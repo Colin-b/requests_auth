@@ -202,30 +202,37 @@ class AuthenticationTest(unittest.TestCase):
                                      # TODO Should use a method to retrieve a free port instead
                                      redirect_uri_port=5002,
                                      token_reception_timeout=TIMEOUT)
-        self.assertIsNotNone(get_header(auth).get('Bearer'))
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*&')
 
-    def test_oauth2_token_is_sent_in_bearer(self):
+    def test_oauth2_token_is_sent_in_authorization_header_by_default(self):
         auth = authentication.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*&')
+
+    def test_oauth2_token_is_sent_in_requested_field(self):
+        auth = authentication.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token',
+                                     token_reception_timeout=TIMEOUT,
+                                     header_name='Bearer',
+                                     header_value='{token}')
         self.assertIsNotNone(get_header(auth).get('Bearer'))
 
     def test_oauth2_can_send_a_custom_response_type_and_expects_token_to_be_received_with_this_name(self):
         auth = authentication.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_custom_token',
                                      token_reception_timeout=TIMEOUT,
                                      response_type='custom_token')
-        self.assertIsNotNone(get_header(auth).get('Bearer'))
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*&')
 
     def test_oauth2_expects_token_to_be_stored_in_token_by_default(self):
         auth = authentication.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
-        self.assertIsNotNone(get_header(auth).get('Bearer'))
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*&')
 
     def test_oauth2_token_is_reused_if_not_expired(self):
         auth1 = authentication.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
-        token1 = get_header(auth1).get('Bearer')
-        self.assertIsNotNone(token1)
+        token1 = get_header(auth1).get('Authorization')
+        self.assertRegex(token1, '^Bearer .*&')
 
         oauth2 = authentication.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
-        token2 = get_header(oauth2).get('Bearer')
-        self.assertIsNotNone(token2)
+        token2 = get_header(oauth2).get('Authorization')
+        self.assertRegex(token2, '^Bearer .*&')
 
         # As the token should not be expired, this call should use the same token
         self.assertEqual(token1, token2)
@@ -250,8 +257,8 @@ class AuthenticationTest(unittest.TestCase):
         # This token will expires in 1 seconds
         auth1 = authentication.OAuth2(TEST_SERVICE_HOST + '/provide_a_token_expiring_in_1_second',
                                       token_reception_timeout=TIMEOUT)
-        token1 = get_header(auth1).get('Bearer')
-        self.assertIsNotNone(token1)
+        token1 = get_header(auth1).get('Authorization')
+        self.assertRegex(token1, '^Bearer .*&')
 
         # Wait for 2 seconds to ensure that the token expiring in 1 seconds will be considered as expired
         time.sleep(2)
@@ -259,8 +266,8 @@ class AuthenticationTest(unittest.TestCase):
         # Token should now be expired, a new one should be requested
         auth2 = authentication.OAuth2(TEST_SERVICE_HOST + '/provide_a_token_expiring_in_1_second',
                                       token_reception_timeout=TIMEOUT)
-        token2 = get_header(auth2).get('Bearer')
-        self.assertIsNotNone(token2)
+        token2 = get_header(auth2).get('Authorization')
+        self.assertRegex(token2, '^Bearer .*&')
 
         self.assertNotEqual(token1, token2)
 

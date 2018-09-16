@@ -2,7 +2,13 @@ import webbrowser
 import logging
 import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import parse_qs
+try:
+    # Python 3
+    from urllib.parse import parse_qs
+except ImportError:
+    # Python 2
+    from urlparse import parse_qs
+
 from requests_auth.errors import *
 
 DEFAULT_SERVER_PORT = 5000

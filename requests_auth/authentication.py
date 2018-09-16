@@ -71,6 +71,8 @@ class OAuth2(requests.auth.AuthBase):
                  token_reception_timeout=None,
                  token_reception_success_display_time=None,
                  token_reception_failure_display_time=None,
+                 header_name='Authorization',
+                 header_value='Bearer {token}',
                  **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
@@ -89,6 +91,11 @@ class OAuth2(requests.auth.AuthBase):
         :param token_reception_failure_display_time: In case received token is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
         Common parameters are:
@@ -134,12 +141,20 @@ class OAuth2(requests.auth.AuthBase):
                                                         DEFAULT_SUCCESS_DISPLAY_TIME)
         self.token_reception_failure_display_time = int(token_reception_failure_display_time or
                                                         DEFAULT_FAILURE_DISPLAY_TIME)
+        if not header_name:
+            raise Exception('header_name must be provided.')
+        self.header_name = header_name
+        if not header_value:
+            raise Exception('header_value must be provided.')
+        if '{token}' not in header_value:
+            raise Exception('header_value parameter must contains {token}.')
+        self.header_value = header_value
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(self.unique_token_provider_identifier,
                                              oauth2_authentication_responses_server.request_new_token,
                                              self)
-        r.headers['Bearer'] = token
+        r.headers[self.header_name] = self.header_value.format(token)
         return r
 
     def __str__(self):
@@ -147,10 +162,12 @@ class OAuth2(requests.auth.AuthBase):
                                        for key, value in self.kwargs.items()])
         return "authentication.OAuth2('{0}', redirect_uri_endpoint='{1}', redirect_uri_port={2}, " \
                "redirect_uri_port_availability_timeout={3}, token_reception_timeout={4}, " \
-               "token_reception_success_display_time={5}, token_reception_failure_display_time={6}, {7})".format(
+               "token_reception_success_display_time={5}, token_reception_failure_display_time={6}, " \
+               "header_name='{7}', header_value='{8}', {9})".format(
             self.authorization_url, self.redirect_uri_endpoint, self.redirect_uri_port,
             self.redirect_uri_port_availability_timeout, self.token_reception_timeout,
-            self.token_reception_success_display_time, self.token_reception_failure_display_time, addition_args_str)
+            self.token_reception_success_display_time, self.token_reception_failure_display_time,
+            self.header_name, self.header_value, addition_args_str)
 
 
 class MicrosoftOAuth2(OAuth2):
@@ -167,6 +184,8 @@ class MicrosoftOAuth2(OAuth2):
                  token_reception_timeout=None,
                  token_reception_success_display_time=None,
                  token_reception_failure_display_time=None,
+                 header_name='Authorization',
+                 header_value='Bearer {token}',
                  **kwargs):
         """
         :param tenant_id: Microsoft Tenant Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd)
@@ -188,6 +207,11 @@ class MicrosoftOAuth2(OAuth2):
         :param token_reception_failure_display_time: In case received token is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
         """
@@ -199,6 +223,8 @@ class MicrosoftOAuth2(OAuth2):
                         token_reception_timeout,
                         token_reception_success_display_time,
                         token_reception_failure_display_time,
+                        header_name,
+                        header_value,
                         client_id=client_id,
                         response_type='id_token',
                         nonce=nonce)

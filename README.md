@@ -66,6 +66,18 @@ requests.get('http://www.example.com', auth=OAuth2('https://www.example.com'))
         <td>5000</td>
     </tr>
     <tr>
+        <td><strong>header_name</strong></td>
+        <td>Name of the header field used to send token.</td>
+        <td>Optional</td>
+        <td>Authorization</td>
+    </tr>
+    <tr>
+        <td><strong>header_value</strong></td>
+        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
+        <td>Optional</td>
+        <td>Bearer {token}</td>
+    </tr>
+    <tr>
         <td><strong>any other parameter</strong></td>
         <td>all additional authorization parameters that should be put as query parameter in the authorization URL.        
         Common parameters are:
@@ -167,6 +179,18 @@ requests.get('http://www.example.com', auth=ms_auth)
         <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>5000</td>
+    </tr>
+    <tr>
+        <td><strong>header_name</strong></td>
+        <td>Name of the header field used to send token.</td>
+        <td>Optional</td>
+        <td>Authorization</td>
+    </tr>
+    <tr>
+        <td><strong>header_value</strong></td>
+        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
+        <td>Optional</td>
+        <td>Bearer {token}</td>
     </tr>
     <tr>
         <td><strong>any other parameter</strong></td>
