@@ -13,7 +13,7 @@ Sample:
 .. code:: python
 
     import requests
-    from requests_auth.authentication import OAuth2
+    from requests_auth import OAuth2
 
     requests.get('http://www.example.com', auth=OAuth2('https://www.example.com'))
 
@@ -56,8 +56,7 @@ Default cache is in memory but it is also possible to use a physical cache using
 
 .. code:: python
 
-    from requests_auth.authentication import OAuth2
-    from requests_auth.oauth2_tokens import JsonTokenFileCache
+    from requests_auth import OAuth2, JsonTokenFileCache
 
     OAuth2.token_cache = JsonTokenFileCache('my_token_cache')
 
@@ -72,10 +71,10 @@ Sample:
 .. code:: python
 
     import requests
-    from requests_auth.authentication import MicrosoftOAuth2
+    from requests_auth import MSOAuth2
 
 
-    ms_auth = MicrosoftOAuth2(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+    ms_auth = MSOAuth2(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
     requests.get('http://www.example.com', auth=ms_auth)
 
 Parameters
@@ -117,7 +116,7 @@ Sample:
 .. code:: python
 
     import requests
-    from requests_auth.authentication import HeaderApiKey
+    from requests_auth import HeaderApiKey
 
     requests.get('http://www.example.com', auth=HeaderApiKey('my_api_key'))
 
@@ -140,7 +139,7 @@ Sample:
 .. code:: python
 
     import requests
-    from requests_auth.authentication import QueryApiKey
+    from requests_auth import QueryApiKey
 
     requests.get('http://www.example.com', auth=QueryApiKey('my_api_key'))
 
@@ -163,7 +162,7 @@ Sample:
 .. code:: python
 
     import requests
-    from requests_auth.authentication import Basic
+    from requests_auth import Basic
 
     requests.get('http://www.example.com', auth=Basic('username', 'password'))
 
@@ -188,7 +187,7 @@ Sample:
 .. code:: python
 
     import requests
-    from requests_auth.authentication import NTLM
+    from requests_auth import NTLM
 
     requests.get('http://www.example.com', auth=NTLM())
 
@@ -211,11 +210,11 @@ You can also use a combination of authentication as in the following sample:
 .. code:: python
 
     import requests
-    from requests_auth.authentication import Auths, HeaderApiKey, OAuth2
+    from requests_auth import Auths, HeaderApiKey, OAuth2
 
     api_key = HeaderApiKey('my_api_key')
     oauth2 = OAuth2('https://www.example.com')
-    requests.get('http://www.example.com', auth=Auths([api_key, oauth2]))
+    requests.get('http://www.example.com', auth=Auths(api_key, oauth2))
 
 .. _requests module: https://pypi.python.org/pypi/requests
 .. _authentication parameter on requests module: http://docs.python-requests.org/en/master/user/authentication/

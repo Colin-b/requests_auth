@@ -11,6 +11,12 @@ List all changes in various categories:
 ### Release notes ###
 
 - OAuth2 token is now provided by default in Authorization header.
+- Auths does not take a list anymore but a var args instead.
+
+### Enhancements ###
+
+- Authentication classes can now be imported from requests_auth.
+- JSONTokenFileCache can now be imported from requests_auth.
 
 ### Bug fixes ###
 

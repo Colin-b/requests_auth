@@ -154,7 +154,7 @@ class OAuth2(requests.auth.AuthBase):
         token = OAuth2.token_cache.get_token(self.unique_token_provider_identifier,
                                              oauth2_authentication_responses_server.request_new_token,
                                              self)
-        r.headers[self.header_name] = self.header_value.format(token)
+        r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
     def __str__(self):
@@ -319,7 +319,7 @@ class NTLM:
 
 class Auths(requests.auth.AuthBase):
     """Authentication using multiple authentication methods."""
-    def __init__(self, authentication_modes):
+    def __init__(self, *authentication_modes):
         self.authentication_modes = authentication_modes
 
     def __call__(self, r):
@@ -328,4 +328,4 @@ class Auths(requests.auth.AuthBase):
         return r
 
     def __str__(self):
-        return "authentication.Auths([" + ", ".join(map(str, self.authentication_modes)) + "])"
+        return "authentication.Auths(" + ", ".join(map(str, self.authentication_modes)) + ")"
