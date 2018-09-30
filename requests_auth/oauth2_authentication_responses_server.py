@@ -172,7 +172,7 @@ def _open_url(url):
     try:
         browser = webbrowser.get(webbrowser.iexplore) if hasattr(webbrowser, 'iexplore') else webbrowser.get()
         logger.info('Opening browser on {0}'.format(url))
-        if not browser.open(url, 1):
+        if not browser.open(url, new=1):
             logger.warning('Unable to open URL, try with a GET request.')
             requests.get(url)
     except webbrowser.Error:
