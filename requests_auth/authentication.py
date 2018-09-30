@@ -3,7 +3,6 @@ from hashlib import sha512
 
 import requests
 import requests.auth
-
 from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
 
 if sys.version_info.major > 2:
@@ -249,10 +248,9 @@ class OktaOAuth2(OAuth2):
         """
         OAuth2.__init__(self,
                         'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(
-                            {
-                                "okta_instance": okta_instance,
-                                "okta_auth_server": "/" + okta_auth_server if okta_auth_server else ""
-                            }),
+                            okta_instance=okta_instance,
+                            okta_auth_server="/" + okta_auth_server if okta_auth_server else ""
+                        ),
                         redirect_uri_endpoint,
                         redirect_uri_port,
                         redirect_uri_port_availability_timeout,
@@ -263,6 +261,13 @@ class OktaOAuth2(OAuth2):
                         response_type='id_token',
                         scope="openid profile email",
                         nonce=nonce)
+
+    def __call__(self, r):
+        token = OAuth2.token_cache.get_token(self.unique_token_provider_identifier,
+                                             oauth2_authentication_responses_server.request_new_token,
+                                             self)
+        r.headers['Authorization'] = 'Bearer ' + token
+        return r
 
 
 class HeaderApiKey(requests.auth.AuthBase):
