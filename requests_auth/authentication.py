@@ -1,5 +1,6 @@
 import sys
 from hashlib import sha512
+
 import requests
 import requests.auth
 from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
@@ -174,6 +175,7 @@ class MicrosoftOAuth2(OAuth2):
     """
     Describes a Microsoft OAuth 2 requests authentication.
     """
+
     def __init__(self,
                  tenant_id,
                  client_id,
@@ -230,6 +232,70 @@ class MicrosoftOAuth2(OAuth2):
                         nonce=nonce)
 
 
+class OktaOAuth2(OAuth2):
+    """
+    Describes an Okta OAuth 2 requests authentication.
+    """
+
+    def __init__(self,
+                 okta_instance,
+                 client_id,
+                 nonce,
+                 okta_auth_server=None,
+                 redirect_uri_endpoint=None,
+                 redirect_uri_port=None,
+                 redirect_uri_port_availability_timeout=None,
+                 token_reception_timeout=None,
+                 token_reception_success_display_time=None,
+                 token_reception_failure_display_time=None,
+                 **kwargs):
+        """
+        :param okta_instance: Okta instance (like "testserver.okta-emea.com")
+        :param okta_auth_server: Okta authorization server (if not the default)
+        :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
+        (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)
+        :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
+        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
+        Listen on port 5000 by default.
+        :param redirect_uri_port_availability_timeout:  The maximum amount of seconds to wait for the
+        redirect_uri_port to become available.
+        Wait for 2 seconds maximum by default.
+        :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        Wait for 1 minute by default.
+        :param token_reception_success_display_time: In case a token is successfully received,
+        this is the maximum amount of milliseconds the success page will be displayed in your browser.
+        Display the page for 1 millisecond by default.
+        :param token_reception_failure_display_time: In case received token is not valid,
+        this is the maximum amount of milliseconds the failure page will be displayed in your browser.
+        Display the page for 5 seconds by default.
+        :param kwargs: all additional authorization parameters that should be put as query parameter
+        in the authorization URL.
+        """
+        OAuth2.__init__(self,
+                        'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(
+                            okta_instance=okta_instance,
+                            okta_auth_server="/" + okta_auth_server if okta_auth_server else ""
+                        ),
+                        redirect_uri_endpoint,
+                        redirect_uri_port,
+                        redirect_uri_port_availability_timeout,
+                        token_reception_timeout,
+                        token_reception_success_display_time,
+                        token_reception_failure_display_time,
+                        client_id=client_id,
+                        response_type='id_token',
+                        scope="openid profile email",
+                        nonce=nonce)
+
+    def __call__(self, r):
+        token = OAuth2.token_cache.get_token(self.unique_token_provider_identifier,
+                                             oauth2_authentication_responses_server.request_new_token,
+                                             self)
+        r.headers['Authorization'] = 'Bearer ' + token
+        return r
+
+
 class HeaderApiKey(requests.auth.AuthBase):
     """Describes an API Key requests authentication."""
 
@@ -274,6 +340,7 @@ class QueryApiKey(requests.auth.AuthBase):
 
 class Basic(requests.auth.HTTPBasicAuth):
     """Describes a basic requests authentication."""
+
     def __init__(self, username, password):
         requests.auth.HTTPBasicAuth.__init__(self, username, password)
 
@@ -283,6 +350,7 @@ class Basic(requests.auth.HTTPBasicAuth):
 
 class NTLM:
     """Describes a NTLM requests authentication."""
+
     def __init__(self, username=None, password=None):
         """
         :param username: Mandatory if requests_negotiate_sspi module is not installed.
@@ -319,6 +387,7 @@ class NTLM:
 
 class Auths(requests.auth.AuthBase):
     """Authentication using multiple authentication methods."""
+
     def __init__(self, *authentication_modes):
         self.authentication_modes = authentication_modes
 

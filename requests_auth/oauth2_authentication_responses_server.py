@@ -4,10 +4,10 @@ import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
 try:
     # Python 3
-    from urllib.parse import parse_qs
+    from urllib.parse import parse_qs, urlparse
 except ImportError:
     # Python 2
-    from urlparse import parse_qs
+    from urlparse import parse_qs, urlparse
 
 from requests_auth.errors import *
 
@@ -28,9 +28,18 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         if self.path == '/favicon.ico':
             logger.debug('Favicon request received on OAuth2 authentication response server.')
             return self.send_html('Favicon is not provided.')
+
+        # parse the query string
+        args = parse_qs(urlparse(self.path).query)
+
+        # if no id_token in the ID string, it means it is still in the fragment
+        if "id_token" not in args:
+            self.send_html(self.fragment_redirect_page())
+            return
+
+        # otherwise, extract the token from the query string
         try:
-            logger.exception("Unable to properly perform authentication. GET is not supported for now.")
-            self.send_html(self.error_page("Unable to properly perform authentication. GET is not supported for now."))
+            self.parse_server_token(args)
         except Exception as e:
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
@@ -40,25 +49,28 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         logger.debug('POST received on {0}'.format(self.path))
         try:
             form_dict = self._get_form()
-
-            id_tokens = form_dict.get(self.server.oauth2.token_name)
-            if not id_tokens or len(id_tokens) > 1:
-                raise TokenNotProvided(self.server.oauth2.token_name, form_dict)
-            logger.debug('Received tokens: {0}'.format(id_tokens))
-            id_token = id_tokens[0]
-
-            unique_token_provider_identifiers = form_dict.get('state')
-            if not unique_token_provider_identifiers or len(unique_token_provider_identifiers) > 1:
-                raise StateNotProvided(form_dict)
-            logger.debug('Received states: {0}'.format(unique_token_provider_identifiers))
-            unique_token_provider_identifier = unique_token_provider_identifiers[0]
-            self.server.token = unique_token_provider_identifier, id_token
-            self.send_html(self.success_page("You are now authenticated on {0}. You may close this tab.".format(
-                unique_token_provider_identifier)))
+            self.parse_server_token(form_dict)
         except Exception as e:
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
             self.send_html(self.error_page("Unable to properly perform authentication: {0}".format(e)))
+
+    def parse_server_token(self, dct):
+        id_tokens = dct.get(self.server.oauth2.token_name.split(" ")[0])
+        if not id_tokens or len(id_tokens) > 1:
+            raise TokenNotProvided(self.server.oauth2.token_name, dct)
+        logger.debug('Received tokens: {0}'.format(id_tokens))
+        id_token = id_tokens[0]
+
+        unique_token_provider_identifiers = dct.get('state')
+        if not unique_token_provider_identifiers or len(unique_token_provider_identifiers) > 1:
+            raise StateNotProvided(dct)
+        logger.debug('Received states: {0}'.format(unique_token_provider_identifiers))
+        unique_token_provider_identifier = unique_token_provider_identifiers[0]
+        self.server.token = unique_token_provider_identifier, id_token
+        self.send_html(self.success_page("You are now authenticated on {0}. You may close this tab.".format(
+            unique_token_provider_identifier)))
+
 
     def _get_form(self):
         content_length = int(self.headers.get('Content-Length', 0))
@@ -93,6 +105,21 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         justify-content: center;">
             <div style="border: 1px solid;">{1}</div>
         </body>""".format(self.server.oauth2.token_reception_failure_display_time, text)
+
+    def fragment_redirect_page(self):
+        """Return a page with JS that calls back the server on the url
+        original url: scheme://FQDN/path#fragment
+        call back url: scheme://FQDN/path?fragment
+
+        The fragment part is used in the protocol for the client to retrieve the token.
+        As the fragment part is not sent to the server (to avoid normally to see the token in the logs)
+        we must call again the localhost server with the fragment transformed as query string.
+        """
+        return """<html><body><script>
+            var xhttp = new XMLHttpRequest();
+            xhttp.open("GET", window.location.href.replace("#","?"), true);
+            xhttp.send();
+        </script></body></html>"""
 
     def log_message(self, format, *args):
         """Make sure that messages are logged even with pythonw (seems like a bug in BaseHTTPRequestHandler)."""
@@ -151,7 +178,7 @@ def _open_url(url):
     try:
         browser = webbrowser.get(webbrowser.iexplore) if hasattr(webbrowser, 'iexplore') else webbrowser.get()
         logger.info('Opening browser on {0}'.format(url))
-        if not browser.open(url, 1):
+        if not browser.open(url, new=1):
             logger.warning('Unable to open URL, try with a GET request.')
             requests.get(url)
     except webbrowser.Error:
