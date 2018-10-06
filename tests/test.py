@@ -87,14 +87,6 @@ class AzureADTest(unittest.TestCase):
                          aad.full_url)
         self.assertEqual("authentication.OAuth2("
                          "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
-                         "redirect_uri_endpoint='', "
-                         "redirect_uri_port=5000, "
-                         "redirect_uri_port_availability_timeout=2.0, "
-                         "token_reception_timeout=60, "
-                         "token_reception_success_display_time=1, "
-                         "token_reception_failure_display_time=5000, "
-                         "header_name='Authorization', "
-                         "header_value='Bearer {token}', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
                          "nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')",
@@ -107,26 +99,20 @@ class OktaTest(unittest.TestCase):
         okta = requests_auth.Okta('testserver.okta-emea.com',
                                   '54239d18-c68c-4c47-8bdd-ce71ea1d50cd',
                                   '7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
-        self.assertEqual('https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
+        self.assertEqual('https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
-                         '&state=c141cf16f45343f37ca8053b6d0c67bad30a777b00221132d5a4514dd23082994e553a9f9fb45224ab9c2da3380047b32948fc2bf233efddc2fbd5801fc1d2d9'
+                         '&scope=openid+profile+email'
+                         '&state=da5a9f82a677a9b3bf19ce2f063f336f1968b8960d4626b35f7d4c0aee68e48ae1a5d5994dc78c3deb043d0e431c5be0bb084c8ac39bd41d670780306329d5a8'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&response_mode=form_post'
                          '&nonce=%5B%277362CAEA-9CA5-4B43-9BA3-34D7C303EBA7%27%5D',
                          okta.full_url)
         self.assertEqual("authentication.OAuth2("
-                         "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
-                         "redirect_uri_endpoint='', "
-                         "redirect_uri_port=5000, "
-                         "redirect_uri_port_availability_timeout=2.0, "
-                         "token_reception_timeout=60, "
-                         "token_reception_success_display_time=1, "
-                         "token_reception_failure_display_time=5000, "
-                         "header_name='Authorization', "
-                         "header_value='Bearer {token}', "
+                         "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
+                         "scope='openid profile email', "
                          "nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')",
                          str(okta))
 
