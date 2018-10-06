@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect
 import jwt
 import datetime
 import logging
@@ -40,6 +40,12 @@ def post_token_as_my_custom_token():
 def post_token_as_token():
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     return submit_a_form_with_a_token(expiry_in_1_hour, 'token')
+
+
+@app.route('/provide_token_as_anchor_token')
+def get_token_as_anchor_token():
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    return redirect_with_a_token(expiry_in_1_hour, 'token')
 
 
 @app.route('/provide_token_as_token_but_without_providing_state')
@@ -88,6 +94,13 @@ def submit_a_form_with_a_token(token_expiry, response_type):
     </body>
 </html>
         """.format(redirect_uri, response_type, token, state)
+
+
+def redirect_with_a_token(token_expiry, response_type):
+    redirect_uri = request.args.get('redirect_uri')
+    state = request.args.get('state')
+    token = create_token(token_expiry)
+    return redirect('{0}#{1}={2}&state={3}'.format(redirect_uri, response_type, token, state))
 
 
 def submit_a_form_without_state(token_expiry, response_type):
