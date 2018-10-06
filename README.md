@@ -104,17 +104,17 @@ OAuth2.token_cache = JsonTokenFileCache('my_token_cache')
 
 ### Common OAuth2 providers ###
 
-#### Microsoft ####
+#### Microsoft (Azure Active Directory) ####
 
 Sample:
 
 ```python
 import requests
-from requests_auth import MSOAuth2
+from requests_auth import AzureAD
 
 
-ms_auth = MSOAuth2(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
-requests.get('http://www.example.com', auth=ms_auth)
+aad = AzureAD(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+requests.get('http://www.example.com', auth=aad)
 ```
 
 ##### Parameters #####
@@ -142,6 +142,107 @@ requests.get('http://www.example.com', auth=ms_auth)
         <td>Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)</td>
         <td>Mandatory</td>
         <td></td>
+    </tr>
+    <tr>
+        <td><strong>redirect_uri_endpoint</strong></td>
+        <td>Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.</td>
+        <td>Optional</td>
+        <td>''</td>
+    </tr>
+    <tr>
+        <td><strong>redirect_uri_port</strong></td>
+        <td>The port on which the server listening for the OAuth 2 token will be started.</td>
+        <td>Optional</td>
+        <td>5000</td>
+    </tr>
+    <tr>
+        <td><strong>redirect_uri_port_availability_timeout</strong></td>
+        <td>The maximum amount of seconds to wait for the redirect_uri_port to become available.</td>
+        <td>Optional</td>
+        <td>2</td>
+    </tr>
+    <tr>
+        <td><strong>token_reception_timeout</strong></td>
+        <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
+        <td>Optional</td>
+        <td>60</td>
+    </tr>
+    <tr>
+        <td><strong>token_reception_success_display_time</strong></td>
+        <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
+        <td>Optional</td>
+        <td>1</td>
+    </tr>
+    <tr>
+        <td><strong>token_reception_failure_display_time</strong></td>
+        <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
+        <td>Optional</td>
+        <td>5000</td>
+    </tr>
+    <tr>
+        <td><strong>header_name</strong></td>
+        <td>Name of the header field used to send token.</td>
+        <td>Optional</td>
+        <td>Authorization</td>
+    </tr>
+    <tr>
+        <td><strong>header_value</strong></td>
+        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
+        <td>Optional</td>
+        <td>Bearer {token}</td>
+    </tr>
+    <tr>
+        <td><strong>any other parameter</strong></td>
+        <td>all additional authorization parameters that should be put as query parameter in the authorization URL.</td>
+        <td>Optional</td>
+        <td></td>
+    </tr>
+</table>
+
+#### OKTA ####
+
+Sample:
+
+```python
+import requests
+from requests_auth import Okta
+
+
+okta = Okta(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+requests.get('http://www.example.com', auth=okta)
+```
+
+##### Parameters #####
+
+<table>
+    <th>
+        <td><em>Description</em></td>
+        <td><em>Mandatory</em></td>
+        <td><em>Default value</em></td>
+    </th>
+    <tr>
+        <td><strong>instance</strong></td>
+        <td>OKTA instance (like "testserver.okta-emea.com").</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>client_id</strong></td>
+        <td>Microsoft Application Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>nonce</strong></td>
+        <td>Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>authorization_server</strong></td>
+        <td>OKTA authorization server.</td>
+        <td>Optional</td>
+        <td>''</td>
     </tr>
     <tr>
         <td><strong>redirect_uri_endpoint</strong></td>

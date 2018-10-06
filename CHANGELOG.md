@@ -12,16 +12,20 @@ List all changes in various categories:
 
 - OAuth2 token is now provided by default in Authorization header.
 - Auths does not take a list anymore but a var args instead.
+- MicrosoftOAuth2 renamed into AzureActiveDirectory
 
 ### Enhancements ###
 
 - Authentication classes can now be imported from requests_auth.
 - JSONTokenFileCache can now be imported from requests_auth.
+- Okta authentication is now available (thanks to Sebastien De Menten).
 
 ### Bug fixes ###
 
 - Oauth2 authentication was not working with Python 2.7
 - Update requests to 2.19.1 (latest version)
+- OAuth2 authentication now supports GET on token reception (thanks to Sebastien De Menten).
+- Extra parameters were not handled when using MicrosoftOAuth2 (now AzureActiveDirectory)
 
 ## 1.0.2 (2018-01-19) ##
 

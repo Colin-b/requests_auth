@@ -71,12 +71,12 @@ class JsonTokenFileCacheTest(unittest.TestCase):
         self.assertEqual(retrieved_token, token)
 
 
-class MicrosoftOAuth2Test(unittest.TestCase):
+class AzureADTest(unittest.TestCase):
 
     def test_corresponding_oauth2_instance(self):
-        ms_auth = requests_auth.MSOAuth2('45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
-                                         '54239d18-c68c-4c47-8bdd-ce71ea1d50cd',
-                                         '7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+        aad = requests_auth.AzureAD('45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
+                                    '54239d18-c68c-4c47-8bdd-ce71ea1d50cd',
+                                    '7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
         self.assertEqual('https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
@@ -84,7 +84,7 @@ class MicrosoftOAuth2Test(unittest.TestCase):
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&response_mode=form_post'
                          '&nonce=%5B%277362CAEA-9CA5-4B43-9BA3-34D7C303EBA7%27%5D',
-                         ms_auth.full_url)
+                         aad.full_url)
         self.assertEqual("authentication.OAuth2("
                          "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
                          "redirect_uri_endpoint='', "
@@ -98,7 +98,37 @@ class MicrosoftOAuth2Test(unittest.TestCase):
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
                          "nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')",
-                         str(ms_auth))
+                         str(aad))
+
+
+class OktaTest(unittest.TestCase):
+
+    def test_corresponding_oauth2_instance(self):
+        okta = requests_auth.Okta('testserver.okta-emea.com',
+                                  '54239d18-c68c-4c47-8bdd-ce71ea1d50cd',
+                                  '7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+        self.assertEqual('https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
+                         'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+                         '&response_type=id_token'
+                         '&state=c141cf16f45343f37ca8053b6d0c67bad30a777b00221132d5a4514dd23082994e553a9f9fb45224ab9c2da3380047b32948fc2bf233efddc2fbd5801fc1d2d9'
+                         '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
+                         '&response_mode=form_post'
+                         '&nonce=%5B%277362CAEA-9CA5-4B43-9BA3-34D7C303EBA7%27%5D',
+                         okta.full_url)
+        self.assertEqual("authentication.OAuth2("
+                         "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
+                         "redirect_uri_endpoint='', "
+                         "redirect_uri_port=5000, "
+                         "redirect_uri_port_availability_timeout=2.0, "
+                         "token_reception_timeout=60, "
+                         "token_reception_success_display_time=1, "
+                         "token_reception_failure_display_time=5000, "
+                         "header_name='Authorization', "
+                         "header_value='Bearer {token}', "
+                         "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
+                         "response_type='id_token', "
+                         "nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')",
+                         str(okta))
 
 
 TEST_SERVICE_PORT = 5001  # TODO Should use a method to retrieve a free port instead

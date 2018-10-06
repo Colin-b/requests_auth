@@ -63,19 +63,19 @@ Default cache is in memory but it is also possible to use a physical cache using
 Common OAuth2 providers
 -----------------------
 
-Microsoft
----------
+Microsoft (Azure Active Directory)
+----------------------------------
 
 Sample:
 
 .. code:: python
 
     import requests
-    from requests_auth import MSOAuth2
+    from requests_auth import AzureAD
 
 
-    ms_auth = MSOAuth2(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
-    requests.get('http://www.example.com', auth=ms_auth)
+    aad = AzureAD(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+    requests.get('http://www.example.com', auth=aad)
 
 Parameters
 ----------
@@ -88,6 +88,53 @@ Parameters
 | client_id                              | Microsoft Application Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).                                                    | Mandatory |                |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
 | nonce                                  | Refer to `OpenID ID Token specifications`_ for more details (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)                          | Mandatory |                |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| redirect_uri_endpoint                  | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.       | Optional  | ''             |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| redirect_uri_port                      | The port on which the server listening for the OAuth 2 token will be started.                                                            | Optional  | 5000           |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| redirect_uri_port_availability_timeout | The maximum amount of seconds to wait for the redirect_uri_port to become available.                                                     | Optional  | 2              |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| token_reception_timeout                | Maximum amount of seconds to wait for a token to be received once requested.                                                             | Optional  | 60             |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| token_reception_success_display_time   | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional  | 1              |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| token_reception_failure_display_time   | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.      | Optional  | 5000           |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| header_name                            | Name of the header field used to send token.                                                                                             | Optional  | Authorization  |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| header_value                           | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                               | Optional  | Bearer {token} |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| any other parameter                    | all additional authorization parameters that should be put as query parameter in the authorization URL.                                  | Optional  |                |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+
+OKTA
+----
+
+Sample:
+
+.. code:: python
+
+    import requests
+    from requests_auth import Okta
+
+
+    okta = Okta(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+    requests.get('http://www.example.com', auth=okta)
+
+Parameters
+----------
+
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+|                                        | Description                                                                                                                              | Mandatory | Default value |
++========================================+==========================================================================================================================================+===========+================+
+| instance                               | OKTA instance (like "testserver.okta-emea.com").                                                                                         | Mandatory |                |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| client_id                              | Microsoft Application Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).                                                    | Mandatory |                |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| nonce                                  | Refer to `OpenID ID Token specifications`_ for more details (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)                          | Mandatory |                |
++----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
+| authorization_server                   | OKTA authorization server.                                                                                                               | Optional  | ''             |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
 | redirect_uri_endpoint                  | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.       | Optional  | ''             |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
