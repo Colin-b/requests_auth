@@ -262,8 +262,7 @@ class AuthenticationTest(unittest.TestCase):
     def test_oauth2_get_failure_if_token_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
             call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/do_not_provide_token_as_anchor_token', token_reception_timeout=TIMEOUT))
-        self.assertEqual('User authentication was not received within {timeout} seconds.'.format(timeout=TIMEOUT),
-                         str(cm.exception))
+        self.assertEqual("token not provided within {}.", str(cm.exception))
 
     def test_oauth2_post_failure_if_state_is_not_provided(self):
         with self.assertRaises(Exception) as cm:

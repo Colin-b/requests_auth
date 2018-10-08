@@ -25,12 +25,11 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         logger.debug('GET received on {0}'.format(self.path))
         try:
             args = self._get_params()
-
-            if self.server.oauth2.token_name not in args:
+            if self.server.oauth2.token_name in args or args.pop('pyxelrest_redirect', None):
+                self.parse_server_token(args)
+            else:
                 logger.debug('Send anchor token as query parameter.')
                 self.send_html(self.fragment_redirect_page())
-            else:
-                self.parse_server_token(args)
         except Exception as e:
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
@@ -109,9 +108,13 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         we must call again the localhost server with the fragment transformed as query string.
         """
         return """<html><body><script>
-            var xhttp = new XMLHttpRequest();
-            xhttp.open("GET", window.location.href.replace("#","?"), true);
-            xhttp.send();
+        var new_url = window.location.href.replace("#","?");
+        if (new_url.indexOf("?") !== -1) {
+            new_url += "&pyxelrest_redirect=1";
+        } else {
+            new_url += "?pyxelrest_redirect=1";
+        }
+        window.location.replace(new_url)
         </script></body></html>"""
 
     def log_message(self, format, *args):
