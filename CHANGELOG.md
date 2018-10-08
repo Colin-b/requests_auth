@@ -6,7 +6,7 @@ List all changes in various categories:
 * Bug fixes
 * Known issues
 
-## 2.0.0 (2018-09-16) ##
+## 2.0.0 (2018-10-09) ##
 
 ### Release notes ###
 
