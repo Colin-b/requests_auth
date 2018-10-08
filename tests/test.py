@@ -176,9 +176,9 @@ class AuthenticationTest(unittest.TestCase):
         self.assertEqual(str(cm.exception), 'Authorization URL is mandatory.')
 
     def test_oauth2_token_is_not_reused_if_a_url_parameter_is_changing(self):
-        auth1 = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token'
-                                                          '&fake_param=1',
-                                      token_reception_timeout=TIMEOUT)
+        auth1 = requests_auth.OAuth2(TEST_SERVICE_HOST +
+                                     '/provide_token_as_custom_token?response_type=custom_token&fake_param=1',
+                                     token_reception_timeout=TIMEOUT)
         token_on_auth1 = get_header(auth1).get('Authorization')
         self.assertRegex(token_on_auth1, '^Bearer .*')
 
@@ -187,9 +187,9 @@ class AuthenticationTest(unittest.TestCase):
 
         logger.info('Requesting a custom token with a different parameter in URL.')
 
-        auth2 = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token'
-                                                          '&fake_param=2',
-                                      token_reception_timeout=TIMEOUT)
+        auth2 = requests_auth.OAuth2(TEST_SERVICE_HOST +
+                                     '/provide_token_as_custom_token?response_type=custom_token&fake_param=2',
+                                     token_reception_timeout=TIMEOUT)
         token_on_auth2 = get_header(auth2).get('Authorization')
         self.assertRegex(token_on_auth2, '^Bearer .*')
 
@@ -217,8 +217,12 @@ class AuthenticationTest(unittest.TestCase):
                                     token_reception_timeout=TIMEOUT)
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
-    def test_oauth2_token_is_sent_in_authorization_header_by_default(self):
+    def test_oauth2_post_token_is_sent_in_authorization_header_by_default(self):
         auth = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
+
+    def test_oauth2_get_token_is_sent_in_authorization_header_by_default(self):
+        auth = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_anchor_token', token_reception_timeout=TIMEOUT)
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
     def test_oauth2_token_is_sent_in_requested_field(self):
@@ -250,14 +254,26 @@ class AuthenticationTest(unittest.TestCase):
         # As the token should not be expired, this call should use the same token
         self.assertEqual(token1, token2)
 
-    def test_oauth2_failure_if_token_is_not_provided(self):
+    def test_oauth2_post_failure_if_token_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
             call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/do_not_provide_token', token_reception_timeout=TIMEOUT))
         self.assertEqual('token not provided within {}.', str(cm.exception))
 
-    def test_oauth2_failure_if_state_is_not_provided(self):
+    def test_oauth2_get_failure_if_token_is_not_provided(self):
+        with self.assertRaises(Exception) as cm:
+            call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/do_not_provide_token_as_anchor_token', token_reception_timeout=TIMEOUT))
+        self.assertEqual('User authentication was not received within {timeout} seconds.'.format(timeout=TIMEOUT),
+                         str(cm.exception))
+
+    def test_oauth2_post_failure_if_state_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
             call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token_but_without_providing_state',
+                                      token_reception_timeout=TIMEOUT),)
+        self.assertRegex(str(cm.exception), "state not provided within {'token': \['.*'\]}.")
+
+    def test_oauth2_get_failure_if_state_is_not_provided(self):
+        with self.assertRaises(Exception) as cm:
+            call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_anchor_token_but_without_providing_state',
                                       token_reception_timeout=TIMEOUT),)
         self.assertRegex(str(cm.exception), "state not provided within {'token': \['.*'\]}.")
 

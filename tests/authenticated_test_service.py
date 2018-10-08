@@ -54,9 +54,20 @@ def post_without_state():
     return submit_a_form_without_state(expiry_in_1_hour, 'token')
 
 
+@app.route('/provide_token_as_anchor_token_but_without_providing_state')
+def get_token_as_anchor_token_without_state():
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    return redirect_with_a_token_without_state(expiry_in_1_hour, 'token')
+
+
 @app.route('/do_not_provide_token')
 def post_without_token():
     return submit_an_empty_form()
+
+
+@app.route('/do_not_provide_token_as_anchor_token')
+def get_without_token():
+    return redirect_without_a_token()
 
 
 @app.route('/provide_a_token_expiring_in_1_second')
@@ -122,6 +133,12 @@ def submit_a_form_without_state(token_expiry, response_type):
         """.format(redirect_uri, response_type, token)
 
 
+def redirect_with_a_token_without_state(token_expiry, response_type):
+    redirect_uri = request.args.get('redirect_uri')
+    token = create_token(token_expiry)
+    return redirect('{0}#{1}={2}'.format(redirect_uri, response_type, token))
+
+
 def submit_an_empty_form():
     redirect_uri = request.args.get('redirect_uri')
     return """
@@ -137,6 +154,11 @@ def submit_an_empty_form():
     </body>
 </html>
         """.format(redirect_uri)
+
+
+def redirect_without_a_token():
+    redirect_uri = request.args.get('redirect_uri')
+    return redirect('{0}'.format(redirect_uri))
 
 
 def close_page():

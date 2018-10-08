@@ -26,13 +26,11 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         try:
             args = self._get_params()
 
-            # if no token in the ID string, it means it is still in the fragment
             if self.server.oauth2.token_name not in args:
+                logger.debug('Send anchor token as query parameter.')
                 self.send_html(self.fragment_redirect_page())
-                return
-
-            # otherwise, extract the token from the query string
-            self.parse_server_token(args)
+            else:
+                self.parse_server_token(args)
         except Exception as e:
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
@@ -49,7 +47,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             self.send_html(self.error_page("Unable to properly perform authentication: {0}".format(e)))
 
     def parse_server_token(self, arguments):
-        id_tokens = arguments.get(self.server.oauth2.token_name.split(" ")[0])
+        id_tokens = arguments.get(self.server.oauth2.token_name)
         if not id_tokens or len(id_tokens) > 1:
             raise TokenNotProvided(self.server.oauth2.token_name, arguments)
         logger.debug('Received tokens: {0}'.format(id_tokens))
