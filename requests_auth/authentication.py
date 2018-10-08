@@ -193,6 +193,9 @@ class Okta(OAuth2):
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param authorization_server: OKTA authorization server
+        :param scope: Scope parameter sent in query.
+        :param scopes: List of scopes sent in query. Only valid if scope is not provided.
+        Request ['openid', 'profile', 'email'] by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
@@ -217,6 +220,8 @@ class Okta(OAuth2):
         in the authorization URL.
         """
         authorization_server = kwargs.pop('authorization_server', None)
+        if 'scope' not in kwargs:
+            kwargs['scope'] = ' '.join(kwargs.pop('scopes', ['openid', 'profile', 'email']))
         OAuth2.__init__(self,
                         'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(
                             okta_instance=instance,
@@ -224,7 +229,6 @@ class Okta(OAuth2):
                         ),
                         client_id=client_id,
                         response_type='id_token',
-                        scope="openid profile email",
                         nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
                         **kwargs)
 

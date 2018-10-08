@@ -109,8 +109,8 @@ class OktaTest(unittest.TestCase):
                          "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
-                         "scope='openid profile email', "
-                         "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
+                         "nonce='.*-.*-.*-.*-.*', "
+                         "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
 
 
 TEST_SERVICE_PORT = 5001  # TODO Should use a method to retrieve a free port instead
