@@ -12,7 +12,8 @@ List all changes in various categories:
 
 - OAuth2 token is now provided by default in Authorization header.
 - Auths does not take a list anymore but a var args instead.
-- MicrosoftOAuth2 renamed into AzureActiveDirectory
+- MicrosoftOAuth2 renamed into AzureActiveDirectory.
+- Nonce is not a mandatory parameter anymore for MicrosoftOAuth2.
 
 ### Enhancements ###
 

@@ -11,13 +11,6 @@ except ImportError:
 
 from requests_auth.errors import *
 
-DEFAULT_SERVER_PORT = 5000
-DEFAULT_PORT_AVAILABILITY_TIMEOUT = 2  # Time is expressed in seconds
-DEFAULT_AUTHENTICATION_TIMEOUT = 60  # Time is expressed in seconds
-DEFAULT_SUCCESS_DISPLAY_TIME = 1  # Time is expressed in milliseconds
-DEFAULT_FAILURE_DISPLAY_TIME = 5000  # Time is expressed in milliseconds
-DEFAULT_TOKEN_NAME = 'token'  # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
-
 logger = logging.getLogger(__name__)
 
 
@@ -29,16 +22,16 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             logger.debug('Favicon request received on OAuth2 authentication response server.')
             return self.send_html('Favicon is not provided.')
 
-        # parse the query string
-        args = parse_qs(urlparse(self.path).query)
-
-        # if no id_token in the ID string, it means it is still in the fragment
-        if "id_token" not in args:
-            self.send_html(self.fragment_redirect_page())
-            return
-
-        # otherwise, extract the token from the query string
+        logger.debug('GET received on {0}'.format(self.path))
         try:
+            args = self._get_params()
+
+            # if no token in the ID string, it means it is still in the fragment
+            if self.server.oauth2.token_name not in args:
+                self.send_html(self.fragment_redirect_page())
+                return
+
+            # otherwise, extract the token from the query string
             self.parse_server_token(args)
         except Exception as e:
             self.server.request_error = e
@@ -55,27 +48,29 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             logger.exception("Unable to properly perform authentication.")
             self.send_html(self.error_page("Unable to properly perform authentication: {0}".format(e)))
 
-    def parse_server_token(self, dct):
-        id_tokens = dct.get(self.server.oauth2.token_name.split(" ")[0])
+    def parse_server_token(self, arguments):
+        id_tokens = arguments.get(self.server.oauth2.token_name.split(" ")[0])
         if not id_tokens or len(id_tokens) > 1:
-            raise TokenNotProvided(self.server.oauth2.token_name, dct)
+            raise TokenNotProvided(self.server.oauth2.token_name, arguments)
         logger.debug('Received tokens: {0}'.format(id_tokens))
         id_token = id_tokens[0]
 
-        unique_token_provider_identifiers = dct.get('state')
+        unique_token_provider_identifiers = arguments.get('state')
         if not unique_token_provider_identifiers or len(unique_token_provider_identifiers) > 1:
-            raise StateNotProvided(dct)
+            raise StateNotProvided(arguments)
         logger.debug('Received states: {0}'.format(unique_token_provider_identifiers))
         unique_token_provider_identifier = unique_token_provider_identifiers[0]
         self.server.token = unique_token_provider_identifier, id_token
         self.send_html(self.success_page("You are now authenticated on {0}. You may close this tab.".format(
             unique_token_provider_identifier)))
 
-
     def _get_form(self):
         content_length = int(self.headers.get('Content-Length', 0))
         body_str = self.rfile.read(content_length).decode('utf-8')
         return parse_qs(body_str, keep_blank_values=1)
+
+    def _get_params(self):
+        return parse_qs(urlparse(self.path).query)
 
     def send_html(self, html_content):
         self.send_response(200)

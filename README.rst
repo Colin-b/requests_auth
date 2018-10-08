@@ -74,7 +74,7 @@ Sample:
     from requests_auth import AzureAD
 
 
-    aad = AzureAD(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+    aad = AzureAD(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
     requests.get('http://www.example.com', auth=aad)
 
 Parameters
@@ -83,11 +83,11 @@ Parameters
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
 |                                        | Description                                                                                                                              | Mandatory | Default value |
 +========================================+==========================================================================================================================================+===========+================+
-| tenant_id                              | Microsoft Tenant Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).                                                         | Mandatory |                |
+| tenant_id                              | Microsoft Tenant Identifier (formatted as an Universal Unique Identifier).                                                               | Mandatory |                |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
-| client_id                              | Microsoft Application Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).                                                    | Mandatory |                |
+| client_id                              | Microsoft Application Identifier (formatted as an Universal Unique Identifier).                                                          | Mandatory |                |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
-| nonce                                  | Refer to `OpenID ID Token specifications`_ for more details (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)                          | Mandatory |                |
+| nonce                                  | Refer to `OpenID ID Token specifications`_ for more details.                                                                             | Optional  | New UUID       |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
 | redirect_uri_endpoint                  | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.       | Optional  | ''             |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
@@ -119,7 +119,7 @@ Sample:
     from requests_auth import Okta
 
 
-    okta = Okta(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+    okta = Okta(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
     requests.get('http://www.example.com', auth=okta)
 
 Parameters
@@ -130,9 +130,9 @@ Parameters
 +========================================+==========================================================================================================================================+===========+================+
 | instance                               | OKTA instance (like "testserver.okta-emea.com").                                                                                         | Mandatory |                |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
-| client_id                              | Microsoft Application Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).                                                    | Mandatory |                |
+| client_id                              | Microsoft Application Identifier (formatted as an Universal Unique Identifier).                                                          | Mandatory |                |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
-| nonce                                  | Refer to `OpenID ID Token specifications`_ for more details (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)                          | Mandatory |                |
+| nonce                                  | Refer to `OpenID ID Token specifications`_ for more details.                                                                             | Optional  | New UUID       |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+
 | authorization_server                   | OKTA authorization server.                                                                                                               | Optional  | ''             |
 +----------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------+-----------+----------------+

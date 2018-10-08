@@ -113,7 +113,7 @@ import requests
 from requests_auth import AzureAD
 
 
-aad = AzureAD(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+aad = AzureAD(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=aad)
 ```
 
@@ -127,21 +127,21 @@ requests.get('http://www.example.com', auth=aad)
     </th>
     <tr>
         <td><strong>tenant_id</strong></td>
-        <td>Microsoft Tenant Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).</td>
+        <td>Microsoft Tenant Identifier (formatted as an Universal Unique Identifier).</td>
         <td>Mandatory</td>
         <td></td>
     </tr>
     <tr>
         <td><strong>client_id</strong></td>
-        <td>Microsoft Application Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).</td>
+        <td>Microsoft Application Identifier (formatted as an Universal Unique Identifier).</td>
         <td>Mandatory</td>
         <td></td>
     </tr>
     <tr>
         <td><strong>nonce</strong></td>
-        <td>Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)</td>
-        <td>Mandatory</td>
-        <td></td>
+        <td>Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details.</td>
+        <td>Optional</td>
+        <td>Newly generated Universal Unique Identifier.</td>
     </tr>
     <tr>
         <td><strong>redirect_uri_endpoint</strong></td>
@@ -208,7 +208,7 @@ import requests
 from requests_auth import Okta
 
 
-okta = Okta(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', nonce='7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7')
+okta = Okta(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=okta)
 ```
 
@@ -228,15 +228,15 @@ requests.get('http://www.example.com', auth=okta)
     </tr>
     <tr>
         <td><strong>client_id</strong></td>
-        <td>Microsoft Application Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd).</td>
+        <td>Microsoft Application Identifier (formatted as an Universal Unique Identifier).</td>
         <td>Mandatory</td>
         <td></td>
     </tr>
     <tr>
         <td><strong>nonce</strong></td>
-        <td>Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)</td>
-        <td>Mandatory</td>
-        <td></td>
+        <td>Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details.</td>
+        <td>Optional</td>
+        <td>Newly generated Universal Unique Identifier.</td>
     </tr>
     <tr>
         <td><strong>authorization_server</strong></td>
