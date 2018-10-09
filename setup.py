@@ -1,14 +1,13 @@
 import os
 from setuptools import setup, find_packages
-from requests_auth import _version
 
 this_dir = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(this_dir, 'README.rst'), 'r') as f:
+with open(os.path.join(this_dir, 'README.md'), 'r') as f:
     long_description = f.read()
 
 # More information on properties: https://packaging.python.org/distributing
 setup(name='requests_auth',
-      version=_version.__version__,
+      version=open("requests_auth/_version.py").readlines()[-1].split()[-1].strip("\"'"),
       author='Colin Bounouar',
       maintainer='Colin Bounouar',
       url="https://github.com/Colin-b/requests_auth",
@@ -27,12 +26,16 @@ setup(name='requests_auth',
           "Programming Language :: Python :: 3",
           "Programming Language :: Python :: 3.5",
           "Programming Language :: Python :: 3.6",
+          "Programming Language :: Python :: 3.7",
           "Topic :: Software Development :: Build Tools",
       ],
       keywords=[
           'authentication',
           'ntlm',
           'oauth2',
+          'azure-active-directory',
+          'azure-ad',
+          'okta',
           'apikey',
           'multiple',
       ],
