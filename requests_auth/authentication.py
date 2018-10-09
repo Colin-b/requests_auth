@@ -1,8 +1,9 @@
 import sys
 from hashlib import sha512
-
+import uuid
 import requests
 import requests.auth
+
 from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
 
 if sys.version_info.major > 2:
@@ -64,15 +65,7 @@ class OAuth2(requests.auth.AuthBase):
 
     token_cache = oauth2_tokens.TokenMemoryCache()
 
-    def __init__(self,
-                 authorization_url,
-                 redirect_uri_endpoint=None,
-                 redirect_uri_port=None,
-                 redirect_uri_port_availability_timeout=None,
-                 token_reception_timeout=None,
-                 token_reception_success_display_time=None,
-                 token_reception_failure_display_time=None,
-                 **kwargs):
+    def __init__(self, authorization_url, **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
@@ -90,6 +83,11 @@ class OAuth2(requests.auth.AuthBase):
         :param token_reception_failure_display_time: In case received token is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
         Common parameters are:
@@ -97,84 +95,61 @@ class OAuth2(requests.auth.AuthBase):
         * response_type: id_token for Microsoft
         * nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         """
-        from requests_auth.oauth2_authentication_responses_server import (
-            DEFAULT_SERVER_PORT,
-            DEFAULT_TOKEN_NAME,
-            DEFAULT_PORT_AVAILABILITY_TIMEOUT,
-            DEFAULT_AUTHENTICATION_TIMEOUT,
-            DEFAULT_SUCCESS_DISPLAY_TIME,
-            DEFAULT_FAILURE_DISPLAY_TIME
-        )
         self.authorization_url = authorization_url
         if not self.authorization_url:
             raise Exception('Authorization URL is mandatory.')
-        self.redirect_uri_endpoint = redirect_uri_endpoint or ''
-        self.redirect_uri_port = int(redirect_uri_port or DEFAULT_SERVER_PORT)
-        self.redirect_uri_port_availability_timeout = float(redirect_uri_port_availability_timeout or
-                                                            DEFAULT_PORT_AVAILABILITY_TIMEOUT)
-        self.redirect_uri = 'http://localhost:{0}/{1}'.format(self.redirect_uri_port, self.redirect_uri_endpoint)
         self.kwargs = kwargs
-        unique_token_provider_url = _add_parameters(self.authorization_url, self.kwargs)
+        self.extra_parameters = dict(kwargs)
+        self.redirect_uri_endpoint = self.extra_parameters.pop('redirect_uri_endpoint', None) or ''
+        self.redirect_uri_port = int(self.extra_parameters.pop('redirect_uri_port', None) or 5000)
+        # Time is expressed in seconds
+        self.redirect_uri_port_availability_timeout = float(self.extra_parameters.pop('redirect_uri_port_availability_timeout', None) or 2)
+        # Time is expressed in seconds
+        self.token_reception_timeout = int(self.extra_parameters.pop('token_reception_timeout', None) or 60)
+        # Time is expressed in milliseconds
+        self.token_reception_success_display_time = int(self.extra_parameters.pop('token_reception_success_display_time', None) or 1)
+        # Time is expressed in milliseconds
+        self.token_reception_failure_display_time = int(self.extra_parameters.pop('token_reception_failure_display_time', None) or 5000)
+        self.header_name = self.extra_parameters.pop('header_name', None) or 'Authorization'
+        self.header_value = self.extra_parameters.pop('header_value', None) or 'Bearer {token}'
+        if '{token}' not in self.header_value:
+            raise Exception('header_value parameter must contains {token}.')
+
+        self.redirect_uri = 'http://localhost:{0}/{1}'.format(self.redirect_uri_port, self.redirect_uri_endpoint)
+        unique_token_provider_url = _add_parameters(self.authorization_url, self.extra_parameters)
         unique_token_provider_url, nonce = _pop_parameter(unique_token_provider_url, 'nonce')
         self.unique_token_provider_identifier = sha512(unique_token_provider_url.encode('unicode_escape')).hexdigest()
-        custom_parameters = {
-            'state': self.unique_token_provider_identifier,
-            'redirect_uri': self.redirect_uri,
-
-            # TODO Handle GET to be able to get rid of this HACK (not working with every OAUTH2 provider anyway)
-            # Force Form Post as get is only providing token in anchor and anchor is not provided to server
-            # (interpreted on client side only)
-            'response_mode': 'form_post',
-        }
+        custom_parameters = {'state': self.unique_token_provider_identifier, 'redirect_uri': self.redirect_uri}
         if nonce:
             custom_parameters['nonce'] = nonce
         self.full_url = _add_parameters(unique_token_provider_url, custom_parameters)
-        self.token_name = _get_query_parameter(self.full_url, 'response_type') or DEFAULT_TOKEN_NAME
-        self.token_reception_timeout = int(token_reception_timeout or DEFAULT_AUTHENTICATION_TIMEOUT)
-        self.token_reception_success_display_time = int(token_reception_success_display_time or
-                                                        DEFAULT_SUCCESS_DISPLAY_TIME)
-        self.token_reception_failure_display_time = int(token_reception_failure_display_time or
-                                                        DEFAULT_FAILURE_DISPLAY_TIME)
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
+        self.token_name = _get_query_parameter(self.full_url, 'response_type') or 'token'
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(self.unique_token_provider_identifier,
                                              oauth2_authentication_responses_server.request_new_token,
                                              self)
-        r.headers['Bearer'] = token
+        r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value)
                                        for key, value in self.kwargs.items()])
-        return "authentication.OAuth2('{0}', redirect_uri_endpoint='{1}', redirect_uri_port={2}, " \
-               "redirect_uri_port_availability_timeout={3}, token_reception_timeout={4}, " \
-               "token_reception_success_display_time={5}, token_reception_failure_display_time={6}, {7})".format(
-            self.authorization_url, self.redirect_uri_endpoint, self.redirect_uri_port,
-            self.redirect_uri_port_availability_timeout, self.token_reception_timeout,
-            self.token_reception_success_display_time, self.token_reception_failure_display_time, addition_args_str)
+        return "authentication.OAuth2('{0}', {1})".format(self.authorization_url, addition_args_str)
 
 
-class MicrosoftOAuth2(OAuth2):
+class AzureActiveDirectory(OAuth2):
     """
-    Describes a Microsoft OAuth 2 requests authentication.
+    Describes an Azure Active Directory (Microsoft OAuth 2) requests authentication.
     """
 
-    def __init__(self,
-                 tenant_id,
-                 client_id,
-                 nonce,
-                 redirect_uri_endpoint=None,
-                 redirect_uri_port=None,
-                 redirect_uri_port_availability_timeout=None,
-                 token_reception_timeout=None,
-                 token_reception_success_display_time=None,
-                 token_reception_failure_display_time=None,
-                 **kwargs):
+    def __init__(self, tenant_id, client_id, **kwargs):
         """
-        :param tenant_id: Microsoft Tenant Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd)
-        :param client_id: Microsoft Application Identifier (formatted as 45239d18-c68c-4c47-8bdd-ce71ea1d50cd)
+        :param tenant_id: Microsoft Tenant Identifier (formatted as an Universal Unique Identifier)
+        :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
-        (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)
+        (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
@@ -190,44 +165,37 @@ class MicrosoftOAuth2(OAuth2):
         :param token_reception_failure_display_time: In case received token is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
         """
         OAuth2.__init__(self,
                         'https://login.microsoftonline.com/{0}/oauth2/authorize'.format(tenant_id),
-                        redirect_uri_endpoint,
-                        redirect_uri_port,
-                        redirect_uri_port_availability_timeout,
-                        token_reception_timeout,
-                        token_reception_success_display_time,
-                        token_reception_failure_display_time,
                         client_id=client_id,
                         response_type='id_token',
-                        nonce=nonce)
+                        nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
+                        **kwargs)
 
 
-class OktaOAuth2(OAuth2):
+class Okta(OAuth2):
     """
-    Describes an Okta OAuth 2 requests authentication.
+    Describes an OKTA (OAuth 2) requests authentication.
     """
 
-    def __init__(self,
-                 okta_instance,
-                 client_id,
-                 nonce,
-                 okta_auth_server=None,
-                 redirect_uri_endpoint=None,
-                 redirect_uri_port=None,
-                 redirect_uri_port_availability_timeout=None,
-                 token_reception_timeout=None,
-                 token_reception_success_display_time=None,
-                 token_reception_failure_display_time=None,
-                 **kwargs):
+    def __init__(self, instance, client_id, **kwargs):
         """
-        :param okta_instance: Okta instance (like "testserver.okta-emea.com")
-        :param okta_auth_server: Okta authorization server (if not the default)
+        :param instance: OKTA instance (like "testserver.okta-emea.com")
+        :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
-        (formatted as 7362CAEA-9CA5-4B43-9BA3-34D7C303EBA7)
+        (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
+        :param authorization_server: OKTA authorization server
+        :param scope: Scope parameter sent in query.
+        :param scopes: List of scopes sent in query. Only valid if scope is not provided.
+        Request ['openid', 'profile', 'email'] by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
@@ -243,31 +211,26 @@ class OktaOAuth2(OAuth2):
         :param token_reception_failure_display_time: In case received token is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
         """
+        authorization_server = kwargs.pop('authorization_server', None)
+        if 'scope' not in kwargs:
+            kwargs['scope'] = ' '.join(kwargs.pop('scopes', ['openid', 'profile', 'email']))
         OAuth2.__init__(self,
                         'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(
-                            okta_instance=okta_instance,
-                            okta_auth_server="/" + okta_auth_server if okta_auth_server else ""
+                            okta_instance=instance,
+                            okta_auth_server="/" + authorization_server if authorization_server else ""
                         ),
-                        redirect_uri_endpoint,
-                        redirect_uri_port,
-                        redirect_uri_port_availability_timeout,
-                        token_reception_timeout,
-                        token_reception_success_display_time,
-                        token_reception_failure_display_time,
                         client_id=client_id,
                         response_type='id_token',
-                        scope="openid profile email",
-                        nonce=nonce)
-
-    def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.unique_token_provider_identifier,
-                                             oauth2_authentication_responses_server.request_new_token,
-                                             self)
-        r.headers['Authorization'] = 'Bearer ' + token
-        return r
+                        nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
+                        **kwargs)
 
 
 class HeaderApiKey(requests.auth.AuthBase):
@@ -362,7 +325,7 @@ class NTLM:
 class Auths(requests.auth.AuthBase):
     """Authentication using multiple authentication methods."""
 
-    def __init__(self, authentication_modes):
+    def __init__(self, *authentication_modes):
         self.authentication_modes = authentication_modes
 
     def __call__(self, r):
@@ -371,4 +334,4 @@ class Auths(requests.auth.AuthBase):
         return r
 
     def __str__(self):
-        return "authentication.Auths([" + ", ".join(map(str, self.authentication_modes)) + "])"
+        return "authentication.Auths(" + ", ".join(map(str, self.authentication_modes)) + ")"

@@ -128,14 +128,13 @@ class JsonTokenFileCache(TokenMemoryCache):
             os.remove(self.tokens_path)
         except:
             logger.debug('Cannot remove tokens file.')
-            pass
 
     def _save_tokens(self):
         try:
             with open(self.tokens_path, 'w') as tokens_cache_file:
                 json.dump(self.tokens, tokens_cache_file)
             self.last_save_time = os.path.getmtime(self.tokens_path)
-        except Exception as e:
+        except:
             logger.exception('Cannot save tokens.')
 
     def _load_tokens(self):
@@ -148,6 +147,5 @@ class JsonTokenFileCache(TokenMemoryCache):
                 self.last_save_time = last_modification_time
                 with open(self.tokens_path, 'r') as tokens_cache_file:
                     self.tokens = json.load(tokens_cache_file)
-        except Exception as e:
+        except:
             logger.exception('Cannot load tokens.')
-            pass
