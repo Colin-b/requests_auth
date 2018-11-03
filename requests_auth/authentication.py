@@ -58,9 +58,9 @@ def _get_query_parameter(url, param_name):
     return all_values[0] if all_values else None
 
 
-class OAuth2(requests.auth.AuthBase):
+class OAuth2Implicit(requests.auth.AuthBase):
     """
-    Describes an OAuth 2 requests authentication.
+    Describes an OAuth 2 implicit flow requests authentication.
     """
 
     token_cache = oauth2_tokens.TokenMemoryCache()
@@ -127,19 +127,19 @@ class OAuth2(requests.auth.AuthBase):
         self.token_name = _get_query_parameter(self.full_url, 'response_type') or 'token'
 
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.unique_token_provider_identifier,
-                                             oauth2_authentication_responses_server.request_new_token,
-                                             self)
+        token = self.token_cache.get_token(self.unique_token_provider_identifier,
+                                           oauth2_authentication_responses_server.request_new_token,
+                                           self)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value)
                                        for key, value in self.kwargs.items()])
-        return "authentication.OAuth2('{0}', {1})".format(self.authorization_url, addition_args_str)
+        return "authentication.OAuth2Implicit('{0}', {1})".format(self.authorization_url, addition_args_str)
 
 
-class AzureActiveDirectory(OAuth2):
+class AzureActiveDirectoryImplicit(OAuth2Implicit):
     """
     Describes an Azure Active Directory (Microsoft OAuth 2) requests authentication.
     """
@@ -173,17 +173,19 @@ class AzureActiveDirectory(OAuth2):
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
         """
-        OAuth2.__init__(self,
-                        'https://login.microsoftonline.com/{0}/oauth2/authorize'.format(tenant_id),
-                        client_id=client_id,
-                        response_type='id_token',
-                        nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
-                        **kwargs)
+        OAuth2Implicit.__init__(
+            self,
+            'https://login.microsoftonline.com/{0}/oauth2/authorize'.format(tenant_id),
+            client_id=client_id,
+            response_type='id_token',
+            nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
+            **kwargs
+        )
 
 
-class Okta(OAuth2):
+class OktaImplicit(OAuth2Implicit):
     """
-    Describes an OKTA (OAuth 2) requests authentication.
+    Describes an OKTA (OAuth 2) implicit flow requests authentication.
     """
 
     def __init__(self, instance, client_id, **kwargs):
@@ -222,15 +224,17 @@ class Okta(OAuth2):
         authorization_server = kwargs.pop('authorization_server', None)
         if 'scope' not in kwargs:
             kwargs['scope'] = ' '.join(kwargs.pop('scopes', ['openid', 'profile', 'email']))
-        OAuth2.__init__(self,
-                        'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(
-                            okta_instance=instance,
-                            okta_auth_server="/" + authorization_server if authorization_server else ""
-                        ),
-                        client_id=client_id,
-                        response_type='id_token',
-                        nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
-                        **kwargs)
+        OAuth2Implicit.__init__(
+            self,
+            'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(
+                okta_instance=instance,
+                okta_auth_server="/" + authorization_server if authorization_server else ""
+            ),
+            client_id=client_id,
+            response_type='id_token',
+            nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
+            **kwargs
+        )
 
 
 class HeaderApiKey(requests.auth.AuthBase):

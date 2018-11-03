@@ -52,7 +52,7 @@ setup(name='requests_auth',
       ],
       install_requires=[
           # Used for Base Authentication and to communicate with OAuth2 servers (also used in test cases)
-          'requests==2.19.1',
+          'requests==2.20.0',
       ],
       platforms=[
           'Windows',

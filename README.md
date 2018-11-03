@@ -4,15 +4,15 @@ This module provides you authentication classes to be used with [`requests`][1].
 
 To use a specific authentication in combination with requests, use the [authentication parameter on `requests` module][2].
 
-## OAuth 2 ##
+## OAuth 2 (implicit flow) ##
 
 Sample:
 
 ```python
 import requests
-from requests_auth import OAuth2
+from requests_auth import OAuth2Implicit
 
-requests.get('http://www.example.com', auth=OAuth2('https://www.example.com'))
+requests.get('http://www.example.com', auth=OAuth2Implicit('https://www.example.com'))
 ```
 
 ### Parameters ###
@@ -97,23 +97,23 @@ To avoid asking for a new token every new request, a token cache is used.
 Default cache is in memory but it is also possible to use a physical cache using the following method:
 
 ```python
-from requests_auth import OAuth2, JsonTokenFileCache
+from requests_auth import OAuth2Implicit, JsonTokenFileCache
 
-OAuth2.token_cache = JsonTokenFileCache('my_token_cache')
+OAuth2Implicit.token_cache = JsonTokenFileCache('my_token_cache')
 ```
 
 ### Common OAuth2 providers ###
 
-#### Microsoft (Azure Active Directory) ####
+#### Microsoft - Azure Active Directory (implicit flow) ####
 
 Sample:
 
 ```python
 import requests
-from requests_auth import AzureAD
+from requests_auth import AzureActiveDirectoryImplicit
 
 
-aad = AzureAD(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
+aad = AzureActiveDirectoryImplicit(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=aad)
 ```
 
@@ -199,16 +199,16 @@ requests.get('http://www.example.com', auth=aad)
     </tr>
 </table>
 
-#### OKTA ####
+#### OKTA (implicit flow) ####
 
 Sample:
 
 ```python
 import requests
-from requests_auth import Okta
+from requests_auth import OktaImplicit
 
 
-okta = Okta(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
+okta = OktaImplicit(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=okta)
 ```
 
@@ -440,10 +440,10 @@ You can also use a combination of authentication as in the following sample:
 
 ```python
 import requests
-from requests_auth import Auths, HeaderApiKey, OAuth2
+from requests_auth import Auths, HeaderApiKey, OAuth2Implicit
 
 api_key = HeaderApiKey('my_api_key')
-oauth2 = OAuth2('https://www.example.com')
+oauth2 = OAuth2Implicit('https://www.example.com')
 requests.get('http://www.example.com', auth=Auths(api_key, oauth2))
 ```
 
