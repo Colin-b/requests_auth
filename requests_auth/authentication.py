@@ -58,6 +58,165 @@ def _get_query_parameter(url, param_name):
     return all_values[0] if all_values else None
 
 
+class OAuth2Password(requests.auth.AuthBase):
+    """
+    Describes an OAuth 2 password flow requests authentication.
+    """
+
+    def __init__(self, token_url, **kwargs):
+        """
+        :param token_url: OAuth 2 token URL.
+        """
+        self.token_url = token_url
+        if not self.token_url:
+            raise Exception('Token URL is mandatory.')
+
+    def __call__(self, r):
+        return r
+
+    def __str__(self):
+        return "authentication.OAuth2Password('{0}')".format(self.token_url)
+
+
+class OAuth2Application(requests.auth.AuthBase):
+    """
+    Describes an OAuth 2 application flow requests authentication.
+    """
+
+    def __init__(self, token_url, **kwargs):
+        """
+        :param token_url: OAuth 2 token URL.
+        """
+        self.token_url = token_url
+        if not self.token_url:
+            raise Exception('Token URL is mandatory.')
+
+    def __call__(self, r):
+        return r
+
+    def __str__(self):
+        return "authentication.OAuth2Application('{0}')".format(self.token_url)
+
+
+class OAuth2AuthorizationCode(requests.auth.AuthBase):
+    """
+    Describes an OAuth 2 authorization code (also called access code) flow requests authentication.
+    """
+
+    token_cache = oauth2_tokens.TokenMemoryCache()
+
+    def __init__(self, authorization_url, token_url, **kwargs):
+        """
+        :param authorization_url: OAuth 2 authorization URL.
+        :param token_url: OAuth 2 token URL.
+        :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
+        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        :param redirect_uri_port: The port on which the server listening for the OAuth 2 code will be started.
+        Listen on port 5000 by default.
+        :param code_reception_timeout: Maximum amount of seconds to wait for a code to be received once requested.
+        Wait for 1 minute by default.
+        :param reception_timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
+        Wait for 1 minute by default.
+        :param reception_success_display_time: In case a code or a token is successfully received,
+        this is the maximum amount of milliseconds the success page will be displayed in your browser.
+        Display the page for 1 millisecond by default.
+        :param reception_failure_display_time: In case received code or token is not valid,
+        this is the maximum amount of milliseconds the failure page will be displayed in your browser.
+        Display the page for 5 seconds by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
+        :param kwargs: all additional authorization parameters that should be put as query parameter
+        in the authorization and token URL.
+        Common parameters are:
+        * client_id: Corresponding to your Application ID (in Microsoft Azure app portal)
+        * client_secret: If client is not authenticated with the authorization server
+        * response_type: code for Microsoft
+        * nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
+        """
+        self.authorization_url = authorization_url
+        if not self.authorization_url:
+            raise Exception('Authorization URL is mandatory.')
+
+        self.token_url = token_url
+        if not self.token_url:
+            raise Exception('Token URL is mandatory.')
+        self.kwargs = kwargs
+
+        extra_parameters = dict(kwargs)
+        self.header_name = extra_parameters.pop('header_name', None) or 'Authorization'
+        self.header_value = extra_parameters.pop('header_value', None) or 'Bearer {token}'
+        if '{token}' not in self.header_value:
+            raise Exception('header_value parameter must contains {token}.')
+
+        redirect_uri_endpoint = extra_parameters.pop('redirect_uri_endpoint', None) or ''
+        redirect_uri_port = int(extra_parameters.pop('redirect_uri_port', None) or 5000)
+        # Time is expressed in seconds
+        reception_timeout = int(extra_parameters.pop('reception_timeout', None) or 60)
+        # Time is expressed in milliseconds
+        reception_success_display_time = int(extra_parameters.pop('reception_success_display_time', None) or 1)
+        # Time is expressed in milliseconds
+        reception_failure_display_time = int(extra_parameters.pop('reception_failure_display_time', None) or 5000)
+
+        redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
+        authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)
+        authorization_url_without_nonce, nonce = _pop_parameter(authorization_url_without_nonce, 'nonce')
+        self.state = sha512(authorization_url_without_nonce.encode('unicode_escape')).hexdigest()
+        custom_code_parameters = {'state': self.state, 'redirect_uri': redirect_uri}
+        if nonce:
+            custom_code_parameters['nonce'] = nonce
+        code_grant_url = _add_parameters(authorization_url_without_nonce, custom_code_parameters)
+        self.code_grant_details = oauth2_authentication_responses_server.GrantDetails(
+            code_grant_url,
+            # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
+            _get_query_parameter(code_grant_url, 'response_type') or 'code',
+            reception_timeout,
+            reception_success_display_time,
+            reception_failure_display_time,
+            redirect_uri_port
+        )
+
+        token_url = _add_parameters(self.token_url, extra_parameters)
+        custom_token_parameters = {'state': self.state, 'redirect_uri': redirect_uri, 'grant_type': 'authorization_code'}
+        if nonce:
+            custom_token_parameters['nonce'] = nonce
+        token_grant_url = _add_parameters(token_url, custom_token_parameters)
+        self.token_grant_details = oauth2_authentication_responses_server.GrantDetails(
+            token_grant_url,
+            # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
+            'access_token',
+            reception_timeout,
+            reception_success_display_time,
+            reception_failure_display_time,
+            redirect_uri_port
+        )
+
+    def __call__(self, r):
+        token = self.token_cache.get_token(self.state,
+                                           self.request_new_token,
+                                           self)
+        r.headers[self.header_name] = self.header_value.format(token=token)
+        return r
+
+    def request_new_token(self):
+        # Request code
+        state, code = oauth2_authentication_responses_server.request_new_grant(self.code_grant_details)
+        self.token_grant_details.url = _add_parameters(
+            self.token_grant_details.url,
+            {'code': code}
+        )
+        # Request token with this code
+        return oauth2_authentication_responses_server.request_new_grant(self.token_grant_details)
+
+    def __str__(self):
+        addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
+        return "authentication.OAuth2AuthorizationCode('{0}', '{1}', {2})".format(
+            self.authorization_url, self.token_url, addition_args_str
+        )
+
+
 class OAuth2Implicit(requests.auth.AuthBase):
     """
     Describes an OAuth 2 implicit flow requests authentication.
@@ -72,9 +231,6 @@ class OAuth2Implicit(requests.auth.AuthBase):
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
-        :param redirect_uri_port_availability_timeout:  The maximum amount of seconds to wait for the
-        redirect_uri_port to become available.
-        Wait for 2 seconds maximum by default.
         :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
         :param token_reception_success_display_time: In case a token is successfully received,
@@ -99,43 +255,49 @@ class OAuth2Implicit(requests.auth.AuthBase):
         if not self.authorization_url:
             raise Exception('Authorization URL is mandatory.')
         self.kwargs = kwargs
-        self.extra_parameters = dict(kwargs)
-        self.redirect_uri_endpoint = self.extra_parameters.pop('redirect_uri_endpoint', None) or ''
-        self.redirect_uri_port = int(self.extra_parameters.pop('redirect_uri_port', None) or 5000)
-        # Time is expressed in seconds
-        self.redirect_uri_port_availability_timeout = float(self.extra_parameters.pop('redirect_uri_port_availability_timeout', None) or 2)
-        # Time is expressed in seconds
-        self.token_reception_timeout = int(self.extra_parameters.pop('token_reception_timeout', None) or 60)
-        # Time is expressed in milliseconds
-        self.token_reception_success_display_time = int(self.extra_parameters.pop('token_reception_success_display_time', None) or 1)
-        # Time is expressed in milliseconds
-        self.token_reception_failure_display_time = int(self.extra_parameters.pop('token_reception_failure_display_time', None) or 5000)
-        self.header_name = self.extra_parameters.pop('header_name', None) or 'Authorization'
-        self.header_value = self.extra_parameters.pop('header_value', None) or 'Bearer {token}'
+
+        extra_parameters = dict(kwargs)
+        self.header_name = extra_parameters.pop('header_name', None) or 'Authorization'
+        self.header_value = extra_parameters.pop('header_value', None) or 'Bearer {token}'
         if '{token}' not in self.header_value:
             raise Exception('header_value parameter must contains {token}.')
 
-        self.redirect_uri = 'http://localhost:{0}/{1}'.format(self.redirect_uri_port, self.redirect_uri_endpoint)
-        unique_token_provider_url = _add_parameters(self.authorization_url, self.extra_parameters)
-        unique_token_provider_url, nonce = _pop_parameter(unique_token_provider_url, 'nonce')
-        self.unique_token_provider_identifier = sha512(unique_token_provider_url.encode('unicode_escape')).hexdigest()
-        custom_parameters = {'state': self.unique_token_provider_identifier, 'redirect_uri': self.redirect_uri}
+        redirect_uri_endpoint = extra_parameters.pop('redirect_uri_endpoint', None) or ''
+        redirect_uri_port = int(extra_parameters.pop('redirect_uri_port', None) or 5000)
+        # Time is expressed in seconds
+        token_reception_timeout = int(extra_parameters.pop('token_reception_timeout', None) or 60)
+        # Time is expressed in milliseconds
+        token_reception_success_display_time = int(extra_parameters.pop('token_reception_success_display_time', None) or 1)
+        # Time is expressed in milliseconds
+        token_reception_failure_display_time = int(extra_parameters.pop('token_reception_failure_display_time', None) or 5000)
+
+        redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
+        authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)
+        authorization_url_without_nonce, nonce = _pop_parameter(authorization_url_without_nonce, 'nonce')
+        self.state = sha512(authorization_url_without_nonce.encode('unicode_escape')).hexdigest()
+        custom_parameters = {'state': self.state, 'redirect_uri': redirect_uri}
         if nonce:
             custom_parameters['nonce'] = nonce
-        self.full_url = _add_parameters(unique_token_provider_url, custom_parameters)
-        # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
-        self.token_name = _get_query_parameter(self.full_url, 'response_type') or 'token'
+        grant_url = _add_parameters(authorization_url_without_nonce, custom_parameters)
+        self.grant_details = oauth2_authentication_responses_server.GrantDetails(
+            grant_url,
+            # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
+            _get_query_parameter(grant_url, 'response_type') or 'token',
+            token_reception_timeout,
+            token_reception_success_display_time,
+            token_reception_failure_display_time,
+            redirect_uri_port
+        )
 
     def __call__(self, r):
-        token = self.token_cache.get_token(self.unique_token_provider_identifier,
-                                           oauth2_authentication_responses_server.request_new_token,
-                                           self)
+        token = self.token_cache.get_token(self.state,
+                                           oauth2_authentication_responses_server.request_new_grant,
+                                           self.grant_details)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
     def __str__(self):
-        addition_args_str = ', '.join(["{0}='{1}'".format(key, value)
-                                       for key, value in self.kwargs.items()])
+        addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
         return "authentication.OAuth2Implicit('{0}', {1})".format(self.authorization_url, addition_args_str)
 
 
@@ -154,9 +316,6 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
-        :param redirect_uri_port_availability_timeout:  The maximum amount of seconds to wait for the
-        redirect_uri_port to become available.
-        Wait for 2 seconds maximum by default.
         :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
         :param token_reception_success_display_time: In case a token is successfully received,
@@ -201,9 +360,6 @@ class OktaImplicit(OAuth2Implicit):
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
-        :param redirect_uri_port_availability_timeout:  The maximum amount of seconds to wait for the
-        redirect_uri_port to become available.
-        Wait for 2 seconds maximum by default.
         :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
         :param token_reception_success_display_time: In case a token is successfully received,

@@ -78,7 +78,7 @@ class AzureADTest(unittest.TestCase):
             '45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
             '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
         )
-        self.assertRegex(aad.full_url,
+        self.assertRegex(aad.grant_details.url,
                          'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
@@ -98,7 +98,7 @@ class AzureADTest(unittest.TestCase):
             '45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
             '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
         )
-        self.assertRegex(aad.full_url,
+        self.assertRegex(aad.grant_details.url,
                          'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
@@ -120,7 +120,7 @@ class OktaTest(unittest.TestCase):
             'testserver.okta-emea.com',
             '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
         )
-        self.assertRegex(okta.full_url,
+        self.assertRegex(okta.grant_details.url,
                          'https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
@@ -142,7 +142,7 @@ class OktaTest(unittest.TestCase):
             'testserver.okta-emea.com',
             '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
         )
-        self.assertRegex(okta.full_url,
+        self.assertRegex(okta.grant_details.url,
                          'https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'

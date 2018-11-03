@@ -16,6 +16,7 @@ List all changes in various categories:
 ### Bug fixes ###
 
 - Update requests dependency to latest version (2.20.0)
+- [OAuth2] Remove unused redirect_uri_port_availability_timeout parameter
 
 ## 2.0.0 (2018-10-09) ##
 

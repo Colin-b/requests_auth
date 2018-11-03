@@ -42,12 +42,6 @@ requests.get('http://www.example.com', auth=OAuth2Implicit('https://www.example.
         <td>5000</td>
     </tr>
     <tr>
-        <td><strong>redirect_uri_port_availability_timeout</strong></td>
-        <td>The maximum amount of seconds to wait for the redirect_uri_port to become available.</td>
-        <td>Optional</td>
-        <td>2</td>
-    </tr>
-    <tr>
         <td><strong>token_reception_timeout</strong></td>
         <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
         <td>Optional</td>
@@ -156,12 +150,6 @@ requests.get('http://www.example.com', auth=aad)
         <td>5000</td>
     </tr>
     <tr>
-        <td><strong>redirect_uri_port_availability_timeout</strong></td>
-        <td>The maximum amount of seconds to wait for the redirect_uri_port to become available.</td>
-        <td>Optional</td>
-        <td>2</td>
-    </tr>
-    <tr>
         <td><strong>token_reception_timeout</strong></td>
         <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
         <td>Optional</td>
@@ -261,12 +249,6 @@ requests.get('http://www.example.com', auth=okta)
         <td>The port on which the server listening for the OAuth 2 token will be started.</td>
         <td>Optional</td>
         <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_port_availability_timeout</strong></td>
-        <td>The maximum amount of seconds to wait for the redirect_uri_port to become available.</td>
-        <td>Optional</td>
-        <td>2</td>
     </tr>
     <tr>
         <td><strong>token_reception_timeout</strong></td>

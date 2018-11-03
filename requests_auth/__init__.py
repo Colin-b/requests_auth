@@ -16,6 +16,9 @@ from .oauth2_tokens import JsonTokenFileCache
 
 class OAuth2Flow(Enum):
     Implicit = auto(),
+    Password = auto(),
+    Application = auto(),
+    AuthorizationCode = auto(),  # Also called AccessCode
 
 
 def okta(flow, *args, **kwargs):
