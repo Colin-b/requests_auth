@@ -11,6 +11,7 @@ List all changes in various categories:
 ### Release notes ###
 
 - All previously existing OAuth2 related classes renamed to state that it corresponds to implicit flow.
+- [Okta] scopes parameter merged with scope.
 
 ### Bug fixes ###
 

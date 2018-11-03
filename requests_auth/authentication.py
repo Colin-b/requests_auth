@@ -195,8 +195,7 @@ class OktaImplicit(OAuth2Implicit):
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param authorization_server: OKTA authorization server
-        :param scope: Scope parameter sent in query.
-        :param scopes: List of scopes sent in query. Only valid if scope is not provided.
+        :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request ['openid', 'profile', 'email'] by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
@@ -222,8 +221,8 @@ class OktaImplicit(OAuth2Implicit):
         in the authorization URL.
         """
         authorization_server = kwargs.pop('authorization_server', None)
-        if 'scope' not in kwargs:
-            kwargs['scope'] = ' '.join(kwargs.pop('scopes', ['openid', 'profile', 'email']))
+        scopes = kwargs.pop('scope', None) or ['openid', 'profile', 'email']
+        kwargs['scope'] = ' '.join(scopes) if isinstance(scopes, list) else scopes
         OAuth2Implicit.__init__(
             self,
             'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(

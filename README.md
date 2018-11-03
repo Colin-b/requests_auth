@@ -239,6 +239,12 @@ requests.get('http://www.example.com', auth=okta)
         <td>Newly generated Universal Unique Identifier.</td>
     </tr>
     <tr>
+        <td><strong>scope</strong></td>
+        <td>Scope parameter sent in query. Can also be a list of scopes.</td>
+        <td>Optional</td>
+        <td>['openid', 'profile', 'email']</td>
+    </tr>
+    <tr>
         <td><strong>authorization_server</strong></td>
         <td>OKTA authorization server.</td>
         <td>Optional</td>
