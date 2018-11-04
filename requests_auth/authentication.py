@@ -92,6 +92,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         :param header_value: Format used to send the token value.
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
+        :param scope: Scope parameter sent in query. Can also be a list of scopes. Not sent by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
         """
         self.token_url = token_url
@@ -171,6 +172,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         :param header_value: Format used to send the token value.
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
+        :param scope: Scope parameter sent in query. Can also be a list of scopes. Not sent by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
         """
         self.token_url = token_url
