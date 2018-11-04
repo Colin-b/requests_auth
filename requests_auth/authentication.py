@@ -59,8 +59,8 @@ def _get_query_parameter(url, param_name):
     return all_values[0] if all_values else None
 
 
-def request_new_grant_with_post(url, grant_name, timeout):
-    response = requests.post(url, timeout=timeout)
+def request_new_grant_with_post(url, grant_name, timeout, auth=None):
+    response = requests.post(url, timeout=timeout, auth=auth)
     response.raise_for_status()
 
     content = response.json()
@@ -148,19 +148,66 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.4
     """
 
-    def __init__(self, token_url, **kwargs):
+    token_cache = oauth2_tokens.TokenMemoryCache()
+
+    def __init__(self, token_url, username, password, **kwargs):
         """
         :param token_url: OAuth 2 token URL.
+        :param username: Resource owner user name.
+        :param password: Resource owner password.
+        :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        Wait for 1 minute by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
+        :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
         """
         self.token_url = token_url
         if not self.token_url:
             raise Exception('Token URL is mandatory.')
+        self.username = username
+        if not self.username:
+            raise Exception('User name is mandatory.')
+        self.password = password
+        if not self.password:
+            raise Exception('Password is mandatory.')
+        self.kwargs = kwargs
+
+        extra_parameters = dict(kwargs)
+        self.header_name = extra_parameters.pop('header_name', None) or 'Authorization'
+        self.header_value = extra_parameters.pop('header_value', None) or 'Bearer {token}'
+        if '{token}' not in self.header_value:
+            raise Exception('header_value parameter must contains {token}.')
+
+        # Time is expressed in seconds
+        self.token_reception_timeout = int(extra_parameters.pop('token_reception_timeout', None) or 60)
+
+        token_url = _add_parameters(self.token_url, extra_parameters)
+        custom_token_parameters = {'grant_type': 'client_credentials'}
+        self.token_grant_url = _add_parameters(token_url, custom_token_parameters)
+        self.state = sha512(self.token_grant_url.encode('unicode_escape')).hexdigest()
 
     def __call__(self, r):
+        token = self.token_cache.get_token(self.state,
+                                           self.request_new_token,
+                                           self)
+        r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
+    def request_new_token(self):
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
+        token, expires_in = request_new_grant_with_post(
+            self.token_grant_url, 'access_token', self.token_reception_timeout, auth=(self.username, self.password)
+        )
+        return self.state, token, expires_in
+
     def __str__(self):
-        return "authentication.OAuth2ClientCredentials('{0}')".format(self.token_url)
+        addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
+        return "authentication.OAuth2ClientCredentials('{0}', '{1}', '{2}', {3})".format(
+            self.token_url, self.username, self.password, addition_args_str
+        )
 
 
 class OAuth2AuthorizationCode(requests.auth.AuthBase):
