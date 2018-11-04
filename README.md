@@ -42,19 +42,19 @@ requests.get('http://www.example.com', auth=OAuth2Implicit('https://www.example.
         <td>5000</td>
     </tr>
     <tr>
-        <td><strong>token_reception_timeout</strong></td>
+        <td><strong>timeout</strong></td>
         <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
         <td>Optional</td>
         <td>60</td>
     </tr>
     <tr>
-        <td><strong>token_reception_success_display_time</strong></td>
+        <td><strong>success_display_time</strong></td>
         <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>1</td>
     </tr>
     <tr>
-        <td><strong>token_reception_failure_display_time</strong></td>
+        <td><strong>failure_display_time</strong></td>
         <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>5000</td>
@@ -150,19 +150,19 @@ requests.get('http://www.example.com', auth=aad)
         <td>5000</td>
     </tr>
     <tr>
-        <td><strong>token_reception_timeout</strong></td>
+        <td><strong>timeout</strong></td>
         <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
         <td>Optional</td>
         <td>60</td>
     </tr>
     <tr>
-        <td><strong>token_reception_success_display_time</strong></td>
+        <td><strong>success_display_time</strong></td>
         <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>1</td>
     </tr>
     <tr>
-        <td><strong>token_reception_failure_display_time</strong></td>
+        <td><strong>failure_display_time</strong></td>
         <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>5000</td>
@@ -251,19 +251,19 @@ requests.get('http://www.example.com', auth=okta)
         <td>5000</td>
     </tr>
     <tr>
-        <td><strong>token_reception_timeout</strong></td>
+        <td><strong>timeout</strong></td>
         <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
         <td>Optional</td>
         <td>60</td>
     </tr>
     <tr>
-        <td><strong>token_reception_success_display_time</strong></td>
+        <td><strong>success_display_time</strong></td>
         <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>1</td>
     </tr>
     <tr>
-        <td><strong>token_reception_failure_display_time</strong></td>
+        <td><strong>failure_display_time</strong></td>
         <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>5000</td>

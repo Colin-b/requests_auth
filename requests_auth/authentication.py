@@ -85,7 +85,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         :param token_url: OAuth 2 token URL.
         :param username: Resource owner user name.
         :param password: Resource owner password.
-        :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
         :param header_name: Name of the header field used to send token.
         Token will be sent in Authorization header field by default.
@@ -112,7 +112,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
             raise Exception('header_value parameter must contains {token}.')
 
         # Time is expressed in seconds
-        self.token_reception_timeout = int(extra_parameters.pop('token_reception_timeout', None) or 60)
+        self.timeout = int(extra_parameters.pop('timeout', None) or 60)
 
         # TODO Use extra parameters in data instead of URL
         self.token_grant_url = _add_parameters(self.token_url, extra_parameters)
@@ -137,7 +137,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
     def request_new_token(self):
         # As described in https://tools.ietf.org/html/rfc6749#section-4.3.3
         token, expires_in = request_new_grant_with_post(
-            self.token_grant_url, self.data, 'access_token', self.token_reception_timeout,
+            self.token_grant_url, self.data, 'access_token', self.timeout,
             auth=(self.username, self.password)
         )
         return self.state, token, expires_in
@@ -164,7 +164,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         :param token_url: OAuth 2 token URL.
         :param username: Resource owner user name.
         :param password: Resource owner password.
-        :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
         :param header_name: Name of the header field used to send token.
         Token will be sent in Authorization header field by default.
@@ -191,7 +191,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
             raise Exception('header_value parameter must contains {token}.')
 
         # Time is expressed in seconds
-        self.token_reception_timeout = int(extra_parameters.pop('token_reception_timeout', None) or 60)
+        self.timeout = int(extra_parameters.pop('timeout', None) or 60)
 
         # TODO Use extra parmeters in data instead of URL
         self.token_grant_url = _add_parameters(self.token_url, extra_parameters)
@@ -214,7 +214,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
     def request_new_token(self):
         # As described in https://tools.ietf.org/html/rfc6749#section-4.4.3
         token, expires_in = request_new_grant_with_post(
-            self.token_grant_url, self.data, 'access_token', self.token_reception_timeout,
+            self.token_grant_url, self.data, 'access_token', self.timeout,
             auth=(self.username, self.password)
         )
         return self.state, token, expires_in
@@ -248,12 +248,12 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 code will be started.
         Listen on port 5000 by default.
-        :param reception_timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
+        :param timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
         Wait for 1 minute by default.
-        :param code_reception_success_display_time: In case a code is successfully received,
+        :param success_display_time: In case a code is successfully received,
         this is the maximum amount of milliseconds the success page will be displayed in your browser.
         Display the page for 1 millisecond by default.
-        :param code_reception_failure_display_time: In case received code is not valid,
+        :param failure_display_time: In case received code is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
         :param header_name: Name of the header field used to send token.
@@ -287,11 +287,11 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         redirect_uri_endpoint = extra_parameters.pop('redirect_uri_endpoint', None) or ''
         redirect_uri_port = int(extra_parameters.pop('redirect_uri_port', None) or 5000)
         # Time is expressed in seconds
-        self.reception_timeout = int(extra_parameters.pop('reception_timeout', None) or 60)
+        self.timeout = int(extra_parameters.pop('timeout', None) or 60)
         # Time is expressed in milliseconds
-        reception_success_display_time = int(extra_parameters.pop('code_reception_success_display_time', None) or 1)
+        success_display_time = int(extra_parameters.pop('success_display_time', None) or 1)
         # Time is expressed in milliseconds
-        reception_failure_display_time = int(extra_parameters.pop('code_reception_failure_display_time', None) or 5000)
+        failure_display_time = int(extra_parameters.pop('failure_display_time', None) or 5000)
 
         self.client_id = extra_parameters.get('client_id')
         username = extra_parameters.pop('username', None)
@@ -310,9 +310,9 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
             code_grant_url,
             # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
             _get_query_parameter(code_grant_url, 'response_type') or 'code',
-            self.reception_timeout,
-            reception_success_display_time,
-            reception_failure_display_time,
+            self.timeout,
+            success_display_time,
+            failure_display_time,
             redirect_uri_port
         )
 
@@ -339,7 +339,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
             data['client_id'] = self.client_id
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.4
         token, expires_in = request_new_grant_with_post(
-            self.token_grant_url, data, 'access_token', self.reception_timeout, auth=self.auth
+            self.token_grant_url, data, 'access_token', self.timeout, auth=self.auth
         )
         return state, token, expires_in
 
@@ -371,12 +371,12 @@ class OAuth2Implicit(requests.auth.AuthBase):
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
-        :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
-        :param token_reception_success_display_time: In case a token is successfully received,
+        :param success_display_time: In case a token is successfully received,
         this is the maximum amount of milliseconds the success page will be displayed in your browser.
         Display the page for 1 millisecond by default.
-        :param token_reception_failure_display_time: In case received token is not valid,
+        :param failure_display_time: In case received token is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
         :param header_name: Name of the header field used to send token.
@@ -405,11 +405,11 @@ class OAuth2Implicit(requests.auth.AuthBase):
         redirect_uri_endpoint = extra_parameters.pop('redirect_uri_endpoint', None) or ''
         redirect_uri_port = int(extra_parameters.pop('redirect_uri_port', None) or 5000)
         # Time is expressed in seconds
-        token_reception_timeout = int(extra_parameters.pop('token_reception_timeout', None) or 60)
+        timeout = int(extra_parameters.pop('timeout', None) or 60)
         # Time is expressed in milliseconds
-        token_reception_success_display_time = int(extra_parameters.pop('token_reception_success_display_time', None) or 1)
+        success_display_time = int(extra_parameters.pop('success_display_time', None) or 1)
         # Time is expressed in milliseconds
-        token_reception_failure_display_time = int(extra_parameters.pop('token_reception_failure_display_time', None) or 5000)
+        failure_display_time = int(extra_parameters.pop('failure_display_time', None) or 5000)
 
         redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
         authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)
@@ -423,9 +423,9 @@ class OAuth2Implicit(requests.auth.AuthBase):
             grant_url,
             # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
             _get_query_parameter(grant_url, 'response_type') or 'token',
-            token_reception_timeout,
-            token_reception_success_display_time,
-            token_reception_failure_display_time,
+            timeout,
+            success_display_time,
+            failure_display_time,
             redirect_uri_port
         )
 
@@ -456,12 +456,12 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
-        :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
-        :param token_reception_success_display_time: In case a token is successfully received,
+        :param success_display_time: In case a token is successfully received,
         this is the maximum amount of milliseconds the success page will be displayed in your browser.
         Display the page for 1 millisecond by default.
-        :param token_reception_failure_display_time: In case received token is not valid,
+        :param failure_display_time: In case received token is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
         :param header_name: Name of the header field used to send token.
@@ -500,12 +500,12 @@ class OktaImplicit(OAuth2Implicit):
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
-        :param token_reception_timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
-        :param token_reception_success_display_time: In case a token is successfully received,
+        :param success_display_time: In case a token is successfully received,
         this is the maximum amount of milliseconds the success page will be displayed in your browser.
         Display the page for 1 millisecond by default.
-        :param token_reception_failure_display_time: In case received token is not valid,
+        :param failure_display_time: In case received token is not valid,
         this is the maximum amount of milliseconds the failure page will be displayed in your browser.
         Display the page for 5 seconds by default.
         :param header_name: Name of the header field used to send token.
