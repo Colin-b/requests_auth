@@ -59,8 +59,8 @@ def _get_query_parameter(url, param_name):
     return all_values[0] if all_values else None
 
 
-def request_new_grant_with_post(url, grant_name, timeout, auth=None):
-    response = requests.post(url, timeout=timeout, auth=auth)
+def request_new_grant_with_post(url, data, grant_name, timeout, auth=None):
+    response = requests.post(url, data=data, timeout=timeout, auth=auth)
     response.raise_for_status()
 
     content = response.json()
@@ -114,10 +114,18 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         # Time is expressed in seconds
         self.token_reception_timeout = int(extra_parameters.pop('token_reception_timeout', None) or 60)
 
-        token_url = _add_parameters(self.token_url, extra_parameters)
-        custom_token_parameters = {'grant_type': 'password', 'username': username, 'password': password}
-        self.token_grant_url = _add_parameters(token_url, custom_token_parameters)
+        # TODO Use extra parameters in data instead of URL
+        self.token_grant_url = _add_parameters(self.token_url, extra_parameters)
         self.state = sha512(self.token_grant_url.encode('unicode_escape')).hexdigest()
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.3.2
+        self.data = {
+            'grant_type': 'password',
+            'username': self.username,
+            'password': self.password,
+        }
+        scope = extra_parameters.get('scope')
+        if scope:
+            self.data['scope'] = ' '.join(scope) if isinstance(scope, list) else scope
 
     def __call__(self, r):
         token = self.token_cache.get_token(self.state,
@@ -127,9 +135,10 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         return r
 
     def request_new_token(self):
-        # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.3.3
         token, expires_in = request_new_grant_with_post(
-            self.token_grant_url, 'access_token', self.token_reception_timeout
+            self.token_grant_url, self.data, 'access_token', self.token_reception_timeout,
+            auth=(self.username, self.password)
         )
         return self.state, token, expires_in
 
@@ -184,10 +193,16 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         # Time is expressed in seconds
         self.token_reception_timeout = int(extra_parameters.pop('token_reception_timeout', None) or 60)
 
-        token_url = _add_parameters(self.token_url, extra_parameters)
-        custom_token_parameters = {'grant_type': 'client_credentials'}
-        self.token_grant_url = _add_parameters(token_url, custom_token_parameters)
+        # TODO Use extra parmeters in data instead of URL
+        self.token_grant_url = _add_parameters(self.token_url, extra_parameters)
         self.state = sha512(self.token_grant_url.encode('unicode_escape')).hexdigest()
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.4.2
+        self.data = {
+            'grant_type': 'client_credentials',
+        }
+        scope = extra_parameters.get('scope')
+        if scope:
+            self.data['scope'] = ' '.join(scope) if isinstance(scope, list) else scope
 
     def __call__(self, r):
         token = self.token_cache.get_token(self.state,
@@ -197,9 +212,10 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         return r
 
     def request_new_token(self):
-        # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.4.3
         token, expires_in = request_new_grant_with_post(
-            self.token_grant_url, 'access_token', self.token_reception_timeout, auth=(self.username, self.password)
+            self.token_grant_url, self.data, 'access_token', self.token_reception_timeout,
+            auth=(self.username, self.password)
         )
         return self.state, token, expires_in
 
@@ -277,11 +293,16 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         # Time is expressed in milliseconds
         reception_failure_display_time = int(extra_parameters.pop('code_reception_failure_display_time', None) or 5000)
 
-        redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
+        self.client_id = extra_parameters.get('client_id')
+        username = extra_parameters.pop('username', None)
+        password = extra_parameters.pop('password', None)
+        self.auth = (username, password) if username and password else None
+
+        self.redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
         authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)
         authorization_url_without_nonce, nonce = _pop_parameter(authorization_url_without_nonce, 'nonce')
         self.state = sha512(authorization_url_without_nonce.encode('unicode_escape')).hexdigest()
-        custom_code_parameters = {'state': self.state, 'redirect_uri': redirect_uri}
+        custom_code_parameters = {'state': self.state, 'redirect_uri': self.redirect_uri}
         if nonce:
             custom_code_parameters['nonce'] = nonce
         code_grant_url = _add_parameters(authorization_url_without_nonce, custom_code_parameters)
@@ -295,11 +316,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
             redirect_uri_port
         )
 
-        token_url = _add_parameters(self.token_url, extra_parameters)
-        custom_token_parameters = {'state': self.state, 'redirect_uri': redirect_uri, 'grant_type': 'authorization_code'}
-        if nonce:
-            custom_token_parameters['nonce'] = nonce
-        self.token_grant_url = _add_parameters(token_url, custom_token_parameters)
+        self.token_grant_url = _add_parameters(self.token_url, extra_parameters)
 
     def __call__(self, r):
         token = self.token_cache.get_token(self.state,
@@ -312,12 +329,18 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         # Request code
         state, code = oauth2_authentication_responses_server.request_new_grant(self.code_grant_details)
 
-        token_grant_url = _add_parameters(
-            self.token_grant_url,
-            {'code': code}
-        )
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
-        token, expires_in = request_new_grant_with_post(token_grant_url, 'access_token', self.reception_timeout)
+        data = {
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': self.redirect_uri,
+        }
+        if self.client_id:
+            data['client_id'] = self.client_id
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.1.4
+        token, expires_in = request_new_grant_with_post(
+            self.token_grant_url, data, 'access_token', self.reception_timeout, auth=self.auth
+        )
         return state, token, expires_in
 
     def __str__(self):
