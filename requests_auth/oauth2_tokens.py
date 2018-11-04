@@ -36,7 +36,7 @@ class TokenMemoryCache:
         self.forbid_concurrent_cache_access = threading.Lock()
         self.forbid_concurrent_missing_token_function_call = threading.Lock()
 
-    def add_token(self, key, token):
+    def add_bearer_token(self, key, token):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -45,12 +45,39 @@ class TokenMemoryCache:
         """
         if not token:
             raise InvalidToken(token)
+
+        header, body, other = token.split('.')
+        body = json.loads(decode_base64(body))
+        if 'exp' not in body:
+            raise TokenExpiryNotProvided(body)
+        expiry = body['exp']
+
+        self._add_token(key, token, expiry)
+
+    def add_access_token(self, key, token, expires_in):
+        """
+        Set the bearer token and save it
+        :param key: key identifier of the token
+        :param token: value
+        :param expires_in: Number of seconds before token expiry
+        :raise InvalidToken: In case token is invalid.
+        """
+        expiry = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
+        self._add_token(key, token, expiry)
+
+    def _add_token(self, key, token, expiry):
+        """
+        Set the bearer token and save it
+        :param key: key identifier of the token
+        :param token: value
+        :param expiry: UTC timestamp of expiry
+        :raise InvalidToken: In case token is invalid.
+        """
+        if not token:
+            raise InvalidToken(token)
         with self.forbid_concurrent_cache_access:
-            header, body, other = token.split('.')
-            body = json.loads(decode_base64(body))
-            if 'exp' not in body:
-                raise TokenExpiryNotProvided(body)
-            expiry = body['exp']
+            if not expiry:
+                raise TokenExpiryNotProvided(expiry)
             self.tokens[key] = token, expiry
             self._save_tokens()
             logger.debug('Inserting token expiring on {0} (UTC) with "{1}" key: {2}'.format(
@@ -81,8 +108,13 @@ class TokenMemoryCache:
         logger.debug('Token cannot be found in cache.')
         if on_missing_token is not None:
             with self.forbid_concurrent_missing_token_function_call:
-                state, token = on_missing_token(*on_missing_token_args)
-                self.add_token(state, token)
+                new_token = on_missing_token(*on_missing_token_args)
+                if len(new_token) == 2:  # Bearer token
+                    state, token = new_token
+                    self.add_bearer_token(state, token)
+                else:  # Access Token
+                    state, token, expires_in = new_token
+                    self.add_access_token(state, token, expires_in)
                 if key != state:
                     logger.warning('Using a token received on another key than expected. Expecting {0} but was {1}.'.format(key, state))
             with self.forbid_concurrent_cache_access:
