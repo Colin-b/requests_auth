@@ -135,7 +135,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         self.state = sha512(all_parameters_in_url.encode('unicode_escape')).hexdigest()
 
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token, self)
+        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
@@ -214,7 +214,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         self.state = sha512(all_parameters_in_url.encode('unicode_escape')).hexdigest()
 
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token, self)
+        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
@@ -335,7 +335,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         self.token_data.update(extra_parameters)
 
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token, self)
+        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 

@@ -48,6 +48,22 @@ def get_token_as_anchor_token():
     return redirect_with_a_token(expiry_in_1_hour, 'token')
 
 
+@app.route('/provide_code_as_anchor_code')
+def get_code_as_anchor_code():
+    return redirect_with_a_code('code', 'SplxlOBeZQQYbYS6WxSbIA')
+
+
+@app.route('/provide_access_token', methods=['POST'])
+def get_access_token():
+    return jsonify({
+       "access_token": "2YotnFZFEjr1zCsicMWpAA",
+       "token_type": "example",
+       "expires_in": 3600,
+       "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+       "example_parameter": "example_value"
+    })
+
+
 @app.route('/provide_token_as_token_but_without_providing_state')
 def post_without_state():
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
@@ -112,6 +128,12 @@ def redirect_with_a_token(token_expiry, response_type):
     state = request.args.get('state')
     token = create_token(token_expiry)
     return redirect('{0}#{1}={2}&state={3}'.format(redirect_uri, response_type, token, state))
+
+
+def redirect_with_a_code(code_field_name, code_value):
+    redirect_uri = request.args.get('redirect_uri')
+    state = request.args.get('state')
+    return redirect('{0}#{1}={2}&state={3}'.format(redirect_uri, code_field_name, code_value, state))
 
 
 def submit_a_form_without_state(token_expiry, response_type):
