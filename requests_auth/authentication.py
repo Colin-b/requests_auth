@@ -94,7 +94,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         :param header_value: Format used to send the token value.
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
-        :param scope: Scope parameter sent in query. Can also be a list of scopes. Not sent by default.
+        :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes. Not sent by default.
         :param token_field_name: Field name containing the token. access_token by default.
         :param kwargs: all additional authorization parameters that should be put as body parameters in the token URL.
         """
@@ -175,7 +175,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         :param header_value: Format used to send the token value.
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
-        :param scope: Scope parameter sent in query. Can also be a list of scopes. Not sent by default.
+        :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes. Not sent by default.
         :param token_field_name: Field name containing the token. access_token by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
         """
@@ -268,6 +268,8 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param username: User name in case basic authentication should be used to retrieve token.
+        :param password: User password in case basic authentication should be used to retrieve token.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL and as body parameters in the token URL.
         Common parameters are:
