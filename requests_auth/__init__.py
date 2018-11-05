@@ -7,6 +7,8 @@ from .authentication import (
     NTLM,
     Auths,
 
+    OAuth2,
+
     OAuth2Implicit,
     OktaImplicit,
     AzureActiveDirectoryImplicit,

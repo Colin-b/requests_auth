@@ -91,9 +91,9 @@ To avoid asking for a new token every new request, a token cache is used.
 Default cache is in memory but it is also possible to use a physical cache using the following method:
 
 ```python
-from requests_auth import OAuth2Implicit, JsonTokenFileCache
+from requests_auth import OAuth2, JsonTokenFileCache
 
-OAuth2Implicit.token_cache = JsonTokenFileCache('my_token_cache')
+OAuth2.token_cache = JsonTokenFileCache('my_token_cache')
 ```
 
 ### Common OAuth2 providers ###

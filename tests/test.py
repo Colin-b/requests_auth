@@ -214,7 +214,7 @@ class AuthenticationTest(unittest.TestCase):
         cls.test_service_process.join(timeout=0.5)
 
     def setUp(self):
-        requests_auth.OAuth2Implicit.token_cache.clear()
+        requests_auth.OAuth2.token_cache.clear()
 
     def test_oauth2_implicit_flow_url_is_mandatory(self):
         with self.assertRaises(Exception) as cm:

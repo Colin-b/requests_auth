@@ -70,6 +70,10 @@ def request_new_grant_with_post(url, data, grant_name, timeout, auth=None):
     return token, content.get('expires_in')
 
 
+class OAuth2:
+    token_cache = oauth2_tokens.TokenMemoryCache()
+
+
 class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
     """
     Resource Owner Password Credentials Grant
@@ -77,8 +81,6 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
     Describes an OAuth 2 resource owner password credentials (also called password) flow requests authentication.
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.3
     """
-
-    token_cache = oauth2_tokens.TokenMemoryCache()
 
     def __init__(self, token_url, username, password, **kwargs):
         """
@@ -93,7 +95,8 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes. Not sent by default.
-        :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
+        :param token_field_name: Field name containing the token. access_token by default.
+        :param kwargs: all additional authorization parameters that should be put as body parameters in the token URL.
         """
         self.token_url = token_url
         if not self.token_url:
@@ -112,36 +115,38 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         if '{token}' not in self.header_value:
             raise Exception('header_value parameter must contains {token}.')
 
+        self.token_field_name = extra_parameters.pop('token_field_name', None) or 'access_token'
+
         # Time is expressed in seconds
         self.timeout = int(extra_parameters.pop('timeout', None) or 60)
 
-        # TODO Use extra parameters in data instead of URL
-        self.token_grant_url = _add_parameters(self.token_url, extra_parameters)
-        self.state = sha512(self.token_grant_url.encode('unicode_escape')).hexdigest()
         # As described in https://tools.ietf.org/html/rfc6749#section-4.3.2
         self.data = {
             'grant_type': 'password',
             'username': self.username,
             'password': self.password,
         }
-        scope = extra_parameters.get('scope')
+        scope = extra_parameters.pop('scope', None)
         if scope:
             self.data['scope'] = ' '.join(scope) if isinstance(scope, list) else scope
+        self.data.update(extra_parameters)
+
+        all_parameters_in_url = _add_parameters(self.token_url, self.data)
+        self.state = sha512(all_parameters_in_url.encode('unicode_escape')).hexdigest()
 
     def __call__(self, r):
-        token = self.token_cache.get_token(self.state,
-                                           self.request_new_token,
-                                           self)
+        token = OAuth2.token_cache.get_token(self.state, self.request_new_token, self)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
     def request_new_token(self):
         # As described in https://tools.ietf.org/html/rfc6749#section-4.3.3
         token, expires_in = request_new_grant_with_post(
-            self.token_grant_url, self.data, 'access_token', self.timeout,
+            self.token_url, self.data, self.token_field_name, self.timeout,
             auth=(self.username, self.password)
         )
-        return self.state, token, expires_in
+        # Handle both Access and Bearer tokens
+        return (self.state, token, expires_in) if expires_in else (self.state, token)
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
@@ -158,8 +163,6 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.4
     """
 
-    token_cache = oauth2_tokens.TokenMemoryCache()
-
     def __init__(self, token_url, username, password, **kwargs):
         """
         :param token_url: OAuth 2 token URL.
@@ -173,6 +176,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes. Not sent by default.
+        :param token_field_name: Field name containing the token. access_token by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
         """
         self.token_url = token_url
@@ -192,34 +196,36 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         if '{token}' not in self.header_value:
             raise Exception('header_value parameter must contains {token}.')
 
+        self.token_field_name = extra_parameters.pop('token_field_name', None) or 'access_token'
+
         # Time is expressed in seconds
         self.timeout = int(extra_parameters.pop('timeout', None) or 60)
 
-        # TODO Use extra parmeters in data instead of URL
-        self.token_grant_url = _add_parameters(self.token_url, extra_parameters)
-        self.state = sha512(self.token_grant_url.encode('unicode_escape')).hexdigest()
         # As described in https://tools.ietf.org/html/rfc6749#section-4.4.2
         self.data = {
             'grant_type': 'client_credentials',
         }
-        scope = extra_parameters.get('scope')
+        scope = extra_parameters.pop('scope', None)
         if scope:
             self.data['scope'] = ' '.join(scope) if isinstance(scope, list) else scope
+        self.data.update(extra_parameters)
+
+        all_parameters_in_url = _add_parameters(self.token_url, self.data)
+        self.state = sha512(all_parameters_in_url.encode('unicode_escape')).hexdigest()
 
     def __call__(self, r):
-        token = self.token_cache.get_token(self.state,
-                                           self.request_new_token,
-                                           self)
+        token = OAuth2.token_cache.get_token(self.state, self.request_new_token, self)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
     def request_new_token(self):
         # As described in https://tools.ietf.org/html/rfc6749#section-4.4.3
         token, expires_in = request_new_grant_with_post(
-            self.token_grant_url, self.data, 'access_token', self.timeout,
+            self.token_url, self.data, self.token_field_name, self.timeout,
             auth=(self.username, self.password)
         )
-        return self.state, token, expires_in
+        # Handle both Access and Bearer tokens
+        return (self.state, token, expires_in) if expires_in else (self.state, token)
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
@@ -239,8 +245,6 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
 
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.1
     """
-
-    token_cache = oauth2_tokens.TokenMemoryCache()
 
     def __init__(self, authorization_url, token_url, **kwargs):
         """
@@ -263,8 +267,9 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         :param header_value: Format used to send the token value.
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
+        :param token_field_name: Field name containing the token. access_token by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter
-        in the authorization and token URL.
+        in the authorization URL and as body parameters in the token URL.
         Common parameters are:
         * client_id: Corresponding to your Application ID (in Microsoft Azure app portal)
         * client_secret: If client is not authenticated with the authorization server
@@ -288,6 +293,9 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
 
         redirect_uri_endpoint = extra_parameters.pop('redirect_uri_endpoint', None) or ''
         redirect_uri_port = int(extra_parameters.pop('redirect_uri_port', None) or 5000)
+
+        self.token_field_name = extra_parameters.pop('token_field_name', None) or 'access_token'
+
         # Time is expressed in seconds
         self.timeout = int(extra_parameters.pop('timeout', None) or 60)
         # Time is expressed in milliseconds
@@ -295,16 +303,15 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         # Time is expressed in milliseconds
         failure_display_time = int(extra_parameters.pop('failure_display_time', None) or 5000)
 
-        self.client_id = extra_parameters.get('client_id')
         username = extra_parameters.pop('username', None)
         password = extra_parameters.pop('password', None)
         self.auth = (username, password) if username and password else None
 
-        self.redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
+        redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
         authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)
         authorization_url_without_nonce, nonce = _pop_parameter(authorization_url_without_nonce, 'nonce')
         self.state = sha512(authorization_url_without_nonce.encode('unicode_escape')).hexdigest()
-        custom_code_parameters = {'state': self.state, 'redirect_uri': self.redirect_uri}
+        custom_code_parameters = {'state': self.state, 'redirect_uri': redirect_uri}
         if nonce:
             custom_code_parameters['nonce'] = nonce
         code_grant_url = _add_parameters(authorization_url_without_nonce, custom_code_parameters)
@@ -318,12 +325,15 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
             redirect_uri_port
         )
 
-        self.token_grant_url = _add_parameters(self.token_url, extra_parameters)
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
+        self.token_data = {
+            'grant_type': 'authorization_code',
+            'redirect_uri': redirect_uri,
+        }
+        self.token_data.update(extra_parameters)
 
     def __call__(self, r):
-        token = self.token_cache.get_token(self.state,
-                                           self.request_new_token,
-                                           self)
+        token = OAuth2.token_cache.get_token(self.state, self.request_new_token, self)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
@@ -332,18 +342,13 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         state, code = oauth2_authentication_responses_server.request_new_grant(self.code_grant_details)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
-        data = {
-            'grant_type': 'authorization_code',
-            'code': code,
-            'redirect_uri': self.redirect_uri,
-        }
-        if self.client_id:
-            data['client_id'] = self.client_id
+        self.token_data['code'] = code
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.4
         token, expires_in = request_new_grant_with_post(
-            self.token_grant_url, data, 'access_token', self.timeout, auth=self.auth
+            self.token_url, self.token_data, self.token_field_name, self.timeout, auth=self.auth
         )
-        return state, token, expires_in
+        # Handle both Access and Bearer tokens
+        return (self.state, token, expires_in) if expires_in else (self.state, token)
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
@@ -363,8 +368,6 @@ class OAuth2Implicit(requests.auth.AuthBase):
 
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.2
     """
-
-    token_cache = oauth2_tokens.TokenMemoryCache()
 
     def __init__(self, authorization_url, **kwargs):
         """
@@ -432,9 +435,9 @@ class OAuth2Implicit(requests.auth.AuthBase):
         )
 
     def __call__(self, r):
-        token = self.token_cache.get_token(self.state,
-                                           oauth2_authentication_responses_server.request_new_grant,
-                                           self.grant_details)
+        token = OAuth2.token_cache.get_token(
+            self.state, oauth2_authentication_responses_server.request_new_grant, self.grant_details
+        )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
