@@ -397,6 +397,7 @@ class OAuth2Implicit(requests.auth.AuthBase):
         * client_id: Corresponding to your Application ID (in Microsoft Azure app portal)
         * response_type: id_token for Microsoft
         * nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
+        * prompt: none to avoid prompting the user if a session is already opened.
         """
         self.authorization_url = authorization_url
         if not self.authorization_url:
@@ -478,6 +479,8 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
         Token will be sent as "Bearer {token}" by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
+        Common parameters are:
+        * prompt: none to avoid prompting the user if a session is already opened.
         """
         OAuth2Implicit.__init__(
             self,
@@ -522,6 +525,8 @@ class OktaImplicit(OAuth2Implicit):
         Token will be sent as "Bearer {token}" by default.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
+        Common parameters are:
+        * prompt: none to avoid prompting the user if a session is already opened.
         """
         authorization_server = kwargs.pop('authorization_server', None)
         scopes = kwargs.pop('scope', None) or ['openid', 'profile', 'email']
