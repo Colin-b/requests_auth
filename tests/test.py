@@ -30,14 +30,14 @@ class JsonTokenFileCacheTest(unittest.TestCase):
     def tearDown(self):
         cache.clear()
 
-    def test_add_tokens(self):
+    def test_add_bearer_tokens(self):
         expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         token1 = authenticated_test_service.create_token(expiry_in_1_hour)
-        cache.add_token('key1', token1)
+        cache.add_bearer_token('key1', token1)
 
         expiry_in_2_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
         token2 = authenticated_test_service.create_token(expiry_in_2_hour)
-        cache.add_token('key2', token2)
+        cache.add_bearer_token('key2', token2)
 
         # Assert that tokens can be retrieved properly even after other token were inserted
         self.assertEqual(cache.get_token('key1'), token1)
@@ -47,14 +47,14 @@ class JsonTokenFileCacheTest(unittest.TestCase):
         self.assertEqual(cache.get_token('key1'), token1)
         self.assertEqual(cache.get_token('key2'), token2)
 
-    def test_save_load_tokens(self):
+    def test_save_bearer_tokens(self):
         expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         token1 = authenticated_test_service.create_token(expiry_in_1_hour)
-        cache.add_token('key1', token1)
+        cache.add_bearer_token('key1', token1)
 
         expiry_in_2_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
         token2 = authenticated_test_service.create_token(expiry_in_2_hour)
-        cache.add_token('key2', token2)
+        cache.add_bearer_token('key2', token2)
 
         same_cache = requests_auth.JsonTokenFileCache('test_tokens.cache')
         self.assertEqual(same_cache.get_token('key1'), token1)
@@ -73,10 +73,12 @@ class JsonTokenFileCacheTest(unittest.TestCase):
 
 class AzureADTest(unittest.TestCase):
 
-    def test_corresponding_oauth2_instance(self):
-        aad = requests_auth.AzureAD('45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
-                                    '54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
-        self.assertRegex(aad.full_url,
+    def test_corresponding_oauth2_implicit_flow_instance(self):
+        aad = requests_auth.AzureActiveDirectoryImplicit(
+            '45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
+            '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+        )
+        self.assertRegex(aad.grant_details.url,
                          'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
@@ -84,7 +86,27 @@ class AzureADTest(unittest.TestCase):
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
         self.assertRegex(str(aad),
-                         "authentication.OAuth2("
+                         "authentication.OAuth2Implicit("
+                         "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
+                         "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
+                         "response_type='id_token', "
+                         "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
+
+    def test_corresponding_oauth2_implicit_flow_instance_using_helper(self):
+        aad = requests_auth.aad(
+            requests_auth.OAuth2Flow.Implicit,
+            '45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
+            '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+        )
+        self.assertRegex(aad.grant_details.url,
+                         'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
+                         'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+                         '&response_type=id_token'
+                         '&state=c141cf16f45343f37ca8053b6d0c67bad30a777b00221132d5a4514dd23082994e553a9f9fb45224ab9c2da3380047b32948fc2bf233efddc2fbd5801fc1d2d9'
+                         '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
+                         '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
+        self.assertRegex(str(aad),
+                         "authentication.OAuth2Implicit("
                          "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
@@ -93,10 +115,12 @@ class AzureADTest(unittest.TestCase):
 
 class OktaTest(unittest.TestCase):
 
-    def test_corresponding_oauth2_instance(self):
-        okta = requests_auth.Okta('testserver.okta-emea.com',
-                                  '54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
-        self.assertRegex(okta.full_url,
+    def test_corresponding_oauth2_implicit_flow_instance(self):
+        okta = requests_auth.OktaImplicit(
+            'testserver.okta-emea.com',
+            '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+        )
+        self.assertRegex(okta.grant_details.url,
                          'https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
@@ -105,7 +129,29 @@ class OktaTest(unittest.TestCase):
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
         self.assertRegex(str(okta),
-                         "authentication.OAuth2("
+                         "authentication.OAuth2Implicit("
+                         "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
+                         "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
+                         "response_type='id_token', "
+                         "nonce='.*-.*-.*-.*-.*', "
+                         "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
+
+    def test_corresponding_oauth2_implicit_flow_instance_using_helper(self):
+        okta = requests_auth.okta(
+            requests_auth.OAuth2Flow.Implicit,
+            'testserver.okta-emea.com',
+            '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+        )
+        self.assertRegex(okta.grant_details.url,
+                         'https://testserver.okta-emea.com/oauth2/v1/authorize?'
+                         'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+                         '&response_type=id_token'
+                         '&scope=openid+profile+email'
+                         '&state=da5a9f82a677a9b3bf19ce2f063f336f1968b8960d4626b35f7d4c0aee68e48ae1a5d5994dc78c3deb043d0e431c5be0bb084c8ac39bd41d670780306329d5a8'
+                         '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
+                         '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
+        self.assertRegex(str(okta),
+                         "authentication.OAuth2Implicit("
                          "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
@@ -170,15 +216,16 @@ class AuthenticationTest(unittest.TestCase):
     def setUp(self):
         requests_auth.OAuth2.token_cache.clear()
 
-    def test_oauth2_url_is_mandatory(self):
+    def test_oauth2_implicit_flow_url_is_mandatory(self):
         with self.assertRaises(Exception) as cm:
-            requests_auth.OAuth2(None)
+            requests_auth.OAuth2Implicit(None)
         self.assertEqual(str(cm.exception), 'Authorization URL is mandatory.')
 
-    def test_oauth2_token_is_not_reused_if_a_url_parameter_is_changing(self):
-        auth1 = requests_auth.OAuth2(TEST_SERVICE_HOST +
-                                     '/provide_token_as_custom_token?response_type=custom_token&fake_param=1',
-                                     token_reception_timeout=TIMEOUT)
+    def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing(self):
+        auth1 = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&fake_param=1',
+            timeout=TIMEOUT
+        )
         token_on_auth1 = get_header(auth1).get('Authorization')
         self.assertRegex(token_on_auth1, '^Bearer .*')
 
@@ -187,105 +234,144 @@ class AuthenticationTest(unittest.TestCase):
 
         logger.info('Requesting a custom token with a different parameter in URL.')
 
-        auth2 = requests_auth.OAuth2(TEST_SERVICE_HOST +
-                                     '/provide_token_as_custom_token?response_type=custom_token&fake_param=2',
-                                     token_reception_timeout=TIMEOUT)
+        auth2 = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&fake_param=2',
+            timeout=TIMEOUT
+        )
         token_on_auth2 = get_header(auth2).get('Authorization')
         self.assertRegex(token_on_auth2, '^Bearer .*')
 
         self.assertNotEqual(token_on_auth1, token_on_auth2)
 
-    def test_oauth2_token_is_reused_if_only_nonce_differs(self):
-        auth1 = requests_auth.OAuth2(TEST_SERVICE_HOST +
-                                     '/provide_token_as_custom_token?response_type=custom_token&nonce=1',
-                                     token_reception_timeout=TIMEOUT)
+    def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(self):
+        auth1 = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&nonce=1',
+            timeout=TIMEOUT
+        )
         token_on_auth1 = get_header(auth1).get('Authorization')
         self.assertRegex(token_on_auth1, '^Bearer .*')
 
-        auth2 = requests_auth.OAuth2(TEST_SERVICE_HOST +
-                                     '/provide_token_as_custom_token?response_type=custom_token&nonce=2',
-                                     token_reception_timeout=TIMEOUT)
+        auth2 = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&nonce=2',
+            timeout=TIMEOUT
+        )
         token_on_auth2 = get_header(auth2).get('Authorization')
         self.assertRegex(token_on_auth2, '^Bearer .*')
 
         self.assertEqual(token_on_auth1, token_on_auth2)
 
-    def test_oauth2_token_can_be_requested_on_a_custom_server_port(self):
-        auth = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token',
-                                    # TODO Should use a method to retrieve a free port instead
-                                    redirect_uri_port=5002,
-                                    token_reception_timeout=TIMEOUT)
+    def test_oauth2_implicit_flow_token_can_be_requested_on_a_custom_server_port(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_token',
+            # TODO Should use a method to retrieve a free port instead
+            redirect_uri_port=5002,
+            timeout=TIMEOUT
+        )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
-    def test_oauth2_post_token_is_sent_in_authorization_header_by_default(self):
-        auth = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
+    def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_default(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_token',
+            timeout=TIMEOUT
+        )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
-    def test_oauth2_get_token_is_sent_in_authorization_header_by_default(self):
-        auth = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_anchor_token', token_reception_timeout=TIMEOUT)
+    def test_oauth2_implicit_flow_get_token_is_sent_in_authorization_header_by_default(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_anchor_token',
+            timeout=TIMEOUT
+        )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
-    def test_oauth2_token_is_sent_in_requested_field(self):
-        auth = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token',
-                                    token_reception_timeout=TIMEOUT,
-                                    header_name='Bearer',
-                                    header_value='{token}')
+    def test_oauth2_implicit_flow_token_is_sent_in_requested_field(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_token',
+            timeout=TIMEOUT,
+            header_name='Bearer',
+            header_value='{token}'
+        )
         self.assertIsNotNone(get_header(auth).get('Bearer'))
 
-    def test_oauth2_can_send_a_custom_response_type_and_expects_token_to_be_received_with_this_name(self):
-        auth = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_custom_token',
-                                    token_reception_timeout=TIMEOUT,
-                                    response_type='custom_token')
+    def test_oauth2_implicit_flow_can_send_a_custom_response_type_and_expects_token_to_be_received_with_this_name(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_custom_token',
+            timeout=TIMEOUT,
+            response_type='custom_token'
+        )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
-    def test_oauth2_expects_token_to_be_stored_in_token_by_default(self):
-        auth = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
+    def test_oauth2_implicit_flow_expects_token_to_be_stored_in_token_by_default(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_token',
+            timeout=TIMEOUT
+        )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
-    def test_oauth2_token_is_reused_if_not_expired(self):
-        auth1 = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
+    def test_oauth2_implicit_flow_token_is_reused_if_not_expired(self):
+        auth1 = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_token',
+            timeout=TIMEOUT
+        )
         token1 = get_header(auth1).get('Authorization')
         self.assertRegex(token1, '^Bearer .*')
 
-        oauth2 = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token', token_reception_timeout=TIMEOUT)
+        oauth2 = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_token',
+            timeout=TIMEOUT
+        )
         token2 = get_header(oauth2).get('Authorization')
         self.assertRegex(token2, '^Bearer .*')
 
         # As the token should not be expired, this call should use the same token
         self.assertEqual(token1, token2)
 
-    def test_oauth2_post_failure_if_token_is_not_provided(self):
+    def test_oauth2_implicit_flow_post_failure_if_token_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
-            call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/do_not_provide_token', token_reception_timeout=TIMEOUT))
+            call(requests_auth.OAuth2Implicit(
+                TEST_SERVICE_HOST + '/do_not_provide_token',
+                timeout=TIMEOUT)
+            )
         self.assertEqual('token not provided within {}.', str(cm.exception))
 
-    def test_oauth2_get_failure_if_token_is_not_provided(self):
+    def test_oauth2_implicit_flow_get_failure_if_token_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
-            call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/do_not_provide_token_as_anchor_token', token_reception_timeout=TIMEOUT))
+            call(requests_auth.OAuth2Implicit(
+                TEST_SERVICE_HOST + '/do_not_provide_token_as_anchor_token',
+                timeout=TIMEOUT
+            ))
         self.assertEqual("token not provided within {}.", str(cm.exception))
 
-    def test_oauth2_post_failure_if_state_is_not_provided(self):
+    def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
-            call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_token_but_without_providing_state',
-                                      token_reception_timeout=TIMEOUT),)
+            call(requests_auth.OAuth2Implicit(
+                TEST_SERVICE_HOST + '/provide_token_as_token_but_without_providing_state',
+                timeout=TIMEOUT
+            ),)
         self.assertRegex(str(cm.exception), "state not provided within {'token': \['.*'\]}.")
 
-    def test_oauth2_get_failure_if_state_is_not_provided(self):
+    def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
-            call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_token_as_anchor_token_but_without_providing_state',
-                                      token_reception_timeout=TIMEOUT),)
+            call(requests_auth.OAuth2Implicit(
+                TEST_SERVICE_HOST + '/provide_token_as_anchor_token_but_without_providing_state',
+                timeout=TIMEOUT
+            ),)
         self.assertRegex(str(cm.exception), "state not provided within {'token': \['.*'\]}.")
 
-    def test_oauth2_failure_if_token_is_not_received_within_the_timeout_interval(self):
+    def test_oauth2_implicit_flow_failure_if_token_is_not_received_within_the_timeout_interval(self):
         with self.assertRaises(Exception) as cm:
-            call(requests_auth.OAuth2(TEST_SERVICE_HOST + '/do_not_redirect', token_reception_timeout=TIMEOUT))
+            call(requests_auth.OAuth2Implicit(
+                TEST_SERVICE_HOST + '/do_not_redirect',
+                timeout=TIMEOUT
+            ))
         self.assertEqual('User authentication was not received within {timeout} seconds.'.
                          format(timeout=TIMEOUT), str(cm.exception))
 
-    def test_oauth2_token_is_requested_again_if_expired(self):
+    def test_oauth2_implicit_flow_token_is_requested_again_if_expired(self):
         # This token will expires in 1 seconds
-        auth1 = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_a_token_expiring_in_1_second',
-                                     token_reception_timeout=TIMEOUT)
+        auth1 = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_a_token_expiring_in_1_second',
+            timeout=TIMEOUT
+        )
         token1 = get_header(auth1).get('Authorization')
         self.assertRegex(token1, '^Bearer .*')
 
@@ -293,12 +379,40 @@ class AuthenticationTest(unittest.TestCase):
         time.sleep(2)
 
         # Token should now be expired, a new one should be requested
-        auth2 = requests_auth.OAuth2(TEST_SERVICE_HOST + '/provide_a_token_expiring_in_1_second',
-                                     token_reception_timeout=TIMEOUT)
+        auth2 = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_a_token_expiring_in_1_second',
+            timeout=TIMEOUT
+        )
         token2 = get_header(auth2).get('Authorization')
         self.assertRegex(token2, '^Bearer .*')
 
         self.assertNotEqual(token1, token2)
+
+    def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header_by_default(self):
+        auth = requests_auth.OAuth2AuthorizationCode(
+            TEST_SERVICE_HOST + '/provide_code_as_anchor_code',
+            TEST_SERVICE_HOST + '/provide_access_token',
+            timeout=TIMEOUT
+        )
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer 2YotnFZFEjr1zCsicMWpAA')
+
+    def test_oauth2_password_credentials_flow_token_is_sent_in_authorization_header_by_default(self):
+        auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
+            TEST_SERVICE_HOST + '/provide_access_token',
+            username='test_user',
+            password='test_pwd',
+            timeout=TIMEOUT
+        )
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer 2YotnFZFEjr1zCsicMWpAA')
+
+    def test_oauth2_client_credentials_flow_token_is_sent_in_authorization_header_by_default(self):
+        auth = requests_auth.OAuth2ClientCredentials(
+            TEST_SERVICE_HOST + '/provide_access_token',
+            username='test_user',
+            password='test_pwd',
+            timeout=TIMEOUT
+        )
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer 2YotnFZFEjr1zCsicMWpAA')
 
     def test_header_api_key_requires_an_api_key(self):
         with self.assertRaises(Exception) as cm:

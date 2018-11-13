@@ -25,10 +25,10 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         logger.debug('GET received on {0}'.format(self.path))
         try:
             args = self._get_params()
-            if self.server.oauth2.token_name in args or args.pop('pyxelrest_redirect', None):
-                self.parse_server_token(args)
+            if self.server.grant_details.name in args or args.pop('requests_auth_redirect', None):
+                self._parse_grant(args)
             else:
-                logger.debug('Send anchor token as query parameter.')
+                logger.debug('Send anchor grant as query parameter.')
                 self.send_html(self.fragment_redirect_page())
         except Exception as e:
             self.server.request_error = e
@@ -39,27 +39,26 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         logger.debug('POST received on {0}'.format(self.path))
         try:
             form_dict = self._get_form()
-            self.parse_server_token(form_dict)
+            self._parse_grant(form_dict)
         except Exception as e:
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
             self.send_html(self.error_page("Unable to properly perform authentication: {0}".format(e)))
 
-    def parse_server_token(self, arguments):
-        id_tokens = arguments.get(self.server.oauth2.token_name)
-        if not id_tokens or len(id_tokens) > 1:
-            raise TokenNotProvided(self.server.oauth2.token_name, arguments)
-        logger.debug('Received tokens: {0}'.format(id_tokens))
-        id_token = id_tokens[0]
+    def _parse_grant(self, arguments):
+        grants = arguments.get(self.server.grant_details.name)
+        if not grants or len(grants) > 1:
+            raise GrantNotProvided(self.server.grant_details.name, arguments)
+        logger.debug('Received grants: {0}'.format(grants))
+        grant = grants[0]
 
-        unique_token_provider_identifiers = arguments.get('state')
-        if not unique_token_provider_identifiers or len(unique_token_provider_identifiers) > 1:
+        states = arguments.get('state')
+        if not states or len(states) > 1:
             raise StateNotProvided(arguments)
-        logger.debug('Received states: {0}'.format(unique_token_provider_identifiers))
-        unique_token_provider_identifier = unique_token_provider_identifiers[0]
-        self.server.token = unique_token_provider_identifier, id_token
-        self.send_html(self.success_page("You are now authenticated on {0}. You may close this tab.".format(
-            unique_token_provider_identifier)))
+        logger.debug('Received states: {0}'.format(states))
+        state = states[0]
+        self.server.grant = state, grant
+        self.send_html(self.success_page("You are now authenticated on {0}. You may close this tab.".format(state)))
 
     def _get_form(self):
         content_length = int(self.headers.get('Content-Length', 0))
@@ -85,7 +84,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         align-items: center;
         justify-content: center;">
             <div style="border: 1px solid;">{1}</div>
-        </body>""".format(self.server.oauth2.token_reception_success_display_time, text)
+        </body>""".format(self.server.grant_details.reception_success_display_time, text)
 
     def error_page(self, text):
         return """<body onload="window.open('', '_self', ''); window.setTimeout(close, {0})" style="
@@ -96,7 +95,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         align-items: center;
         justify-content: center;">
             <div style="border: 1px solid;">{1}</div>
-        </body>""".format(self.server.oauth2.token_reception_failure_display_time, text)
+        </body>""".format(self.server.grant_details.reception_failure_display_time, text)
 
     def fragment_redirect_page(self):
         """Return a page with JS that calls back the server on the url
@@ -110,9 +109,9 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         return """<html><body><script>
         var new_url = window.location.href.replace("#","?");
         if (new_url.indexOf("?") !== -1) {
-            new_url += "&pyxelrest_redirect=1";
+            new_url += "&requests_auth_redirect=1";
         } else {
-            new_url += "?pyxelrest_redirect=1";
+            new_url += "?requests_auth_redirect=1";
         }
         window.location.replace(new_url)
         </script></body></html>"""
@@ -124,13 +123,22 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
 
 class FixedHttpServer(HTTPServer):
 
-    def __init__(self, oauth2):
-        HTTPServer.__init__(self, ('', oauth2.redirect_uri_port), OAuth2ResponseHandler)
-        self.timeout = oauth2.token_reception_timeout
+    def __init__(self, grant_details):
+        """
+
+        :param grant_details: Must be a class providing the following attributes:
+            * name
+            * reception_success_display_time
+            * reception_failure_display_time
+            * redirect_uri_port
+            * reception_timeout
+        """
+        HTTPServer.__init__(self, ('', grant_details.redirect_uri_port), OAuth2ResponseHandler)
+        self.timeout = grant_details.reception_timeout
         logger.debug('Timeout is set to {0} seconds.'.format(self.timeout))
-        self.oauth2 = oauth2
+        self.grant_details = grant_details
         self.request_error = None
-        self.token = False
+        self.grant = False
 
     def finish_request(self, request, client_address):
         """Make sure that timeout is used by the request (seems like a bug in HTTPServer)."""
@@ -140,7 +148,7 @@ class FixedHttpServer(HTTPServer):
     def ensure_no_error_occurred(self):
         if self.request_error:  # Raise error encountered while processing a request if any
             raise self.request_error
-        return not self.token
+        return not self.grant
 
     def handle_timeout(self):
         raise TimeoutOccurred(self.timeout)
@@ -154,17 +162,39 @@ class FixedHttpServer(HTTPServer):
         self.server_close()
 
 
-def request_new_token(oauth2):
-    """
-    Ask for a new OAuth2 Bearer token.
-    :param oauth2: authentication.OAuth2Auth instance
-    :return: The token or an Exception if not retrieved.
-    """
-    logger.debug('Requesting user authentication...')
+class GrantDetails:
+    def __init__(self,
+                 url,
+                 name,
+                 reception_timeout,
+                 reception_success_display_time,
+                 reception_failure_display_time,
+                 redirect_uri_port):
+        self.url = url
+        self.name = name
+        self.reception_timeout = reception_timeout
+        self.reception_success_display_time = reception_success_display_time
+        self.reception_failure_display_time = reception_failure_display_time
+        self.redirect_uri_port = redirect_uri_port
 
-    with FixedHttpServer(oauth2) as server:
-        _open_url(oauth2.full_url)
-        return _wait_for_token(server)
+
+def request_new_grant(grant_details):
+    """
+    Ask for a new OAuth2 grant.
+    :param grant_details: Must be a class providing the following attributes:
+        * url
+        * name
+        * reception_timeout
+        * reception_success_display_time
+        * reception_failure_display_time
+        * redirect_uri_port
+    :return:A tuple (state, grant) or an Exception if not retrieved within timeout.
+    """
+    logger.debug('Requesting new {0}...'.format(grant_details.name))
+
+    with FixedHttpServer(grant_details) as server:
+        _open_url(grant_details.url)
+        return _wait_for_grant(server)
 
 
 def _open_url(url):
@@ -182,9 +212,9 @@ def _open_url(url):
         requests.get(url)
 
 
-def _wait_for_token(server):
+def _wait_for_grant(server):
     logger.debug('Waiting for user authentication...')
-    while not server.token:
+    while not server.grant:
         server.handle_request()
         server.ensure_no_error_occurred()
-    return server.token
+    return server.grant

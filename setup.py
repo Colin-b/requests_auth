@@ -49,10 +49,12 @@ setup(name='requests_auth',
           'pyjwt==1.6.4',
           # Used to run test services
           'flask==1.0.2',
+          # Used to mock responses to requests
+          'responses==0.10.3',
       ],
       install_requires=[
           # Used for Base Authentication and to communicate with OAuth2 servers (also used in test cases)
-          'requests==2.19.1',
+          'requests==2.20.1',
       ],
       platforms=[
           'Windows',
