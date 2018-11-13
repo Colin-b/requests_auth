@@ -6,16 +6,309 @@ To use a specific authentication in combination with requests, use the [authenti
 
 ## OAuth 2 ##
 
+### Authorization Code flow ###
+
 Sample:
 
 ```python
 import requests
-from requests_auth import OAuth2
+from requests_auth import OAuth2AuthorizationCode
 
-requests.get('http://www.example.com', auth=OAuth2('https://www.example.com'))
+requests.get('http://www.example.com', auth=OAuth2AuthorizationCode('https://www.authorization.url', 'https://www.token.url'))
 ```
 
-### Parameters ###
+or
+
+```python
+import requests
+from requests_auth import oauth2, OAuth2Flow
+
+requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.AuthorizationCode, 'https://www.authorization.url', 'https://www.token.url'))
+```
+
+#### Parameters ####
+
+<table>
+    <th>
+        <td><em>Description</em></td>
+        <td><em>Mandatory</em></td>
+        <td><em>Default value</em></td>
+    </th>
+    <tr>
+        <td><strong>authorization_url</strong></td>
+        <td>OAuth 2 authorization URL.</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>token_url</strong></td>
+        <td>OAuth 2 token URL.</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>redirect_uri_endpoint</strong></td>
+        <td>Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.</td>
+        <td>Optional</td>
+        <td>''</td>
+    </tr>
+    <tr>
+        <td><strong>redirect_uri_port</strong></td>
+        <td>The port on which the server listening for the OAuth 2 code will be started.</td>
+        <td>Optional</td>
+        <td>5000</td>
+    </tr>
+    <tr>
+        <td><strong>timeout</strong></td>
+        <td>Maximum amount of seconds to wait for a code or a token to be received once requested.</td>
+        <td>Optional</td>
+        <td>60</td>
+    </tr>
+    <tr>
+        <td><strong>success_display_time</strong></td>
+        <td>In case a code is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
+        <td>Optional</td>
+        <td>1</td>
+    </tr>
+    <tr>
+        <td><strong>failure_display_time</strong></td>
+        <td>In case received code is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
+        <td>Optional</td>
+        <td>5000</td>
+    </tr>
+    <tr>
+        <td><strong>header_name</strong></td>
+        <td>Name of the header field used to send token.</td>
+        <td>Optional</td>
+        <td>Authorization</td>
+    </tr>
+    <tr>
+        <td><strong>header_value</strong></td>
+        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
+        <td>Optional</td>
+        <td>Bearer {token}</td>
+    </tr>
+    <tr>
+        <td><strong>token_field_name</strong></td>
+        <td>Field name containing the token.</td>
+        <td>Optional</td>
+        <td>access_token</td>
+    </tr>
+    <tr>
+        <td><strong>username</strong></td>
+        <td>User name in case basic authentication should be used to retrieve token.</td>
+        <td>Optional</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>password</strong></td>
+        <td>User password in case basic authentication should be used to retrieve token.</td>
+        <td>Optional</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>any other parameter</strong></td>
+        <td>all additional authorization parameters that should be put as query parameter in the authorization URL and as body parameters in the token URL.        
+        Common parameters are:
+        
+ * client_id: Corresponding to your Application ID (in Microsoft Azure app portal)
+ * client_secret: If client is not authenticated with the authorization server
+ * response_type: code for Microsoft
+ * nonce: Refer to [OpenID ID Token specifications][3] for more details</td>
+        <td>Optional</td>
+        <td></td>
+    </tr>
+</table>
+
+### Resource Owner Password Credentials flow ###
+
+Sample:
+
+```python
+import requests
+from requests_auth import OAuth2ResourceOwnerPasswordCredentials
+
+requests.get('http://www.example.com', auth=OAuth2ResourceOwnerPasswordCredentials('https://www.token.url', 'user name', 'user password'))
+```
+
+or
+
+```python
+import requests
+from requests_auth import oauth2, OAuth2Flow
+
+requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PasswordCredentials, 'https://www.token.url', 'user name', 'user password'))
+```
+
+#### Parameters ####
+
+<table>
+    <th>
+        <td><em>Description</em></td>
+        <td><em>Mandatory</em></td>
+        <td><em>Default value</em></td>
+    </th>
+    <tr>
+        <td><strong>token_url</strong></td>
+        <td>OAuth 2 token URL.</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>username</strong></td>
+        <td>Resource owner user name.</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>password</strong></td>
+        <td>Resource owner password.</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>timeout</strong></td>
+        <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
+        <td>Optional</td>
+        <td>60</td>
+    </tr>
+    <tr>
+        <td><strong>header_name</strong></td>
+        <td>Name of the header field used to send token.</td>
+        <td>Optional</td>
+        <td>Authorization</td>
+    </tr>
+    <tr>
+        <td><strong>header_value</strong></td>
+        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
+        <td>Optional</td>
+        <td>Bearer {token}</td>
+    </tr>
+    <tr>
+        <td><strong>scope</strong></td>
+        <td>Scope parameter sent to token URL as body. Can also be a list of scopes.</td>
+        <td>Optional</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>token_field_name</strong></td>
+        <td>Field name containing the token.</td>
+        <td>Optional</td>
+        <td>access_token</td>
+    </tr>
+    <tr>
+        <td><strong>any other parameter</strong></td>
+        <td>all additional authorization parameters that should be put as body parameters in the token URL.</td>
+        <td>Optional</td>
+        <td></td>
+    </tr>
+</table>
+
+### Client Credentials flow ###
+
+Sample:
+
+```python
+import requests
+from requests_auth import OAuth2ClientCredentials
+
+requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', 'user name', 'user password'))
+```
+
+or
+
+```python
+import requests
+from requests_auth import oauth2, OAuth2Flow
+
+requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.ClientCredentials, 'https://www.token.url', 'user name', 'user password'))
+```
+
+#### Parameters ####
+
+<table>
+    <th>
+        <td><em>Description</em></td>
+        <td><em>Mandatory</em></td>
+        <td><em>Default value</em></td>
+    </th>
+    <tr>
+        <td><strong>token_url</strong></td>
+        <td>OAuth 2 token URL.</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>username</strong></td>
+        <td>Resource owner user name.</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>password</strong></td>
+        <td>Resource owner password.</td>
+        <td>Mandatory</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>timeout</strong></td>
+        <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
+        <td>Optional</td>
+        <td>60</td>
+    </tr>
+    <tr>
+        <td><strong>header_name</strong></td>
+        <td>Name of the header field used to send token.</td>
+        <td>Optional</td>
+        <td>Authorization</td>
+    </tr>
+    <tr>
+        <td><strong>header_value</strong></td>
+        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
+        <td>Optional</td>
+        <td>Bearer {token}</td>
+    </tr>
+    <tr>
+        <td><strong>scope</strong></td>
+        <td>Scope parameter sent to token URL as body. Can also be a list of scopes.</td>
+        <td>Optional</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td><strong>token_field_name</strong></td>
+        <td>Field name containing the token.</td>
+        <td>Optional</td>
+        <td>access_token</td>
+    </tr>
+    <tr>
+        <td><strong>any other parameter</strong></td>
+        <td>all additional authorization parameters that should be put as body parameters in the token URL.</td>
+        <td>Optional</td>
+        <td></td>
+    </tr>
+</table>
+
+### Implicit flow ###
+
+Sample:
+
+```python
+import requests
+from requests_auth import OAuth2Implicit
+
+requests.get('http://www.example.com', auth=OAuth2Implicit('https://www.authorization.url'))
+```
+
+or
+
+```python
+import requests
+from requests_auth import oauth2, OAuth2Flow
+
+requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.Implicit, 'https://www.authorization.url'))
+```
+
+#### Parameters ####
 
 <table>
     <th>
@@ -42,25 +335,19 @@ requests.get('http://www.example.com', auth=OAuth2('https://www.example.com'))
         <td>5000</td>
     </tr>
     <tr>
-        <td><strong>redirect_uri_port_availability_timeout</strong></td>
-        <td>The maximum amount of seconds to wait for the redirect_uri_port to become available.</td>
-        <td>Optional</td>
-        <td>2</td>
-    </tr>
-    <tr>
-        <td><strong>token_reception_timeout</strong></td>
+        <td><strong>timeout</strong></td>
         <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
         <td>Optional</td>
         <td>60</td>
     </tr>
     <tr>
-        <td><strong>token_reception_success_display_time</strong></td>
+        <td><strong>success_display_time</strong></td>
         <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>1</td>
     </tr>
     <tr>
-        <td><strong>token_reception_failure_display_time</strong></td>
+        <td><strong>failure_display_time</strong></td>
         <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>5000</td>
@@ -90,34 +377,31 @@ requests.get('http://www.example.com', auth=OAuth2('https://www.example.com'))
     </tr>
 </table>
 
-### Managing token cache ###
+#### Common providers ####
 
-To avoid asking for a new token every new request, a token cache is used.
-
-Default cache is in memory but it is also possible to use a physical cache using the following method:
-
-```python
-from requests_auth import OAuth2, JsonTokenFileCache
-
-OAuth2.token_cache = JsonTokenFileCache('my_token_cache')
-```
-
-### Common OAuth2 providers ###
-
-#### Microsoft (Azure Active Directory) ####
+##### Microsoft - Azure Active Directory #####
 
 Sample:
 
 ```python
 import requests
-from requests_auth import AzureAD
+from requests_auth import AzureActiveDirectoryImplicit
 
 
-aad = AzureAD(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
+aad = AzureActiveDirectoryImplicit(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=aad)
 ```
 
-##### Parameters #####
+or
+
+```python
+import requests
+from requests_auth import aad, OAuth2Flow
+
+requests.get('http://www.example.com', auth=aad(OAuth2Flow.Implicit, tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd'))
+```
+
+###### Parameters ######
 
 <table>
     <th>
@@ -156,25 +440,19 @@ requests.get('http://www.example.com', auth=aad)
         <td>5000</td>
     </tr>
     <tr>
-        <td><strong>redirect_uri_port_availability_timeout</strong></td>
-        <td>The maximum amount of seconds to wait for the redirect_uri_port to become available.</td>
-        <td>Optional</td>
-        <td>2</td>
-    </tr>
-    <tr>
-        <td><strong>token_reception_timeout</strong></td>
+        <td><strong>timeout</strong></td>
         <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
         <td>Optional</td>
         <td>60</td>
     </tr>
     <tr>
-        <td><strong>token_reception_success_display_time</strong></td>
+        <td><strong>success_display_time</strong></td>
         <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>1</td>
     </tr>
     <tr>
-        <td><strong>token_reception_failure_display_time</strong></td>
+        <td><strong>failure_display_time</strong></td>
         <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>5000</td>
@@ -199,20 +477,29 @@ requests.get('http://www.example.com', auth=aad)
     </tr>
 </table>
 
-#### OKTA ####
+##### OKTA (implicit flow) #####
 
 Sample:
 
 ```python
 import requests
-from requests_auth import Okta
+from requests_auth import OktaImplicit
 
 
-okta = Okta(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
+okta = OktaImplicit(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=okta)
 ```
 
-##### Parameters #####
+or
+
+```python
+import requests
+from requests_auth import okta, OAuth2Flow
+
+requests.get('http://www.example.com', auth=okta(OAuth2Flow.Implicit, instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd'))
+```
+
+###### Parameters ######
 
 <table>
     <th>
@@ -239,6 +526,12 @@ requests.get('http://www.example.com', auth=okta)
         <td>Newly generated Universal Unique Identifier.</td>
     </tr>
     <tr>
+        <td><strong>scope</strong></td>
+        <td>Scope parameter sent in query. Can also be a list of scopes.</td>
+        <td>Optional</td>
+        <td>['openid', 'profile', 'email']</td>
+    </tr>
+    <tr>
         <td><strong>authorization_server</strong></td>
         <td>OKTA authorization server.</td>
         <td>Optional</td>
@@ -257,25 +550,19 @@ requests.get('http://www.example.com', auth=okta)
         <td>5000</td>
     </tr>
     <tr>
-        <td><strong>redirect_uri_port_availability_timeout</strong></td>
-        <td>The maximum amount of seconds to wait for the redirect_uri_port to become available.</td>
-        <td>Optional</td>
-        <td>2</td>
-    </tr>
-    <tr>
-        <td><strong>token_reception_timeout</strong></td>
+        <td><strong>timeout</strong></td>
         <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
         <td>Optional</td>
         <td>60</td>
     </tr>
     <tr>
-        <td><strong>token_reception_success_display_time</strong></td>
+        <td><strong>success_display_time</strong></td>
         <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>1</td>
     </tr>
     <tr>
-        <td><strong>token_reception_failure_display_time</strong></td>
+        <td><strong>failure_display_time</strong></td>
         <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
         <td>Optional</td>
         <td>5000</td>
@@ -299,6 +586,19 @@ requests.get('http://www.example.com', auth=okta)
         <td></td>
     </tr>
 </table>
+
+### Managing token cache ###
+
+To avoid asking for a new token every new request, a token cache is used.
+
+Default cache is in memory but it is also possible to use a physical cache using the following method:
+
+```python
+from requests_auth import OAuth2, JsonTokenFileCache
+
+OAuth2.token_cache = JsonTokenFileCache('my_token_cache')
+```
+
 
 ## API key in header ##
 
@@ -440,10 +740,10 @@ You can also use a combination of authentication as in the following sample:
 
 ```python
 import requests
-from requests_auth import Auths, HeaderApiKey, OAuth2
+from requests_auth import Auths, HeaderApiKey, OAuth2Implicit
 
 api_key = HeaderApiKey('my_api_key')
-oauth2 = OAuth2('https://www.example.com')
+oauth2 = OAuth2Implicit('https://www.example.com')
 requests.get('http://www.example.com', auth=Auths(api_key, oauth2))
 ```
 

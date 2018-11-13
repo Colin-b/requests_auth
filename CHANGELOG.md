@@ -6,6 +6,18 @@ List all changes in various categories:
 * Bug fixes
 * Known issues
 
+## 3.0.0 (2018-11-13) ##
+
+### Release notes ###
+
+- All previously existing OAuth2 related classes renamed to state that it corresponds to implicit flow.
+- [Okta] scopes parameter merged with scope.
+
+### Bug fixes ###
+
+- Update requests dependency to latest version (2.20.1)
+- [OAuth2] Remove unused redirect_uri_port_availability_timeout parameter
+
 ## 2.0.0 (2018-10-09) ##
 
 ### Release notes ###

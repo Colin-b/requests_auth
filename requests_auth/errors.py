@@ -22,10 +22,10 @@ class InvalidToken(Exception):
         Exception.__init__(self, '{0} is invalid.'.format(token_name))
 
 
-class TokenNotProvided(Exception):
-    """ Token was not provided. """
-    def __init__(self, token_name, dictionary_without_token):
-        Exception.__init__(self, '{0} not provided within {1}.'.format(token_name, dictionary_without_token))
+class GrantNotProvided(Exception):
+    """ Grant was not provided. """
+    def __init__(self, grant_name, dictionary_without_grant):
+        Exception.__init__(self, '{0} not provided within {1}.'.format(grant_name, dictionary_without_grant))
 
 
 class StateNotProvided(Exception):
