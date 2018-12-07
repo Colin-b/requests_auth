@@ -454,7 +454,7 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
     Describes an Azure Active Directory (Microsoft OAuth 2) requests authentication.
     """
 
-    def __init__(self, tenant_id, client_id, **kwargs):
+    def __init__(self, tenant_id, client_id, response_type='id_token', **kwargs):
         """
         :param tenant_id: Microsoft Tenant Identifier (formatted as an Universal Unique Identifier)
         :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
@@ -486,7 +486,7 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
             self,
             'https://login.microsoftonline.com/{0}/oauth2/authorize'.format(tenant_id),
             client_id=client_id,
-            response_type='id_token',
+            response_type=response_type,
             nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
             **kwargs
         )
