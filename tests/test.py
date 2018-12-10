@@ -86,10 +86,11 @@ class AzureADTest(unittest.TestCase):
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
         self.assertRegex(str(aad),
-                         "authentication.OAuth2Implicit("
+                         "OAuth2Implicit("
                          "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
+                         "token_field_name='id_token', "
                          "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
 
     def test_corresponding_oauth2_implicit_flow_instance_using_helper(self):
@@ -106,10 +107,11 @@ class AzureADTest(unittest.TestCase):
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
         self.assertRegex(str(aad),
-                         "authentication.OAuth2Implicit("
+                         "OAuth2Implicit("
                          "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
+                         "token_field_name='id_token', "
                          "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
 
 
@@ -129,10 +131,11 @@ class OktaTest(unittest.TestCase):
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
         self.assertRegex(str(okta),
-                         "authentication.OAuth2Implicit("
+                         "OAuth2Implicit("
                          "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
+                         "token_field_name='id_token', "
                          "nonce='.*-.*-.*-.*-.*', "
                          "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
 
@@ -151,10 +154,11 @@ class OktaTest(unittest.TestCase):
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
         self.assertRegex(str(okta),
-                         "authentication.OAuth2Implicit("
+                         "OAuth2Implicit("
                          "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
+                         "token_field_name='id_token', "
                          "nonce='.*-.*-.*-.*-.*', "
                          "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
 
@@ -224,7 +228,8 @@ class AuthenticationTest(unittest.TestCase):
     def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing(self):
         auth1 = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&fake_param=1',
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
+            token_field_name='custom_token'
         )
         token_on_auth1 = get_header(auth1).get('Authorization')
         self.assertRegex(token_on_auth1, '^Bearer .*')
@@ -236,7 +241,8 @@ class AuthenticationTest(unittest.TestCase):
 
         auth2 = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&fake_param=2',
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
+            token_field_name='custom_token'
         )
         token_on_auth2 = get_header(auth2).get('Authorization')
         self.assertRegex(token_on_auth2, '^Bearer .*')
@@ -246,14 +252,16 @@ class AuthenticationTest(unittest.TestCase):
     def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(self):
         auth1 = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&nonce=1',
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
+            token_field_name='custom_token'
         )
         token_on_auth1 = get_header(auth1).get('Authorization')
         self.assertRegex(token_on_auth1, '^Bearer .*')
 
         auth2 = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&nonce=2',
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
+            token_field_name='custom_token'
         )
         token_on_auth2 = get_header(auth2).get('Authorization')
         self.assertRegex(token_on_auth2, '^Bearer .*')
@@ -262,7 +270,7 @@ class AuthenticationTest(unittest.TestCase):
 
     def test_oauth2_implicit_flow_token_can_be_requested_on_a_custom_server_port(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             # TODO Should use a method to retrieve a free port instead
             redirect_uri_port=5002,
             timeout=TIMEOUT
@@ -271,21 +279,21 @@ class AuthenticationTest(unittest.TestCase):
 
     def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_default(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
     def test_oauth2_implicit_flow_get_token_is_sent_in_authorization_header_by_default(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_anchor_token',
+            TEST_SERVICE_HOST + '/provide_token_as_anchor_access_token',
             timeout=TIMEOUT
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
     def test_oauth2_implicit_flow_token_is_sent_in_requested_field(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT,
             header_name='Bearer',
             header_value='{token}'
@@ -296,27 +304,28 @@ class AuthenticationTest(unittest.TestCase):
         auth = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token',
             timeout=TIMEOUT,
-            response_type='custom_token'
+            response_type='custom_token',
+            token_field_name='custom_token',
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
-    def test_oauth2_implicit_flow_expects_token_to_be_stored_in_token_by_default(self):
+    def test_oauth2_implicit_flow_expects_token_to_be_stored_in_access_token_by_default(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
     def test_oauth2_implicit_flow_token_is_reused_if_not_expired(self):
         auth1 = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT
         )
         token1 = get_header(auth1).get('Authorization')
         self.assertRegex(token1, '^Bearer .*')
 
         oauth2 = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT
         )
         token2 = get_header(oauth2).get('Authorization')
@@ -331,7 +340,7 @@ class AuthenticationTest(unittest.TestCase):
                 TEST_SERVICE_HOST + '/do_not_provide_token',
                 timeout=TIMEOUT)
             )
-        self.assertEqual('token not provided within {}.', str(cm.exception))
+        self.assertEqual('access_token not provided within {}.', str(cm.exception))
 
     def test_oauth2_implicit_flow_get_failure_if_token_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
@@ -339,23 +348,23 @@ class AuthenticationTest(unittest.TestCase):
                 TEST_SERVICE_HOST + '/do_not_provide_token_as_anchor_token',
                 timeout=TIMEOUT
             ))
-        self.assertEqual("token not provided within {}.", str(cm.exception))
+        self.assertEqual("access_token not provided within {}.", str(cm.exception))
 
     def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
             call(requests_auth.OAuth2Implicit(
-                TEST_SERVICE_HOST + '/provide_token_as_token_but_without_providing_state',
+                TEST_SERVICE_HOST + '/provide_token_as_access_token_but_without_providing_state',
                 timeout=TIMEOUT
             ),)
-        self.assertRegex(str(cm.exception), "state not provided within {'token': \['.*'\]}.")
+        self.assertRegex(str(cm.exception), "state not provided within {'access_token': \['.*'\]}.")
 
     def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
             call(requests_auth.OAuth2Implicit(
-                TEST_SERVICE_HOST + '/provide_token_as_anchor_token_but_without_providing_state',
+                TEST_SERVICE_HOST + '/provide_token_as_anchor_access_token_but_without_providing_state',
                 timeout=TIMEOUT
             ),)
-        self.assertRegex(str(cm.exception), "state not provided within {'token': \['.*'\]}.")
+        self.assertRegex(str(cm.exception), "state not provided within {'access_token': \['.*'\]}.")
 
     def test_oauth2_implicit_flow_failure_if_token_is_not_received_within_the_timeout_interval(self):
         with self.assertRaises(Exception) as cm:

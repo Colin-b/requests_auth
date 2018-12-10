@@ -36,16 +36,16 @@ def post_token_as_my_custom_token():
     return submit_a_form_with_a_token(expiry_in_1_hour, 'custom_token')
 
 
-@app.route('/provide_token_as_token')
-def post_token_as_token():
+@app.route('/provide_token_as_access_token')
+def post_token_as_access_token():
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-    return submit_a_form_with_a_token(expiry_in_1_hour, 'token')
+    return submit_a_form_with_a_token(expiry_in_1_hour, 'access_token')
 
 
-@app.route('/provide_token_as_anchor_token')
+@app.route('/provide_token_as_anchor_access_token')
 def get_token_as_anchor_token():
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-    return redirect_with_a_token(expiry_in_1_hour, 'token')
+    return redirect_with_a_token(expiry_in_1_hour, 'access_token')
 
 
 @app.route('/provide_code_as_anchor_code')
@@ -64,16 +64,16 @@ def get_access_token():
     })
 
 
-@app.route('/provide_token_as_token_but_without_providing_state')
+@app.route('/provide_token_as_access_token_but_without_providing_state')
 def post_without_state():
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-    return submit_a_form_without_state(expiry_in_1_hour, 'token')
+    return submit_a_form_without_state(expiry_in_1_hour, 'access_token')
 
 
-@app.route('/provide_token_as_anchor_token_but_without_providing_state')
+@app.route('/provide_token_as_anchor_access_token_but_without_providing_state')
 def get_token_as_anchor_token_without_state():
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-    return redirect_with_a_token_without_state(expiry_in_1_hour, 'token')
+    return redirect_with_a_token_without_state(expiry_in_1_hour, 'access_token')
 
 
 @app.route('/do_not_provide_token')
@@ -90,11 +90,11 @@ def get_without_token():
 def post_token_quick_expiry():
     if already_asked_for_quick_expiry[0]:
         expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        return submit_a_form_with_a_token(expiry_in_1_hour, 'token')
+        return submit_a_form_with_a_token(expiry_in_1_hour, 'access_token')
     else:
         already_asked_for_quick_expiry[0] = True
         expiry_in_1_second = datetime.datetime.utcnow() + datetime.timedelta(seconds=1)
-        return submit_a_form_with_a_token(expiry_in_1_second, 'token')
+        return submit_a_form_with_a_token(expiry_in_1_second, 'access_token')
 
 
 @app.route('/do_not_redirect')
@@ -102,7 +102,7 @@ def close_page_so_that_client_timeout_waiting_for_token():
     return close_page()
 
 
-def submit_a_form_with_a_token(token_expiry, response_type):
+def submit_a_form_with_a_token(token_expiry, token_field_name):
     redirect_uri = request.args.get('redirect_uri')
     state = request.args.get('state')
     token = create_token(token_expiry)
@@ -120,7 +120,7 @@ def submit_a_form_with_a_token(token_expiry, response_type):
         <script language="javascript">document.forms[0].submit();</script>
     </body>
 </html>
-        """.format(redirect_uri, response_type, token, state)
+        """.format(redirect_uri, token_field_name, token, state)
 
 
 def redirect_with_a_token(token_expiry, response_type):

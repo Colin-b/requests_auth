@@ -52,11 +52,10 @@ def _pop_parameter(url, query_parameter_name):
     return urlunsplit((scheme, netloc, path, new_query_string, fragment)), parameter_value
 
 
-def _get_query_parameter(url, param_name):
+def _contains_query_parameter(url, param_name):
     scheme, netloc, path, query_string, fragment = urlsplit(url)
     query_params = parse_qs(query_string)
-    all_values = query_params.get(param_name)
-    return all_values[0] if all_values else None
+    return param_name in query_params
 
 
 def request_new_grant_with_post(url, data, grant_name, timeout, auth=None):
@@ -150,7 +149,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
-        return "authentication.OAuth2ResourceOwnerPasswordCredentials('{0}', '{1}', '{2}', {3})".format(
+        return "OAuth2ResourceOwnerPasswordCredentials('{0}', '{1}', '{2}', {3})".format(
             self.token_url, self.username, self.password, addition_args_str
         )
 
@@ -229,7 +228,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
-        return "authentication.OAuth2ClientCredentials('{0}', '{1}', '{2}', {3})".format(
+        return "OAuth2ClientCredentials('{0}', '{1}', '{2}', {3})".format(
             self.token_url, self.username, self.password, addition_args_str
         )
 
@@ -267,7 +266,10 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         :param header_value: Format used to send the token value.
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
+        :param response_type: Value of the response_type query parameter if not already provided in authorization URL.
+        code by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param code_field_name: Field name containing the code. code by default.
         :param username: User name in case basic authentication should be used to retrieve token.
         :param password: User password in case basic authentication should be used to retrieve token.
         :param kwargs: all additional authorization parameters that should be put as query parameter
@@ -309,6 +311,14 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         password = extra_parameters.pop('password', None)
         self.auth = (username, password) if username and password else None
 
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
+        code_field_name = extra_parameters.pop('code_field_name', 'code')
+        if _contains_query_parameter(self.authorization_url, 'response_type'):
+            extra_parameters.pop('response_type', None)  # Ensure provided value will not be overridden
+        else:
+            # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
+            extra_parameters.setdefault('response_type', 'code')
+
         redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
         authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)
         authorization_url_without_nonce, nonce = _pop_parameter(authorization_url_without_nonce, 'nonce')
@@ -319,8 +329,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         code_grant_url = _add_parameters(authorization_url_without_nonce, custom_code_parameters)
         self.code_grant_details = oauth2_authentication_responses_server.GrantDetails(
             code_grant_url,
-            # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
-            _get_query_parameter(code_grant_url, 'response_type') or 'code',
+            code_field_name,
             self.timeout,
             success_display_time,
             failure_display_time,
@@ -354,7 +363,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
-        return "authentication.OAuth2AuthorizationCode('{0}', '{1}', {2})".format(
+        return "OAuth2AuthorizationCode('{0}', '{1}', {2})".format(
             self.authorization_url, self.token_url, addition_args_str
         )
 
@@ -374,6 +383,10 @@ class OAuth2Implicit(requests.auth.AuthBase):
     def __init__(self, authorization_url, **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
+        :param response_type: Value of the response_type query parameter if not already provided in authorization URL.
+        token by default.
+        :param token_field_name: Name of the expected field containing the token.
+        access_token by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
@@ -395,7 +408,6 @@ class OAuth2Implicit(requests.auth.AuthBase):
         in the authorization URL.
         Common parameters are:
         * client_id: Corresponding to your Application ID (in Microsoft Azure app portal)
-        * response_type: id_token for Microsoft
         * nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         * prompt: none to avoid prompting the user if a session is already opened.
         """
@@ -418,6 +430,13 @@ class OAuth2Implicit(requests.auth.AuthBase):
         success_display_time = int(extra_parameters.pop('success_display_time', None) or 1)
         # Time is expressed in milliseconds
         failure_display_time = int(extra_parameters.pop('failure_display_time', None) or 5000)
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.2.2
+        token_field_name = extra_parameters.pop('token_field_name', 'access_token')
+        if _contains_query_parameter(self.authorization_url, 'response_type'):
+            extra_parameters.pop('response_type', None)  # Ensure provided value will not be overridden
+        else:
+            # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
+            extra_parameters.setdefault('response_type', 'token')
 
         redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
         authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)
@@ -429,8 +448,7 @@ class OAuth2Implicit(requests.auth.AuthBase):
         grant_url = _add_parameters(authorization_url_without_nonce, custom_parameters)
         self.grant_details = oauth2_authentication_responses_server.GrantDetails(
             grant_url,
-            # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
-            _get_query_parameter(grant_url, 'response_type') or 'token',
+            token_field_name,
             timeout,
             success_display_time,
             failure_display_time,
@@ -446,7 +464,7 @@ class OAuth2Implicit(requests.auth.AuthBase):
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
-        return "authentication.OAuth2Implicit('{0}', {1})".format(self.authorization_url, addition_args_str)
+        return "OAuth2Implicit('{0}', {1})".format(self.authorization_url, addition_args_str)
 
 
 class AzureActiveDirectoryImplicit(OAuth2Implicit):
@@ -454,10 +472,14 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
     Describes an Azure Active Directory (Microsoft OAuth 2) requests authentication.
     """
 
-    def __init__(self, tenant_id, client_id, response_type='id_token', **kwargs):
+    def __init__(self, tenant_id, client_id, **kwargs):
         """
         :param tenant_id: Microsoft Tenant Identifier (formatted as an Universal Unique Identifier)
         :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
+        :param response_type: Value of the response_type query parameter.
+        id_token by default.
+        :param token_field_name: Name of the expected field containing the token.
+        id_token by default.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
@@ -486,7 +508,10 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
             self,
             'https://login.microsoftonline.com/{0}/oauth2/authorize'.format(tenant_id),
             client_id=client_id,
-            response_type=response_type,
+            # https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens
+            # https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens
+            response_type=kwargs.pop('response_type', 'id_token'),
+            token_field_name=kwargs.pop('token_field_name', 'id_token'),
             nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
             **kwargs
         )
@@ -501,6 +526,10 @@ class OktaImplicit(OAuth2Implicit):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
+        :param response_type: Value of the response_type query parameter.
+        id_token by default.
+        :param token_field_name: Name of the expected field containing the token.
+        id_token by default.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param authorization_server: OKTA authorization server
@@ -538,7 +567,8 @@ class OktaImplicit(OAuth2Implicit):
                 okta_auth_server="/" + authorization_server if authorization_server else ""
             ),
             client_id=client_id,
-            response_type='id_token',
+            response_type=kwargs.pop('response_type', 'id_token'),
+            token_field_name=kwargs.pop('token_field_name', 'id_token'),
             nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
             **kwargs
         )
@@ -562,7 +592,7 @@ class HeaderApiKey(requests.auth.AuthBase):
         return r
 
     def __str__(self):
-        return "authentication.HeaderApiKey('{0}', '{1}')".format(self.api_key, self.header_name)
+        return "HeaderApiKey('{0}', '{1}')".format(self.api_key, self.header_name)
 
 
 class QueryApiKey(requests.auth.AuthBase):
@@ -583,7 +613,7 @@ class QueryApiKey(requests.auth.AuthBase):
         return r
 
     def __str__(self):
-        return "authentication.QueryApiKey('{0}', '{1}')".format(self.api_key, self.query_parameter_name)
+        return "QueryApiKey('{0}', '{1}')".format(self.api_key, self.query_parameter_name)
 
 
 class Basic(requests.auth.HTTPBasicAuth):
@@ -593,7 +623,7 @@ class Basic(requests.auth.HTTPBasicAuth):
         requests.auth.HTTPBasicAuth.__init__(self, username, password)
 
     def __str__(self):
-        return "authentication.Basic('{0}', '{1}')".format(self.username, self.password)
+        return "Basic('{0}', '{1}')".format(self.username, self.password)
 
 
 class NTLM:
@@ -629,8 +659,8 @@ class NTLM:
 
     def __str__(self):
         if self.username and self.password:
-            return "authentication.NTLM('{0}', '{1}')".format(self.username, self.password)
-        return "authentication.NTLM()"
+            return "NTLM('{0}', '{1}')".format(self.username, self.password)
+        return "NTLM()"
 
 
 class Auths(requests.auth.AuthBase):
@@ -645,4 +675,4 @@ class Auths(requests.auth.AuthBase):
         return r
 
     def __str__(self):
-        return "authentication.Auths(" + ", ".join(map(str, self.authentication_modes)) + ")"
+        return "Auths(" + ", ".join(map(str, self.authentication_modes)) + ")"
