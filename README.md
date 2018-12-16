@@ -28,97 +28,32 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.AuthorizationCode,
 
 #### Parameters ####
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>authorization_url</strong></td>
-        <td>OAuth 2 authorization URL.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>token_url</strong></td>
-        <td>OAuth 2 token URL.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_endpoint</strong></td>
-        <td>Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.</td>
-        <td>Optional</td>
-        <td>''</td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_port</strong></td>
-        <td>The port on which the server listening for the OAuth 2 code will be started.</td>
-        <td>Optional</td>
-        <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>timeout</strong></td>
-        <td>Maximum amount of seconds to wait for a code or a token to be received once requested.</td>
-        <td>Optional</td>
-        <td>60</td>
-    </tr>
-    <tr>
-        <td><strong>success_display_time</strong></td>
-        <td>In case a code is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
-        <td>Optional</td>
-        <td>1</td>
-    </tr>
-    <tr>
-        <td><strong>failure_display_time</strong></td>
-        <td>In case received code is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
-        <td>Optional</td>
-        <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>header_name</strong></td>
-        <td>Name of the header field used to send token.</td>
-        <td>Optional</td>
-        <td>Authorization</td>
-    </tr>
-    <tr>
-        <td><strong>header_value</strong></td>
-        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
-        <td>Optional</td>
-        <td>Bearer {token}</td>
-    </tr>
-    <tr>
-        <td><strong>token_field_name</strong></td>
-        <td>Field name containing the token.</td>
-        <td>Optional</td>
-        <td>access_token</td>
-    </tr>
-    <tr>
-        <td><strong>username</strong></td>
-        <td>User name in case basic authentication should be used to retrieve token.</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>password</strong></td>
-        <td>User password in case basic authentication should be used to retrieve token.</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>any other parameter</strong></td>
-        <td>all additional authorization parameters that should be put as query parameter in the authorization URL and as body parameters in the token URL.        
-        Common parameters are:
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `authorization_url`     | OAuth 2 authorization URL. | Mandatory |               |
+| `token_url`             | OAuth 2 token URL.         | Mandatory |               |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 code will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a code or a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a code is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received code is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | code |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `code_field_name`       | Field name containing the code. | Optional | code |
+| `username`              | User name in case basic authentication should be used to retrieve token. | Optional |  |
+| `password`              | User password in case basic authentication should be used to retrieve token. | Optional |  |
+
+Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
+
+Usual parameters are:
         
- * client_id: Corresponding to your Application ID (in Microsoft Azure app portal)
- * client_secret: If client is not authenticated with the authorization server
- * response_type: code for Microsoft
- * nonce: Refer to [OpenID ID Token specifications][3] for more details</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-</table>
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `client_id`     | Corresponding to your Application ID (in Microsoft Azure app portal) |
+| `client_secret` | If client is not authenticated with the authorization server         |
+| `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
 
 ### Resource Owner Password Credentials flow ###
 
@@ -142,67 +77,18 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PasswordCredential
 
 #### Parameters ####
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>token_url</strong></td>
-        <td>OAuth 2 token URL.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>username</strong></td>
-        <td>Resource owner user name.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>password</strong></td>
-        <td>Resource owner password.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>timeout</strong></td>
-        <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
-        <td>Optional</td>
-        <td>60</td>
-    </tr>
-    <tr>
-        <td><strong>header_name</strong></td>
-        <td>Name of the header field used to send token.</td>
-        <td>Optional</td>
-        <td>Authorization</td>
-    </tr>
-    <tr>
-        <td><strong>header_value</strong></td>
-        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
-        <td>Optional</td>
-        <td>Bearer {token}</td>
-    </tr>
-    <tr>
-        <td><strong>scope</strong></td>
-        <td>Scope parameter sent to token URL as body. Can also be a list of scopes.</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>token_field_name</strong></td>
-        <td>Field name containing the token.</td>
-        <td>Optional</td>
-        <td>access_token</td>
-    </tr>
-    <tr>
-        <td><strong>any other parameter</strong></td>
-        <td>all additional authorization parameters that should be put as body parameters in the token URL.</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-</table>
+| Name               | Description                                  | Mandatory | Default value |
+|:-------------------|:---------------------------------------------|:----------|:--------------|
+| `token_url`        | OAuth 2 token URL.                           | Mandatory |               |
+| `username`         | Resource owner user name.                    | Mandatory |               |
+| `password`         | Resource owner password.                     | Mandatory |               |
+| `timeout`          | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60            |
+| `header_name`      | Name of the header field used to send token. | Optional  | Authorization |
+| `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `scope`            | Scope parameter sent to token URL as body. Can also be a list of scopes. | Optional |  |
+| `token_field_name` | Field name containing the token.             | Optional  | access_token  |
+
+Any other parameter will be put as body parameter in the token URL.
 
 ### Client Credentials flow ###
 
@@ -226,67 +112,18 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.ClientCredentials,
 
 #### Parameters ####
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>token_url</strong></td>
-        <td>OAuth 2 token URL.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>username</strong></td>
-        <td>Resource owner user name.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>password</strong></td>
-        <td>Resource owner password.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>timeout</strong></td>
-        <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
-        <td>Optional</td>
-        <td>60</td>
-    </tr>
-    <tr>
-        <td><strong>header_name</strong></td>
-        <td>Name of the header field used to send token.</td>
-        <td>Optional</td>
-        <td>Authorization</td>
-    </tr>
-    <tr>
-        <td><strong>header_value</strong></td>
-        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
-        <td>Optional</td>
-        <td>Bearer {token}</td>
-    </tr>
-    <tr>
-        <td><strong>scope</strong></td>
-        <td>Scope parameter sent to token URL as body. Can also be a list of scopes.</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>token_field_name</strong></td>
-        <td>Field name containing the token.</td>
-        <td>Optional</td>
-        <td>access_token</td>
-    </tr>
-    <tr>
-        <td><strong>any other parameter</strong></td>
-        <td>all additional authorization parameters that should be put as body parameters in the token URL.</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-</table>
+| Name               | Description                                  | Mandatory | Default value |
+|:-------------------|:---------------------------------------------|:----------|:--------------|
+| `token_url`        | OAuth 2 token URL.                           | Mandatory |               |
+| `username`         | Resource owner user name.                    | Mandatory |               |
+| `password`         | Resource owner password.                     | Mandatory |               |
+| `timeout`          | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60            |
+| `header_name`      | Name of the header field used to send token. | Optional  | Authorization |
+| `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `scope`            | Scope parameter sent to token URL as body. Can also be a list of scopes. | Optional |  |
+| `token_field_name` | Field name containing the token.             | Optional  | access_token  |
+
+Any other parameter will be put as body parameter in the token URL.
 
 ### Implicit flow ###
 
@@ -310,72 +147,28 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.Implicit, 'https:/
 
 #### Parameters ####
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>authorization_url</strong></td>
-        <td>OAuth 2 authorization URL.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_endpoint</strong></td>
-        <td>Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.</td>
-        <td>Optional</td>
-        <td>''</td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_port</strong></td>
-        <td>The port on which the server listening for the OAuth 2 token will be started.</td>
-        <td>Optional</td>
-        <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>timeout</strong></td>
-        <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
-        <td>Optional</td>
-        <td>60</td>
-    </tr>
-    <tr>
-        <td><strong>success_display_time</strong></td>
-        <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
-        <td>Optional</td>
-        <td>1</td>
-    </tr>
-    <tr>
-        <td><strong>failure_display_time</strong></td>
-        <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
-        <td>Optional</td>
-        <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>header_name</strong></td>
-        <td>Name of the header field used to send token.</td>
-        <td>Optional</td>
-        <td>Authorization</td>
-    </tr>
-    <tr>
-        <td><strong>header_value</strong></td>
-        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
-        <td>Optional</td>
-        <td>Bearer {token}</td>
-    </tr>
-    <tr>
-        <td><strong>any other parameter</strong></td>
-        <td>all additional authorization parameters that should be put as query parameter in the authorization URL.        
-        Common parameters are:
-        
- * client_id: Corresponding to your Application ID (in Microsoft Azure app portal)
- * response_type: id_token for Microsoft
- * nonce: Refer to [OpenID ID Token specifications][3] for more details</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-</table>
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `authorization_url`     | OAuth 2 authorization URL. | Mandatory |               |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | token |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+
+Any other parameter will be put as query parameter in the authorization URL.        
+
+Usual parameters are:
+
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `client_id`     | Corresponding to your Application ID (in Microsoft Azure app portal) |
+| `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
+| `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
 #### Common providers ####
 
@@ -403,79 +196,28 @@ requests.get('http://www.example.com', auth=aad(OAuth2Flow.Implicit, tenant_id='
 
 ###### Parameters ######
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>tenant_id</strong></td>
-        <td>Microsoft Tenant Identifier (formatted as an Universal Unique Identifier).</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>client_id</strong></td>
-        <td>Microsoft Application Identifier (formatted as an Universal Unique Identifier).</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>nonce</strong></td>
-        <td>Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details.</td>
-        <td>Optional</td>
-        <td>Newly generated Universal Unique Identifier.</td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_endpoint</strong></td>
-        <td>Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.</td>
-        <td>Optional</td>
-        <td>''</td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_port</strong></td>
-        <td>The port on which the server listening for the OAuth 2 token will be started.</td>
-        <td>Optional</td>
-        <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>timeout</strong></td>
-        <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
-        <td>Optional</td>
-        <td>60</td>
-    </tr>
-    <tr>
-        <td><strong>success_display_time</strong></td>
-        <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
-        <td>Optional</td>
-        <td>1</td>
-    </tr>
-    <tr>
-        <td><strong>failure_display_time</strong></td>
-        <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
-        <td>Optional</td>
-        <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>header_name</strong></td>
-        <td>Name of the header field used to send token.</td>
-        <td>Optional</td>
-        <td>Authorization</td>
-    </tr>
-    <tr>
-        <td><strong>header_value</strong></td>
-        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
-        <td>Optional</td>
-        <td>Bearer {token}</td>
-    </tr>
-    <tr>
-        <td><strong>any other parameter</strong></td>
-        <td>all additional authorization parameters that should be put as query parameter in the authorization URL.</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-</table>
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `tenant_id`             | Microsoft Tenant Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `client_id`             | Microsoft Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | id_token |
+| `token_field_name`      | Field name containing the token. | Optional | id_token |
+| `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details | Optional | Newly generated Universal Unique Identifier. |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+
+Any other parameter will be put as query parameter in the authorization URL.        
+
+Usual parameters are:
+
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
 ##### OKTA (implicit flow) #####
 
@@ -501,91 +243,30 @@ requests.get('http://www.example.com', auth=okta(OAuth2Flow.Implicit, instance='
 
 ###### Parameters ######
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>instance</strong></td>
-        <td>OKTA instance (like "testserver.okta-emea.com").</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>client_id</strong></td>
-        <td>Microsoft Application Identifier (formatted as an Universal Unique Identifier).</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>nonce</strong></td>
-        <td>Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details.</td>
-        <td>Optional</td>
-        <td>Newly generated Universal Unique Identifier.</td>
-    </tr>
-    <tr>
-        <td><strong>scope</strong></td>
-        <td>Scope parameter sent in query. Can also be a list of scopes.</td>
-        <td>Optional</td>
-        <td>['openid', 'profile', 'email']</td>
-    </tr>
-    <tr>
-        <td><strong>authorization_server</strong></td>
-        <td>OKTA authorization server.</td>
-        <td>Optional</td>
-        <td>''</td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_endpoint</strong></td>
-        <td>Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>.</td>
-        <td>Optional</td>
-        <td>''</td>
-    </tr>
-    <tr>
-        <td><strong>redirect_uri_port</strong></td>
-        <td>The port on which the server listening for the OAuth 2 token will be started.</td>
-        <td>Optional</td>
-        <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>timeout</strong></td>
-        <td>Maximum amount of seconds to wait for a token to be received once requested.</td>
-        <td>Optional</td>
-        <td>60</td>
-    </tr>
-    <tr>
-        <td><strong>success_display_time</strong></td>
-        <td>In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.</td>
-        <td>Optional</td>
-        <td>1</td>
-    </tr>
-    <tr>
-        <td><strong>failure_display_time</strong></td>
-        <td>In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.</td>
-        <td>Optional</td>
-        <td>5000</td>
-    </tr>
-    <tr>
-        <td><strong>header_name</strong></td>
-        <td>Name of the header field used to send token.</td>
-        <td>Optional</td>
-        <td>Authorization</td>
-    </tr>
-    <tr>
-        <td><strong>header_value</strong></td>
-        <td>Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.</td>
-        <td>Optional</td>
-        <td>Bearer {token}</td>
-    </tr>
-    <tr>
-        <td><strong>any other parameter</strong></td>
-        <td>all additional authorization parameters that should be put as query parameter in the authorization URL.</td>
-        <td>Optional</td>
-        <td></td>
-    </tr>
-</table>
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | Microsoft Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | id_token |
+| `token_field_name`      | Field name containing the token. | Optional | id_token |
+| `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
+| `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | ['openid', 'profile', 'email'] |
+| `authorization_server`  | OKTA authorization server. | Optional | '' |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+
+Any other parameter will be put as query parameter in the authorization URL.        
+
+Usual parameters are:
+
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
 ### Managing token cache ###
 
@@ -613,25 +294,10 @@ requests.get('http://www.example.com', auth=HeaderApiKey('my_api_key'))
 
 ### Parameters ###
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>api_key</strong></td>
-        <td>The API key that will be sent.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>header_name</strong></td>
-        <td>Name of the header field.</td>
-        <td>Optional</td>
-        <td>"X-API-Key"</td>
-    </tr>
-</table>
+| Name                    | Description                    | Mandatory | Default value |
+|:------------------------|:-------------------------------|:----------|:--------------|
+| `api_key`               | The API key that will be sent. | Mandatory |               |
+| `header_name`           | Name of the header field.      | Optional  | "X-API-Key"   |
 
 ## API key in query ##
 
@@ -646,25 +312,10 @@ requests.get('http://www.example.com', auth=QueryApiKey('my_api_key'))
 
 ### Parameters ###
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>api_key</strong></td>
-        <td>The API key that will be sent.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>query_parameter_name</strong></td>
-        <td>Name of the query parameter.</td>
-        <td>Optional</td>
-        <td>"api_key"</td>
-    </tr>
-</table>
+| Name                    | Description                    | Mandatory | Default value |
+|:------------------------|:-------------------------------|:----------|:--------------|
+| `api_key`               | The API key that will be sent. | Mandatory |               |
+| `query_parameter_name`  | Name of the query parameter.   | Optional  | "api_key"     |
 
 ## Basic ##
 
@@ -679,25 +330,10 @@ requests.get('http://www.example.com', auth=Basic('username', 'password'))
 
 ### Parameters ###
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>username</strong></td>
-        <td>User name.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>password</strong></td>
-        <td>User password.</td>
-        <td>Mandatory</td>
-        <td></td>
-    </tr>
-</table>
+| Name                    | Description                    | Mandatory | Default value |
+|:------------------------|:-------------------------------|:----------|:--------------|
+| `username`              | User name.                     | Mandatory |               |
+| `password`              | User password.                 | Mandatory |               |
 
 ## NTLM ##
 
@@ -714,25 +350,10 @@ requests.get('http://www.example.com', auth=NTLM())
 
 ### Parameters ###
 
-<table>
-    <th>
-        <td><em>Description</em></td>
-        <td><em>Mandatory</em></td>
-        <td><em>Default value</em></td>
-    </th>
-    <tr>
-        <td><strong>username</strong></td>
-        <td>User name.</td>
-        <td>Mandatory if requests_negotiate_sspi module is not installed. In such a case requests_ntlm module is mandatory.</td>
-        <td></td>
-    </tr>
-    <tr>
-        <td><strong>password</strong></td>
-        <td>User password.</td>
-        <td>Mandatory if requests_negotiate_sspi module is not installed. In such a case requests_ntlm module is mandatory.</td>
-        <td></td>
-    </tr>
-</table>
+| Name                    | Description                    | Mandatory | Default value |
+|:------------------------|:-------------------------------|:----------|:--------------|
+| `username`              | User name.                     | Mandatory if requests_negotiate_sspi module is not installed. In such a case requests_ntlm module is mandatory. |               |
+| `password`              | User password.                 | Mandatory if requests_negotiate_sspi module is not installed. In such a case requests_ntlm module is mandatory. |               |
 
 ## Multiple authentication at once ##
 
