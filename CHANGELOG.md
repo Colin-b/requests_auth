@@ -6,6 +6,13 @@ List all changes in various categories:
 * Bug fixes
 * Known issues
 
+## 4.0.1 (2018-12-16) ##
+
+### Bug fixes ###
+
+- Update requests dependency to the latest version.
+- Update the packaging to render Markdown on pypi.
+
 ## 4.0.0 (2018-12-16) ##
 
 ### Release notes ###
