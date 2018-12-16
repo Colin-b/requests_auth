@@ -15,6 +15,7 @@ setup(name='requests_auth',
       url="https://github.com/Colin-b/requests_auth",
       description="Easy Authentication for Requests",
       long_description=long_description,
+      long_description_content_type='text/markdown',
       download_url='https://pypi.org/project/requests-auth/',
       license='MIT',
       classifiers=[
