@@ -172,7 +172,7 @@ Usual parameters are:
 
 #### Common providers ####
 
-##### Microsoft - Azure Active Directory #####
+##### Microsoft - Azure Active Directory (OAuth2 Access Token) #####
 
 Sample:
 
@@ -200,6 +200,44 @@ requests.get('http://www.example.com', auth=aad(OAuth2Flow.Implicit, tenant_id='
 |:------------------------|:---------------------------|:----------|:--------------|
 | `tenant_id`             | Microsoft Tenant Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `client_id`             | Microsoft Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | token |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details | Optional | Newly generated Universal Unique Identifier. |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+
+Any other parameter will be put as query parameter in the authorization URL.        
+
+Usual parameters are:
+
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `prompt`        | none to avoid prompting the user if a session is already opened.     |
+
+##### Microsoft - Azure Active Directory (OpenID Connect ID token) #####
+
+Sample:
+
+```python
+import requests
+from requests_auth import AzureActiveDirectoryImplicitIdToken
+
+
+aad = AzureActiveDirectoryImplicitIdToken(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
+requests.get('http://www.example.com', auth=aad)
+```
+
+###### Parameters ######
+
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `tenant_id`             | Microsoft Tenant Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `client_id`             | Microsoft Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | id_token |
 | `token_field_name`      | Field name containing the token. | Optional | id_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details | Optional | Newly generated Universal Unique Identifier. |
@@ -219,7 +257,7 @@ Usual parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-##### OKTA (implicit flow) #####
+##### OKTA (OAuth2 Access Token) #####
 
 Sample:
 
@@ -239,6 +277,46 @@ import requests
 from requests_auth import okta, OAuth2Flow
 
 requests.get('http://www.example.com', auth=okta(OAuth2Flow.Implicit, instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd'))
+```
+
+###### Parameters ######
+
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | Microsoft Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | token |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
+| `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | ['openid', 'profile', 'email'] |
+| `authorization_server`  | OKTA authorization server. | Optional | '' |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+
+Any other parameter will be put as query parameter in the authorization URL.        
+
+Usual parameters are:
+
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `prompt`        | none to avoid prompting the user if a session is already opened.     |
+
+##### OKTA (OpenID Connect ID token) #####
+
+Sample:
+
+```python
+import requests
+from requests_auth import OktaImplicitIdToken
+
+
+okta = OktaImplicitIdToken(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
+requests.get('http://www.example.com', auth=okta)
 ```
 
 ###### Parameters ######

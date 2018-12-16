@@ -11,7 +11,9 @@ from .authentication import (
 
     OAuth2Implicit,
     OktaImplicit,
+    OktaImplicitIdToken,
     AzureActiveDirectoryImplicit,
+    AzureActiveDirectoryImplicitIdToken,
 
     OAuth2AuthorizationCode,
 
