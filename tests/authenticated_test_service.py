@@ -42,6 +42,12 @@ def post_token_as_access_token():
     return submit_a_form_with_a_token(expiry_in_1_hour, 'access_token')
 
 
+@app.route('/provide_token_as_id_token')
+def post_token_as_id_token():
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    return submit_a_form_with_a_token(expiry_in_1_hour, 'id_token')
+
+
 @app.route('/provide_token_as_anchor_access_token')
 def get_token_as_anchor_token():
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)

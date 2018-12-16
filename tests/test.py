@@ -183,8 +183,8 @@ class OktaTest(unittest.TestCase):
         self.assertRegex(okta.grant_details.url,
                          'https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
-                         '&scope=openid+profile+email'
                          '&response_type=id_token'
+                         '&scope=openid+profile+email'
                          '&state=da5a9f82a677a9b3bf19ce2f063f336f1968b8960d4626b35f7d4c0aee68e48ae1a5d5994dc78c3deb043d0e431c5be0bb084c8ac39bd41d670780306329d5a8'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
@@ -341,6 +341,21 @@ class AuthenticationTest(unittest.TestCase):
             timeout=TIMEOUT,
             response_type='custom_token',
             token_field_name='custom_token',
+        )
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
+
+    def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_is_id_token(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_id_token',
+            timeout=TIMEOUT,
+            response_type='id_token',
+        )
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
+
+    def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_in_url_is_id_token(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_id_token?response_type=id_token',
+            timeout=TIMEOUT,
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
