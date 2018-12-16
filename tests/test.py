@@ -81,21 +81,38 @@ class AzureADTest(unittest.TestCase):
         self.assertRegex(aad.grant_details.url,
                          'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
-                         '&response_type=id_token'
-                         '&state=c141cf16f45343f37ca8053b6d0c67bad30a777b00221132d5a4514dd23082994e553a9f9fb45224ab9c2da3380047b32948fc2bf233efddc2fbd5801fc1d2d9'
+                         '&response_type=token'
+                         '&state=900fe3bb417d9c729361548bc6d3f83ad881e0b030ac27b2b563ee44ddf563c368612e8ee5b483f43667e897c96551388f6dfbdef83558ba2d6367d3b40d0496'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
         self.assertRegex(str(aad),
                          "OAuth2Implicit("
                          "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
-                         "response_type='id_token', "
-                         "token_field_name='id_token', "
                          "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
 
     def test_corresponding_oauth2_implicit_flow_instance_using_helper(self):
         aad = requests_auth.aad(
             requests_auth.OAuth2Flow.Implicit,
+            '45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
+            '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+        )
+        self.assertRegex(aad.grant_details.url,
+                         'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
+                         'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+                         '&response_type=token'
+                         '&state=900fe3bb417d9c729361548bc6d3f83ad881e0b030ac27b2b563ee44ddf563c368612e8ee5b483f43667e897c96551388f6dfbdef83558ba2d6367d3b40d0496'
+                         '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
+                         '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
+        self.assertRegex(str(aad),
+                         "OAuth2Implicit("
+                         "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
+                         "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
+                         "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
+
+
+    def test_corresponding_oauth2_implicit_flow_id_token_instance(self):
+        aad = requests_auth.AzureActiveDirectoryImplicitIdToken(
             '45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
             '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
         )
@@ -125,17 +142,15 @@ class OktaTest(unittest.TestCase):
         self.assertRegex(okta.grant_details.url,
                          'https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
-                         '&response_type=id_token'
                          '&scope=openid+profile+email'
-                         '&state=da5a9f82a677a9b3bf19ce2f063f336f1968b8960d4626b35f7d4c0aee68e48ae1a5d5994dc78c3deb043d0e431c5be0bb084c8ac39bd41d670780306329d5a8'
+                         '&response_type=token'
+                         '&state=f52217fda42a2089f9624cd7a36bb15bff1fb713144cbefbf3ace96c06b0adff46f854c803a41aa09b4b8a6fedf188f4d0ce3f84a6164a6a5db1cd7c004f9d91'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
         self.assertRegex(str(okta),
                          "OAuth2Implicit("
                          "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
-                         "response_type='id_token', "
-                         "token_field_name='id_token', "
                          "nonce='.*-.*-.*-.*-.*', "
                          "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
 
@@ -148,8 +163,28 @@ class OktaTest(unittest.TestCase):
         self.assertRegex(okta.grant_details.url,
                          'https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
-                         '&response_type=id_token'
                          '&scope=openid+profile+email'
+                         '&response_type=token'
+                         '&state=f52217fda42a2089f9624cd7a36bb15bff1fb713144cbefbf3ace96c06b0adff46f854c803a41aa09b4b8a6fedf188f4d0ce3f84a6164a6a5db1cd7c004f9d91'
+                         '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
+                         '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
+        self.assertRegex(str(okta),
+                         "OAuth2Implicit("
+                         "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
+                         "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
+                         "nonce='.*-.*-.*-.*-.*', "
+                         "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
+
+    def test_corresponding_oauth2_implicit_flow_id_token_instance(self):
+        okta = requests_auth.OktaImplicitIdToken(
+            'testserver.okta-emea.com',
+            '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+        )
+        self.assertRegex(okta.grant_details.url,
+                         'https://testserver.okta-emea.com/oauth2/v1/authorize?'
+                         'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+                         '&scope=openid+profile+email'
+                         '&response_type=id_token'
                          '&state=da5a9f82a677a9b3bf19ce2f063f336f1968b8960d4626b35f7d4c0aee68e48ae1a5d5994dc78c3deb043d0e431c5be0bb084c8ac39bd41d670780306329d5a8'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
