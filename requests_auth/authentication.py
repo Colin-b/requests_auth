@@ -52,10 +52,11 @@ def _pop_parameter(url, query_parameter_name):
     return urlunsplit((scheme, netloc, path, new_query_string, fragment)), parameter_value
 
 
-def _contains_query_parameter(url, param_name):
+def _get_query_parameter(url, param_name):
     scheme, netloc, path, query_string, fragment = urlsplit(url)
     query_params = parse_qs(query_string)
-    return param_name in query_params
+    all_values = query_params.get(param_name)
+    return all_values[0] if all_values else None
 
 
 def request_new_grant_with_post(url, data, grant_name, timeout, auth=None):
@@ -312,7 +313,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
         code_field_name = extra_parameters.pop('code_field_name', 'code')
-        if _contains_query_parameter(self.authorization_url, 'response_type'):
+        if _get_query_parameter(self.authorization_url, 'response_type'):
             extra_parameters.pop('response_type', None)  # Ensure provided value will not be overridden
         else:
             # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
@@ -385,7 +386,7 @@ class OAuth2Implicit(requests.auth.AuthBase):
         :param response_type: Value of the response_type query parameter if not already provided in authorization URL.
         token by default.
         :param token_field_name: Name of the expected field containing the token.
-        access_token by default.
+        id_token by default if response_type is id_token, else access_token.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
@@ -429,13 +430,18 @@ class OAuth2Implicit(requests.auth.AuthBase):
         success_display_time = int(extra_parameters.pop('success_display_time', None) or 1)
         # Time is expressed in milliseconds
         failure_display_time = int(extra_parameters.pop('failure_display_time', None) or 5000)
-        # As described in https://tools.ietf.org/html/rfc6749#section-4.2.2
-        token_field_name = extra_parameters.pop('token_field_name', 'access_token')
-        if _contains_query_parameter(self.authorization_url, 'response_type'):
+
+        response_type = _get_query_parameter(self.authorization_url, 'response_type')
+        if response_type:
             extra_parameters.pop('response_type', None)  # Ensure provided value will not be overridden
         else:
             # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
-            extra_parameters.setdefault('response_type', 'token')
+            response_type = extra_parameters.setdefault('response_type', 'token')
+
+        # As described in https://tools.ietf.org/html/rfc6749#section-4.2.2
+        token_field_name = extra_parameters.pop('token_field_name', None)
+        if not token_field_name:
+            token_field_name = 'id_token' if 'id_token' == response_type else 'access_token'
 
         redirect_uri = 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
         authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)

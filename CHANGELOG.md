@@ -11,7 +11,7 @@ List all changes in various categories:
 ### Release notes ###
 
 - str representation of authentication classes are not prefixed by "authentication." anymore.
-- [OAuth2] Implicit flow is now expecting token in access_token field by default. This can be overridden thanks to new token_field_name parameter. Previous behavior was to expect a token named the same way than response_type (or token)
+- [OAuth2] Implicit flow is now expecting token in access_token field by default (or id_token if response_type is id_token). This can be overridden thanks to new token_field_name parameter. Previous behavior was to expect a token named the same way than response_type (or token)
 - [OAuth2] Authorization code flow provides a new code_field_name parameter to know in what field code should be expected. Default value is code. Previous behavior was to expect a code named the same way than response_type (or code)
 - [Azure AD] Implicit class now provides Access Token by default. Use new IdToken class to request OpenID Connect ID Token.
 - [Okta] Implicit class now provides Access Token by default. Use new IdToken class to request OpenID Connect ID Token.
