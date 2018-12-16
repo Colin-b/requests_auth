@@ -81,15 +81,14 @@ class AzureADTest(unittest.TestCase):
         self.assertRegex(aad.grant_details.url,
                          'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
-                         '&response_type=id_token'
-                         '&state=c141cf16f45343f37ca8053b6d0c67bad30a777b00221132d5a4514dd23082994e553a9f9fb45224ab9c2da3380047b32948fc2bf233efddc2fbd5801fc1d2d9'
+                         '&response_type=token'
+                         '&state=900fe3bb417d9c729361548bc6d3f83ad881e0b030ac27b2b563ee44ddf563c368612e8ee5b483f43667e897c96551388f6dfbdef83558ba2d6367d3b40d0496'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
         self.assertRegex(str(aad),
-                         "authentication.OAuth2Implicit("
+                         "OAuth2Implicit("
                          "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
-                         "response_type='id_token', "
                          "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
 
     def test_corresponding_oauth2_implicit_flow_instance_using_helper(self):
@@ -101,15 +100,35 @@ class AzureADTest(unittest.TestCase):
         self.assertRegex(aad.grant_details.url,
                          'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+                         '&response_type=token'
+                         '&state=900fe3bb417d9c729361548bc6d3f83ad881e0b030ac27b2b563ee44ddf563c368612e8ee5b483f43667e897c96551388f6dfbdef83558ba2d6367d3b40d0496'
+                         '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
+                         '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
+        self.assertRegex(str(aad),
+                         "OAuth2Implicit("
+                         "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
+                         "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
+                         "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
+
+
+    def test_corresponding_oauth2_implicit_flow_id_token_instance(self):
+        aad = requests_auth.AzureActiveDirectoryImplicitIdToken(
+            '45239d18-c68c-4c47-8bdd-ce71ea1d50cd',
+            '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+        )
+        self.assertRegex(aad.grant_details.url,
+                         'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize?'
+                         'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
                          '&state=c141cf16f45343f37ca8053b6d0c67bad30a777b00221132d5a4514dd23082994e553a9f9fb45224ab9c2da3380047b32948fc2bf233efddc2fbd5801fc1d2d9'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?'))
         self.assertRegex(str(aad),
-                         "authentication.OAuth2Implicit("
+                         "OAuth2Implicit("
                          "'https://login.microsoftonline.com/45239d18-c68c-4c47-8bdd-ce71ea1d50cd/oauth2/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
+                         "token_field_name='id_token', "
                          "nonce='.*-.*-.*-.*-.*')".replace('(', '\(').replace(')', '\)'))
 
 
@@ -123,16 +142,15 @@ class OktaTest(unittest.TestCase):
         self.assertRegex(okta.grant_details.url,
                          'https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
-                         '&response_type=id_token'
                          '&scope=openid+profile+email'
-                         '&state=da5a9f82a677a9b3bf19ce2f063f336f1968b8960d4626b35f7d4c0aee68e48ae1a5d5994dc78c3deb043d0e431c5be0bb084c8ac39bd41d670780306329d5a8'
+                         '&response_type=token'
+                         '&state=f52217fda42a2089f9624cd7a36bb15bff1fb713144cbefbf3ace96c06b0adff46f854c803a41aa09b4b8a6fedf188f4d0ce3f84a6164a6a5db1cd7c004f9d91'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
         self.assertRegex(str(okta),
-                         "authentication.OAuth2Implicit("
+                         "OAuth2Implicit("
                          "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
-                         "response_type='id_token', "
                          "nonce='.*-.*-.*-.*-.*', "
                          "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
 
@@ -145,16 +163,37 @@ class OktaTest(unittest.TestCase):
         self.assertRegex(okta.grant_details.url,
                          'https://testserver.okta-emea.com/oauth2/v1/authorize?'
                          'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+                         '&scope=openid+profile+email'
+                         '&response_type=token'
+                         '&state=f52217fda42a2089f9624cd7a36bb15bff1fb713144cbefbf3ace96c06b0adff46f854c803a41aa09b4b8a6fedf188f4d0ce3f84a6164a6a5db1cd7c004f9d91'
+                         '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
+                         '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
+        self.assertRegex(str(okta),
+                         "OAuth2Implicit("
+                         "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
+                         "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
+                         "nonce='.*-.*-.*-.*-.*', "
+                         "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
+
+    def test_corresponding_oauth2_implicit_flow_id_token_instance(self):
+        okta = requests_auth.OktaImplicitIdToken(
+            'testserver.okta-emea.com',
+            '54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
+        )
+        self.assertRegex(okta.grant_details.url,
+                         'https://testserver.okta-emea.com/oauth2/v1/authorize?'
+                         'client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd'
                          '&response_type=id_token'
                          '&scope=openid+profile+email'
                          '&state=da5a9f82a677a9b3bf19ce2f063f336f1968b8960d4626b35f7d4c0aee68e48ae1a5d5994dc78c3deb043d0e431c5be0bb084c8ac39bd41d670780306329d5a8'
                          '&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F'
                          '&nonce=%5B%27.*-.*-.*-.*-.*%27%5D'.replace('?', '\?').replace('+', '\+'))
         self.assertRegex(str(okta),
-                         "authentication.OAuth2Implicit("
+                         "OAuth2Implicit("
                          "'https://testserver.okta-emea.com/oauth2/v1/authorize', "
                          "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
                          "response_type='id_token', "
+                         "token_field_name='id_token', "
                          "nonce='.*-.*-.*-.*-.*', "
                          "scope='openid profile email')".replace('(', '\(').replace(')', '\)'))
 
@@ -224,7 +263,8 @@ class AuthenticationTest(unittest.TestCase):
     def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing(self):
         auth1 = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&fake_param=1',
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
+            token_field_name='custom_token'
         )
         token_on_auth1 = get_header(auth1).get('Authorization')
         self.assertRegex(token_on_auth1, '^Bearer .*')
@@ -236,7 +276,8 @@ class AuthenticationTest(unittest.TestCase):
 
         auth2 = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&fake_param=2',
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
+            token_field_name='custom_token'
         )
         token_on_auth2 = get_header(auth2).get('Authorization')
         self.assertRegex(token_on_auth2, '^Bearer .*')
@@ -246,14 +287,16 @@ class AuthenticationTest(unittest.TestCase):
     def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(self):
         auth1 = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&nonce=1',
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
+            token_field_name='custom_token'
         )
         token_on_auth1 = get_header(auth1).get('Authorization')
         self.assertRegex(token_on_auth1, '^Bearer .*')
 
         auth2 = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token?response_type=custom_token&nonce=2',
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
+            token_field_name='custom_token'
         )
         token_on_auth2 = get_header(auth2).get('Authorization')
         self.assertRegex(token_on_auth2, '^Bearer .*')
@@ -262,7 +305,7 @@ class AuthenticationTest(unittest.TestCase):
 
     def test_oauth2_implicit_flow_token_can_be_requested_on_a_custom_server_port(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             # TODO Should use a method to retrieve a free port instead
             redirect_uri_port=5002,
             timeout=TIMEOUT
@@ -271,21 +314,21 @@ class AuthenticationTest(unittest.TestCase):
 
     def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_default(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
     def test_oauth2_implicit_flow_get_token_is_sent_in_authorization_header_by_default(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_anchor_token',
+            TEST_SERVICE_HOST + '/provide_token_as_anchor_access_token',
             timeout=TIMEOUT
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
     def test_oauth2_implicit_flow_token_is_sent_in_requested_field(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT,
             header_name='Bearer',
             header_value='{token}'
@@ -296,27 +339,43 @@ class AuthenticationTest(unittest.TestCase):
         auth = requests_auth.OAuth2Implicit(
             TEST_SERVICE_HOST + '/provide_token_as_custom_token',
             timeout=TIMEOUT,
-            response_type='custom_token'
+            response_type='custom_token',
+            token_field_name='custom_token',
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
-    def test_oauth2_implicit_flow_expects_token_to_be_stored_in_token_by_default(self):
+    def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_is_id_token(self):
         auth = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_id_token',
+            timeout=TIMEOUT,
+            response_type='id_token',
+        )
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
+
+    def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_in_url_is_id_token(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_id_token?response_type=id_token',
+            timeout=TIMEOUT,
+        )
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
+
+    def test_oauth2_implicit_flow_expects_token_to_be_stored_in_access_token_by_default(self):
+        auth = requests_auth.OAuth2Implicit(
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer .*')
 
     def test_oauth2_implicit_flow_token_is_reused_if_not_expired(self):
         auth1 = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT
         )
         token1 = get_header(auth1).get('Authorization')
         self.assertRegex(token1, '^Bearer .*')
 
         oauth2 = requests_auth.OAuth2Implicit(
-            TEST_SERVICE_HOST + '/provide_token_as_token',
+            TEST_SERVICE_HOST + '/provide_token_as_access_token',
             timeout=TIMEOUT
         )
         token2 = get_header(oauth2).get('Authorization')
@@ -331,7 +390,7 @@ class AuthenticationTest(unittest.TestCase):
                 TEST_SERVICE_HOST + '/do_not_provide_token',
                 timeout=TIMEOUT)
             )
-        self.assertEqual('token not provided within {}.', str(cm.exception))
+        self.assertEqual('access_token not provided within {}.', str(cm.exception))
 
     def test_oauth2_implicit_flow_get_failure_if_token_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
@@ -339,23 +398,23 @@ class AuthenticationTest(unittest.TestCase):
                 TEST_SERVICE_HOST + '/do_not_provide_token_as_anchor_token',
                 timeout=TIMEOUT
             ))
-        self.assertEqual("token not provided within {}.", str(cm.exception))
+        self.assertEqual("access_token not provided within {}.", str(cm.exception))
 
     def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
             call(requests_auth.OAuth2Implicit(
-                TEST_SERVICE_HOST + '/provide_token_as_token_but_without_providing_state',
+                TEST_SERVICE_HOST + '/provide_token_as_access_token_but_without_providing_state',
                 timeout=TIMEOUT
             ),)
-        self.assertRegex(str(cm.exception), "state not provided within {'token': \['.*'\]}.")
+        self.assertRegex(str(cm.exception), "state not provided within {'access_token': \['.*'\]}.")
 
     def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(self):
         with self.assertRaises(Exception) as cm:
             call(requests_auth.OAuth2Implicit(
-                TEST_SERVICE_HOST + '/provide_token_as_anchor_token_but_without_providing_state',
+                TEST_SERVICE_HOST + '/provide_token_as_anchor_access_token_but_without_providing_state',
                 timeout=TIMEOUT
             ),)
-        self.assertRegex(str(cm.exception), "state not provided within {'token': \['.*'\]}.")
+        self.assertRegex(str(cm.exception), "state not provided within {'access_token': \['.*'\]}.")
 
     def test_oauth2_implicit_flow_failure_if_token_is_not_received_within_the_timeout_interval(self):
         with self.assertRaises(Exception) as cm:
