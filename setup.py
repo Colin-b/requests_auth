@@ -7,7 +7,7 @@ with open(os.path.join(this_dir, 'README.md'), 'r') as f:
 
 # More information on properties: https://packaging.python.org/distributing
 setup(name='requests_auth',
-      version=open("requests_auth/_version.py").readlines()[-1].split()[-1].strip("\"'"),
+      version=open("requests_auth/version.py").readlines()[-1].split()[-1].strip("\"'"),
       author='Colin Bounouar',
       author_email='colin.bounouar.dev@gmail.com',
       maintainer='Colin Bounouar',
@@ -47,11 +47,11 @@ setup(name='requests_auth',
           # Used to run tests
           'nose==1.3.7',
           # Used to generate a JWT token
-          'pyjwt==1.6.4',
+          'pyjwt==1.7.1',
           # Used to run test services
           'flask==1.0.2',
           # Used to mock responses to requests
-          'responses==0.10.3',
+          'responses==0.10.6',
       ],
       install_requires=[
           # Used for Base Authentication and to communicate with OAuth2 servers (also used in test cases)
