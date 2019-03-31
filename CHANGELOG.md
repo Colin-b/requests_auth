@@ -6,6 +6,12 @@ List all changes in various categories:
 * Bug fixes
 * Known issues
 
+## 4.1.0 (2019-04-01) ##
+
+### Enhancements ###
+
+- module version is now publicly available.
+
 ## 4.0.1 (2018-12-16) ##
 
 ### Bug fixes ###
