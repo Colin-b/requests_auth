@@ -11,6 +11,11 @@ List all changes in various categories:
 ### Enhancements ###
 
 - module version is now publicly available.
+- multiple authentication is now possible using "+" sign.
+
+### Deprecated ###
+
+- Auths class will be considered as internal in the future and should not be used anymore. Use "+" instead.
 
 ## 4.0.1 (2018-12-16) ##
 

@@ -439,11 +439,11 @@ You can also use a combination of authentication as in the following sample:
 
 ```python
 import requests
-from requests_auth import Auths, HeaderApiKey, OAuth2Implicit
+from requests_auth import HeaderApiKey, OAuth2Implicit
 
 api_key = HeaderApiKey('my_api_key')
 oauth2 = OAuth2Implicit('https://www.example.com')
-requests.get('http://www.example.com', auth=Auths(api_key, oauth2))
+requests.get('http://www.example.com', auth=api_key + oauth2)
 ```
 
 [1]: https://pypi.python.org/pypi/requests "requests module"

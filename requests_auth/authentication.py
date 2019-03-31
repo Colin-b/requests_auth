@@ -3,6 +3,7 @@ from hashlib import sha512
 import uuid
 import requests
 import requests.auth
+import warnings
 
 from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
 from requests_auth.errors import *
@@ -148,6 +149,11 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
+
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
         return "OAuth2ResourceOwnerPasswordCredentials('{0}', '{1}', '{2}', {3})".format(
@@ -226,6 +232,11 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         )
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
+
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
@@ -361,6 +372,11 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
+
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
         return "OAuth2AuthorizationCode('{0}', '{1}', {2})".format(
@@ -466,6 +482,11 @@ class OAuth2Implicit(requests.auth.AuthBase):
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
+
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
 
     def __str__(self):
         addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
@@ -697,6 +718,11 @@ class HeaderApiKey(requests.auth.AuthBase):
         r.headers[self.header_name] = self.api_key
         return r
 
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
+
     def __str__(self):
         return "HeaderApiKey('{0}', '{1}')".format(self.api_key, self.header_name)
 
@@ -718,6 +744,11 @@ class QueryApiKey(requests.auth.AuthBase):
         r.url = _add_parameters(r.url, {self.query_parameter_name: self.api_key})
         return r
 
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
+
     def __str__(self):
         return "QueryApiKey('{0}', '{1}')".format(self.api_key, self.query_parameter_name)
 
@@ -727,6 +758,11 @@ class Basic(requests.auth.HTTPBasicAuth):
 
     def __init__(self, username, password):
         requests.auth.HTTPBasicAuth.__init__(self, username, password)
+
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
 
     def __str__(self):
         return "Basic('{0}', '{1}')".format(self.username, self.password)
@@ -763,6 +799,11 @@ class NTLM:
         self.auth.__call__(r)
         return r
 
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
+
     def __str__(self):
         if self.username and self.password:
             return "NTLM('{0}', '{1}')".format(self.username, self.password)
@@ -773,12 +814,18 @@ class Auths(requests.auth.AuthBase):
     """Authentication using multiple authentication methods."""
 
     def __init__(self, *authentication_modes):
+        warnings.warn("Auths class will be removed in the future. Use + instead.", DeprecationWarning)
         self.authentication_modes = authentication_modes
 
     def __call__(self, r):
         for authentication_mode in self.authentication_modes:
             authentication_mode.__call__(r)
         return r
+
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(*self.authentication_modes, *other.authentication_modes)
+        return Auths(*self.authentication_modes, other)
 
     def __str__(self):
         return "Auths(" + ", ".join(map(str, self.authentication_modes)) + ")"

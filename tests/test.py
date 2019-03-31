@@ -24,50 +24,49 @@ logger = logging.getLogger(__name__)
 class JsonTokenFileCacheTest(unittest.TestCase):
 
     def setUp(self):
-        global cache
-        cache = requests_auth.JsonTokenFileCache('test_tokens.cache')
+        self._token_cache = requests_auth.JsonTokenFileCache(self.id() + '.cache')
 
     def tearDown(self):
-        cache.clear()
+        self._token_cache.clear()
 
     def test_add_bearer_tokens(self):
         expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         token1 = authenticated_test_service.create_token(expiry_in_1_hour)
-        cache.add_bearer_token('key1', token1)
+        self._token_cache.add_bearer_token('key1', token1)
 
         expiry_in_2_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
         token2 = authenticated_test_service.create_token(expiry_in_2_hour)
-        cache.add_bearer_token('key2', token2)
+        self._token_cache.add_bearer_token('key2', token2)
 
         # Assert that tokens can be retrieved properly even after other token were inserted
-        self.assertEqual(cache.get_token('key1'), token1)
-        self.assertEqual(cache.get_token('key2'), token2)
+        self.assertEqual(self._token_cache.get_token('key1'), token1)
+        self.assertEqual(self._token_cache.get_token('key2'), token2)
 
         # Assert that tokens are not removed from the cache on retrieval
-        self.assertEqual(cache.get_token('key1'), token1)
-        self.assertEqual(cache.get_token('key2'), token2)
+        self.assertEqual(self._token_cache.get_token('key1'), token1)
+        self.assertEqual(self._token_cache.get_token('key2'), token2)
 
     def test_save_bearer_tokens(self):
         expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         token1 = authenticated_test_service.create_token(expiry_in_1_hour)
-        cache.add_bearer_token('key1', token1)
+        self._token_cache.add_bearer_token('key1', token1)
 
         expiry_in_2_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=2)
         token2 = authenticated_test_service.create_token(expiry_in_2_hour)
-        cache.add_bearer_token('key2', token2)
+        self._token_cache.add_bearer_token('key2', token2)
 
-        same_cache = requests_auth.JsonTokenFileCache('test_tokens.cache')
+        same_cache = requests_auth.JsonTokenFileCache(self.id() + '.cache')
         self.assertEqual(same_cache.get_token('key1'), token1)
         self.assertEqual(same_cache.get_token('key2'), token2)
 
     def test_missing_token(self):
         with self.assertRaises(errors.AuthenticationFailed):
-            cache.get_token('key1')
+            self._token_cache.get_token('key1')
 
     def test_missing_token_function(self):
         expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         token = authenticated_test_service.create_token(expiry_in_1_hour)
-        retrieved_token = cache.get_token('key1', lambda: ('key1', token))
+        retrieved_token = self._token_cache.get_token('key1', lambda: ('key1', token))
         self.assertEqual(retrieved_token, token)
 
 
@@ -504,6 +503,13 @@ class AuthenticationTest(unittest.TestCase):
         self.assertEqual(get_header(auth).get('Authorization'), 'Basic dGVzdF91c2VyOnRlc3RfcHdk')
 
     def test_basic_and_api_key_authentication_can_be_combined(self):
+        basic_auth = requests_auth.Basic('test_user', 'test_pwd')
+        api_key_auth = requests_auth.HeaderApiKey('my_provided_api_key')
+        header = get_header(basic_auth + api_key_auth)
+        self.assertEqual(header.get('Authorization'), 'Basic dGVzdF91c2VyOnRlc3RfcHdk')
+        self.assertEqual(header.get('X-Api-Key'), 'my_provided_api_key')
+
+    def test_basic_and_api_key_authentication_can_be_combined_deprecated(self):
         basic_auth = requests_auth.Basic('test_user', 'test_pwd')
         api_key_auth = requests_auth.HeaderApiKey('my_provided_api_key')
         header = get_header(requests_auth.Auths(basic_auth, api_key_auth))
