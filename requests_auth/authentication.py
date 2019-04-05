@@ -701,6 +701,64 @@ class OktaImplicitIdToken(OAuth2Implicit):
         )
 
 
+class OktaAuthorizationCode(OAuth2AuthorizationCode):
+    """
+    Describes an OKTA (OAuth 2) "Access Token" implicit flow requests authentication.
+    """
+
+    def __init__(self, instance, client_id, **kwargs):
+        """
+        :param instance: OKTA instance (like "testserver.okta-emea.com")
+        :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
+        :param response_type: Value of the response_type query parameter.
+        token by default.
+        :param token_field_name: Name of the expected field containing the token.
+        access_token by default.
+        :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
+        (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
+        :param authorization_server: OKTA authorization server
+        :param scope: Scope parameter sent in query. Can also be a list of scopes.
+        Request ['openid', 'profile', 'email'] by default.
+        :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
+        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
+        Listen on port 5000 by default.
+        :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        Wait for 1 minute by default.
+        :param success_display_time: In case a token is successfully received,
+        this is the maximum amount of milliseconds the success page will be displayed in your browser.
+        Display the page for 1 millisecond by default.
+        :param failure_display_time: In case received token is not valid,
+        this is the maximum amount of milliseconds the failure page will be displayed in your browser.
+        Display the page for 5 seconds by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
+        :param kwargs: all additional authorization parameters that should be put as query parameter
+        in the authorization URL.
+        Usual parameters are:
+        * prompt: none to avoid prompting the user if a session is already opened.
+        """
+        authorization_server_id = kwargs.pop('authorization_server_id', None)
+        scopes = kwargs.pop('scope', 'openid')
+        kwargs['scope'] = ' '.join(scopes) if isinstance(scopes, list) else scopes
+        OAuth2AuthorizationCode.__init__(
+            self,
+            'https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize'.format(
+                okta_instance=instance,
+                okta_auth_server=authorization_server_id if authorization_server_id else "default"
+            ),
+            'https://{okta_instance}/oauth2/{okta_auth_server}/v1/token'.format(
+                okta_instance=instance,
+                okta_auth_server="/" + authorization_server_id if authorization_server_id else "default"
+            ),
+            client_id=client_id,
+            **kwargs
+        )
+
+
 class HeaderApiKey(requests.auth.AuthBase):
     """Describes an API Key requests authentication."""
 
