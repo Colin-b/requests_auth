@@ -604,7 +604,8 @@ class OktaImplicit(OAuth2Implicit):
         access_token by default.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
-        :param authorization_server: OKTA authorization server
+        :param authorization_server: OKTA authorization server.
+        default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request ['openid', 'profile', 'email'] by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
@@ -629,14 +630,14 @@ class OktaImplicit(OAuth2Implicit):
         Usual parameters are:
         * prompt: none to avoid prompting the user if a session is already opened.
         """
-        authorization_server = kwargs.pop('authorization_server', None)
+        authorization_server = kwargs.pop('authorization_server', None) or "default"
         scopes = kwargs.pop('scope', None) or ['openid', 'profile', 'email']
         kwargs['scope'] = ' '.join(scopes) if isinstance(scopes, list) else scopes
         OAuth2Implicit.__init__(
             self,
-            'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(
+            'https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize'.format(
                 okta_instance=instance,
-                okta_auth_server="/" + authorization_server if authorization_server else ""
+                okta_auth_server=authorization_server
             ),
             client_id=client_id,
             nonce=kwargs.pop('nonce', None) or str(uuid.uuid4()),
@@ -660,6 +661,7 @@ class OktaImplicitIdToken(OAuth2Implicit):
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param authorization_server: OKTA authorization server
+        default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request ['openid', 'profile', 'email'] by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
@@ -684,14 +686,14 @@ class OktaImplicitIdToken(OAuth2Implicit):
         Usual parameters are:
         * prompt: none to avoid prompting the user if a session is already opened.
         """
-        authorization_server = kwargs.pop('authorization_server', None)
+        authorization_server = kwargs.pop('authorization_server', None) or "default"
         scopes = kwargs.pop('scope', None) or ['openid', 'profile', 'email']
         kwargs['scope'] = ' '.join(scopes) if isinstance(scopes, list) else scopes
         OAuth2Implicit.__init__(
             self,
-            'https://{okta_instance}/oauth2{okta_auth_server}/v1/authorize'.format(
+            'https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize'.format(
                 okta_instance=instance,
-                okta_auth_server="/" + authorization_server if authorization_server else ""
+                okta_auth_server=authorization_server
             ),
             client_id=client_id,
             response_type=kwargs.pop('response_type', 'id_token'),
@@ -717,6 +719,7 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param authorization_server: OKTA authorization server
+        default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request ['openid', 'profile', 'email'] by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
@@ -741,18 +744,18 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         Usual parameters are:
         * prompt: none to avoid prompting the user if a session is already opened.
         """
-        authorization_server_id = kwargs.pop('authorization_server_id', None) or "default"
+        authorization_server = kwargs.pop('authorization_server', None) or "default"
         scopes = kwargs.pop('scope', 'openid')
         kwargs['scope'] = ' '.join(scopes) if isinstance(scopes, list) else scopes
         OAuth2AuthorizationCode.__init__(
             self,
             'https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize'.format(
                 okta_instance=instance,
-                okta_auth_server=authorization_server_id
+                okta_auth_server=authorization_server
             ),
             'https://{okta_instance}/oauth2/{okta_auth_server}/v1/token'.format(
                 okta_instance=instance,
-                okta_auth_server=authorization_server_id
+                okta_auth_server=authorization_server
             ),
             client_id=client_id,
             **kwargs

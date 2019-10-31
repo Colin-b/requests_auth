@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - module version is now publicly available.
 - multiple authentication is now possible using "+" sign.
-- OktaAuthorizationCode can now be created using requests_auth.okta function
+- OktaAuthorizationCode is now available
 
 ### Deprecated
 - Auths class will be considered as internal in the future and should not be used anymore. Use "+" instead.
@@ -16,8 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Avoid fixing dependencies to a specific version.
-- Avoid extra slash in OktaAuthorizationCode url
-- Expiry is now properly computed for access token
+- Expiry is now properly computed for access token.
+- It is not possible to provide an empty OKTA authorization_server anymore.
+
+### Changed
+- OKTA default value for authorization_server is now default.
 
 ## [4.0.1] - 2018-12-16
 ### Changed

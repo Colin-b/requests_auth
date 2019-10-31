@@ -289,7 +289,7 @@ requests.get('http://www.example.com', auth=okta(OAuth2Flow.Implicit, instance='
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | ['openid', 'profile', 'email'] |
-| `authorization_server`  | OKTA authorization server. | Optional | '' |
+| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
@@ -329,7 +329,7 @@ requests.get('http://www.example.com', auth=okta)
 | `token_field_name`      | Field name containing the token. | Optional | id_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | ['openid', 'profile', 'email'] |
-| `authorization_server`  | OKTA authorization server. | Optional | '' |
+| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
