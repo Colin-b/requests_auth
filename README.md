@@ -2,8 +2,38 @@
 
 This module provides you authentication classes to be used with [`requests`][1].
 
-To use a specific authentication in combination with requests, use the [authentication parameter on `requests` module][2].
+To use a specific authentication in combination with requests, use the [authentication parameter on `requests` module][2].  
 
+## Contents
+
+- [OAuth2](#oauth-2)
+  - [Authorization Code Flow](#authorization-code-flow)
+    - [Parameters](#parameters-1)
+  - [Resource Owner Password Credentials flow](#resource-owner-password-credentials-flow)
+    - [Parameters](#parameters-2)
+  - [Client Credentials Flow](#client-credentials-flow)
+    - [Parameters](#parameters-3)
+  - [Implicit Flow](#implicit-flow)
+    - [Parameters](#parameters-4)
+  - [Common Providers](#common-providers)
+    - [Microsoft - Azure Active Directory (OAuth2 Access Token)](#microsoft---azure-active-directory-oauth2-access-token)
+      - [Parameters](#parameters-5)
+    - [Microsoft - Azure Active Directory (OpenID Connect ID token)](#microsoft---azure-active-directory-openid-connect-id-token)
+      - [Parameters](#parameters-6)
+    - [OKTA (OAuth2 Access Token)](#okta-oauth2-access-token)
+      - [Parameters](#parameters-7)
+    - [OKTA (OpenID Connect ID token)](#okta-openid-connect-id-token)
+      - [Parameters](#parameters-8)
+  - [Managing token cache](#managing-token-cache)
+  - [API key in header](#api-key-in-header)
+    - [Parameters](#parameters-9)
+  - [API Key in query](#api-key-in-query)
+    - [Parameters](#parameters-10)
+  - [Basic](#basic)
+    - [Parameters](#parameters-11)
+  - [NTML](#ntml)
+    - [Parameters](#parameters-12)
+  - [Multiple authentication at once](#multiple-authentication-at-once)
 ## OAuth 2
 
 ### Authorization Code flow
