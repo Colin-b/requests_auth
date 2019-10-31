@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Avoid fixing dependencies to a specific version.
 - Avoid extra slash in OktaAuthorizationCode url
+- Expiry is now properly computed for access token
 
 ## [4.0.1] - 2018-12-16
 ### Changed

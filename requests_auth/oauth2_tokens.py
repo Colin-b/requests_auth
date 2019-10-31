@@ -62,7 +62,7 @@ class TokenMemoryCache:
         :param expires_in: Number of seconds before token expiry
         :raise InvalidToken: In case token is invalid.
         """
-        expiry = datetime.datetime.utcnow() + datetime.timedelta(seconds=expires_in)
+        expiry = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc) + datetime.timedelta(seconds=expires_in)
         self._add_token(key, token, expiry.timestamp())
 
     def _add_token(self, key, token, expiry):
