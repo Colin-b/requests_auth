@@ -721,7 +721,7 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         :param authorization_server: OKTA authorization server
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
-        Request ['openid', 'profile', 'email'] by default.
+        Request 'openid' by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
@@ -758,6 +758,45 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
                 okta_auth_server=authorization_server
             ),
             client_id=client_id,
+            **kwargs
+        )
+
+
+class OktaClientCredentials(OAuth2ClientCredentials):
+    """
+    Describes an OKTA (OAuth 2) client credentials (also called application) flow requests authentication.
+    """
+
+    def __init__(self, instance, client_id, client_secret, **kwargs):
+        """
+        :param instance: OKTA instance (like "testserver.okta-emea.com")
+        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
+        :param client_secret: Resource owner password.
+        :param authorization_server: OKTA authorization server
+        default by default.
+        :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        Wait for 1 minute by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
+        :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes.
+        Request 'openid' by default.
+        :param token_field_name: Field name containing the token. access_token by default.
+        :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
+        """
+        authorization_server = kwargs.pop('authorization_server', None) or "default"
+        scopes = kwargs.pop('scope', 'openid')
+        kwargs['scope'] = ' '.join(scopes) if isinstance(scopes, list) else scopes
+        OAuth2ClientCredentials.__init__(
+            self,
+            'https://{okta_instance}/oauth2/{okta_auth_server}/v1/token'.format(
+                okta_instance=instance,
+                okta_auth_server=authorization_server
+            ),
+            username=client_id,
+            password=client_secret,
             **kwargs
         )
 

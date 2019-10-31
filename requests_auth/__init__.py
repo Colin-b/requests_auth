@@ -19,6 +19,8 @@ from requests_auth.authentication import (
     OktaAuthorizationCode,
 
     OAuth2ClientCredentials,
+    OktaClientCredentials,
+
     OAuth2ResourceOwnerPasswordCredentials,
 )
 from requests_auth.oauth2_tokens import JsonTokenFileCache
@@ -63,6 +65,8 @@ def okta(flow, *args, **kwargs):
         return OktaImplicit(*args, **kwargs)
     if OAuth2Flow.AuthorizationCode == flow:
         return OktaAuthorizationCode(*args, **kwargs)
+    if OAuth2Flow.ClientCredentials == flow:
+        return OktaClientCredentials(*args, **kwargs)
     raise Exception('{0} flow is not handled yet in OKTA.'.format(flow))
 
 

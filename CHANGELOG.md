@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - module version is now publicly available.
 - multiple authentication is now possible using "+" sign.
-- OktaAuthorizationCode is now available
+- OktaAuthorizationCode is now available.
+- OktaClientCredentials is now available.
 
 ### Deprecated
 - Auths class will be considered as internal in the future and should not be used anymore. Use "+" instead.
