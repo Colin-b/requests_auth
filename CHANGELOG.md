@@ -8,9 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - module version is now publicly available.
 - multiple authentication is now possible using "+" sign.
+- OktaAuthorizationCode can now be created using requests_auth.okta function
 
 ### Deprecated
 - Auths class will be considered as internal in the future and should not be used anymore. Use "+" instead.
+- This is the latest release to support Python 2.7, next release will be 3.6+ only.
+
+### Fixed
+- Avoid fixing dependencies to a specific version.
+- Avoid extra slash in OktaAuthorizationCode url
 
 ## [4.0.1] - 2018-12-16
 ### Changed

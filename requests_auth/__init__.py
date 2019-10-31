@@ -1,6 +1,6 @@
 from enum import Enum, auto
 
-from .authentication import (
+from requests_auth.authentication import (
     Basic,
     HeaderApiKey,
     QueryApiKey,
@@ -12,16 +12,16 @@ from .authentication import (
     OAuth2Implicit,
     OktaImplicit,
     OktaImplicitIdToken,
-    OktaAuthorizationCode,
     AzureActiveDirectoryImplicit,
     AzureActiveDirectoryImplicitIdToken,
 
     OAuth2AuthorizationCode,
+    OktaAuthorizationCode,
 
     OAuth2ClientCredentials,
     OAuth2ResourceOwnerPasswordCredentials,
 )
-from .oauth2_tokens import JsonTokenFileCache
+from requests_auth.oauth2_tokens import JsonTokenFileCache
 
 
 class OAuth2Flow(Enum):
@@ -61,6 +61,8 @@ def okta(flow, *args, **kwargs):
     """
     if OAuth2Flow.Implicit == flow:
         return OktaImplicit(*args, **kwargs)
+    if OAuth2Flow.AuthorizationCode == flow:
+        return OktaAuthorizationCode(*args, **kwargs)
     raise Exception('{0} flow is not handled yet in OKTA.'.format(flow))
 
 

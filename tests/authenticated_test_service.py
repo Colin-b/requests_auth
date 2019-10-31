@@ -1,21 +1,19 @@
-from flask import Flask, jsonify, request, redirect
-import jwt
 import datetime
 import logging
+import sys
+
+from flask import Flask, jsonify, request, redirect
+import jwt
+
+logging.basicConfig(
+    handlers=[logging.StreamHandler(sys.stdout)],
+    level=logging.DEBUG,
+    format='%(asctime)s [%(threadName)s] [%(levelname)s] %(message)s'
+)
 
 app = Flask(__name__)
 
 logger = logging.getLogger(__name__)
-
-
-@app.route('/get_query_args', methods=['GET'])
-def get_query_args():
-    return jsonify(request.args)
-
-
-@app.route('/get_headers', methods=['GET'])
-def get_headers():
-    return jsonify(list(request.headers))
 
 
 already_asked_for_quick_expiry = [False]
@@ -57,17 +55,6 @@ def get_token_as_anchor_token():
 @app.route('/provide_code_as_anchor_code')
 def get_code_as_anchor_code():
     return redirect_with_a_code('code', 'SplxlOBeZQQYbYS6WxSbIA')
-
-
-@app.route('/provide_access_token', methods=['POST'])
-def get_access_token():
-    return jsonify({
-       "access_token": "2YotnFZFEjr1zCsicMWpAA",
-       "token_type": "example",
-       "expires_in": 3600,
-       "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
-       "example_parameter": "example_value"
-    })
 
 
 @app.route('/provide_token_as_access_token_but_without_providing_state')
@@ -205,7 +192,3 @@ def create_token(expiry):
 def start_server(port):
     logger.info('Starting test server on port {0}.'.format(port))
     app.run(port=port)
-
-
-if __name__ == '__main__':
-    start_server(5001)

@@ -703,7 +703,7 @@ class OktaImplicitIdToken(OAuth2Implicit):
 
 class OktaAuthorizationCode(OAuth2AuthorizationCode):
     """
-    Describes an OKTA (OAuth 2) "Access Token" implicit flow requests authentication.
+    Describes an OKTA (OAuth 2) "Access Token" authorization code flow requests authentication.
     """
 
     def __init__(self, instance, client_id, **kwargs):
@@ -741,18 +741,18 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         Usual parameters are:
         * prompt: none to avoid prompting the user if a session is already opened.
         """
-        authorization_server_id = kwargs.pop('authorization_server_id', None)
+        authorization_server_id = kwargs.pop('authorization_server_id', None) or "default"
         scopes = kwargs.pop('scope', 'openid')
         kwargs['scope'] = ' '.join(scopes) if isinstance(scopes, list) else scopes
         OAuth2AuthorizationCode.__init__(
             self,
             'https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize'.format(
                 okta_instance=instance,
-                okta_auth_server=authorization_server_id if authorization_server_id else "default"
+                okta_auth_server=authorization_server_id
             ),
             'https://{okta_instance}/oauth2/{okta_auth_server}/v1/token'.format(
                 okta_instance=instance,
-                okta_auth_server="/" + authorization_server_id if authorization_server_id else "default"
+                okta_auth_server=authorization_server_id
             ),
             client_id=client_id,
             **kwargs
