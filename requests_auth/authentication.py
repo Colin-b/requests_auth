@@ -597,7 +597,7 @@ class OktaImplicit(OAuth2Implicit):
     def __init__(self, instance, client_id, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
-        :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
+        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
         :param response_type: Value of the response_type query parameter.
         token by default.
         :param token_field_name: Name of the expected field containing the token.
@@ -652,7 +652,7 @@ class OktaImplicitIdToken(OAuth2Implicit):
     def __init__(self, instance, client_id, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
-        :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
+        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
         :param response_type: Value of the response_type query parameter.
         id_token by default.
         :param token_field_name: Name of the expected field containing the token.
@@ -709,7 +709,7 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
     def __init__(self, instance, client_id, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
-        :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
+        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
         :param response_type: Value of the response_type query parameter.
         token by default.
         :param token_field_name: Name of the expected field containing the token.
