@@ -24,6 +24,7 @@ from requests_auth.authentication import (
     OAuth2ResourceOwnerPasswordCredentials,
 )
 from requests_auth.oauth2_tokens import JsonTokenFileCache
+from requests_auth.version import __version__
 
 
 class OAuth2Flow(Enum):

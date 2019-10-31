@@ -1,9 +1,3 @@
-class PortNotAvailable(Exception):
-    """ Port is already taken. """
-    def __init__(self, port):
-        Exception.__init__(self, 'The port {0} is not available.'.format(port))
-
-
 class AuthenticationFailed(Exception):
     """ User was not authenticated. """
     def __init__(self):
