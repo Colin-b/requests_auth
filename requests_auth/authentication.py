@@ -538,7 +538,7 @@ class OAuth2PKCE(requests.auth.AuthBase):
         self.token_data['code'] = code
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.4
         token, expires_in = request_new_grant_with_post(
-            self.token_url, self.token_data, self.token_field_name, self.timeout, auth=self.auth
+            self.token_url, self.token_data, self.token_field_name, self.timeout
         )
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
