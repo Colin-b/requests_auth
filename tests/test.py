@@ -455,6 +455,14 @@ class AuthenticationTest(unittest.TestCase):
         )
         self.assertRegex(get_header(auth).get('Authorization'), '^Bearer 2YotnFZFEjr1zCsicMWpAA')
 
+    def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header_by_default(self):
+        auth = requests_auth.OAuth2PKCE(
+            TEST_SERVICE_HOST + '/provide_code_as_anchor_code',
+            TEST_SERVICE_HOST + '/provide_access_token',
+            timeout=TIMEOUT
+        )
+        self.assertRegex(get_header(auth).get('Authorization'), '^Bearer 2YotnFZFEjr1zCsicMWpAA')
+
     def test_oauth2_password_credentials_flow_token_is_sent_in_authorization_header_by_default(self):
         auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
             TEST_SERVICE_HOST + '/provide_access_token',

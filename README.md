@@ -55,6 +55,53 @@ Usual parameters are:
 | `client_secret` | If client is not authenticated with the authorization server         |
 | `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
 
+### PKCE flow ###
+
+Sample:
+
+```python
+import requests
+from requests_auth import OAuth2PKCE
+
+requests.get('http://www.example.com', auth=OAuth2PKCE('https://www.authorization.url', 'https://www.token.url'))
+```
+
+or
+
+```python
+import requests
+from requests_auth import oauth2, OAuth2Flow
+
+requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PKCE, 'https://www.authorization.url', 'https://www.token.url'))
+```
+
+#### Parameters ####
+
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `authorization_url`     | OAuth 2 authorization URL. | Mandatory |               |
+| `token_url`             | OAuth 2 token URL.         | Mandatory |               |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 code will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a code or a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a code is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received code is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | code |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `code_field_name`       | Field name containing the code. | Optional | code |
+
+Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
+
+Usual parameters are:
+        
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `client_id`     | Corresponding to your Application ID (in Microsoft Azure app portal) |
+| `client_secret` | If client is not authenticated with the authorization server         |
+| `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
+
 ### Resource Owner Password Credentials flow ###
 
 Sample:
