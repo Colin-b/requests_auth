@@ -103,7 +103,7 @@ def _get_query_parameter(url, param_name):
 
 def request_new_grant_with_post(url, data, grant_name, timeout, auth=None):
     response = requests.post(url, data=data, timeout=timeout, auth=auth)
-    print("error", response.content)
+
     response.raise_for_status()
 
     content = response.json()
