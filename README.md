@@ -1,4 +1,8 @@
-# Easy Authentication for Requests
+<h2 align="center">Easy Authentication for Requests</h2>
+
+<p align="center">
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+</p>
 
 This module provides you authentication classes to be used with [`requests`][1].
 
@@ -17,10 +21,11 @@ To use a specific authentication in combination with requests, use the [authenti
     - [OKTA (OAuth2 Access Token)](#okta-oauth2-access-token)
     - [OKTA (OpenID Connect ID token)](#okta-openid-connect-id-token)
   - [Managing token cache](#managing-token-cache)
-- [API key in header](#api-key-in-header)
-- [API Key in query](#api-key-in-query)
+- API key
+  - [In header](#api-key-in-header)
+  - [In query](#api-key-in-query)
 - [Basic](#basic)
-- [NTML](#ntml)
+- [NTLM (Windows)](#ntlm)
 - [Multiple authentication at once](#multiple-authentication-at-once)
 
 ## OAuth 2
