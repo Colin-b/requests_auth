@@ -6,32 +6,33 @@ from requests_auth.authentication import (
     QueryApiKey,
     NTLM,
     Auths,
-
     OAuth2,
-
     OAuth2Implicit,
     OktaImplicit,
     OktaImplicitIdToken,
     AzureActiveDirectoryImplicit,
     AzureActiveDirectoryImplicitIdToken,
-
     OAuth2AuthorizationCode,
     OktaAuthorizationCode,
-
     OAuth2ClientCredentials,
     OktaClientCredentials,
-
     OAuth2ResourceOwnerPasswordCredentials,
 )
 from requests_auth.oauth2_tokens import JsonTokenFileCache
+from requests_auth.errors import (
+    GrantNotProvided,
+    TimeoutOccurred,
+    AuthenticationFailed,
+    StateNotProvided,
+)
 from requests_auth.version import __version__
 
 
 class OAuth2Flow(Enum):
-    Implicit = auto(),
-    PasswordCredentials = auto(),  # Also called Resource Owner Password Credentials
-    ClientCredentials = auto(),  # Also called Application
-    AuthorizationCode = auto(),  # Also called AccessCode
+    Implicit = (auto(),)
+    PasswordCredentials = (auto(),)  # Also called Resource Owner Password Credentials
+    ClientCredentials = (auto(),)  # Also called Application
+    AuthorizationCode = (auto(),)  # Also called AccessCode
 
 
 def oauth2(flow, *args, **kwargs):
@@ -68,7 +69,7 @@ def okta(flow, *args, **kwargs):
         return OktaAuthorizationCode(*args, **kwargs)
     if OAuth2Flow.ClientCredentials == flow:
         return OktaClientCredentials(*args, **kwargs)
-    raise Exception('{0} flow is not handled yet in OKTA.'.format(flow))
+    raise Exception("{0} flow is not handled yet in OKTA.".format(flow))
 
 
 def aad(flow, *args, **kwargs):
@@ -82,4 +83,6 @@ def aad(flow, *args, **kwargs):
     """
     if OAuth2Flow.Implicit == flow:
         return AzureActiveDirectoryImplicit(*args, **kwargs)
-    raise Exception('{0} flow is not handled yet in Azure Active Directory.'.format(flow))
+    raise Exception(
+        "{0} flow is not handled yet in Azure Active Directory.".format(flow)
+    )

@@ -212,7 +212,7 @@ def test_oauth2_implicit_flow_get_failure_if_token_is_not_provided(
 def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(
     authenticated_service, token_cache
 ):
-    with pytest.raises(Exception) as exception_info:
+    with pytest.raises(requests_auth.StateNotProvided) as exception_info:
         requests.get(
             "http://authorized_only",
             auth=requests_auth.OAuth2Implicit(
@@ -230,7 +230,7 @@ def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(
 def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(
     authenticated_service, token_cache
 ):
-    with pytest.raises(Exception) as exception_info:
+    with pytest.raises(requests_auth.StateNotProvided) as exception_info:
         requests.get(
             "http://authorized_only",
             auth=requests_auth.OAuth2Implicit(
@@ -248,7 +248,7 @@ def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(
 def test_oauth2_implicit_flow_failure_if_token_is_not_received_within_the_timeout_interval(
     authenticated_service, token_cache
 ):
-    with pytest.raises(Exception) as exception_info:
+    with pytest.raises(requests_auth.TimeoutOccurred) as exception_info:
         requests.get(
             "http://authorized_only",
             auth=requests_auth.OAuth2Implicit(

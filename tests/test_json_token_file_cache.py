@@ -55,7 +55,7 @@ def test_save_bearer_tokens(token_cache, request):
 
 
 def test_missing_token(token_cache):
-    with pytest.raises(requests_auth.errors.AuthenticationFailed):
+    with pytest.raises(requests_auth.AuthenticationFailed):
         token_cache.get_token("key1")
 
 
