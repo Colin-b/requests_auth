@@ -21,6 +21,12 @@ def test_oauth2_implicit_flow_url_is_mandatory():
     assert str(exception_info.value) == "Authorization URL is mandatory."
 
 
+def test_header_value_must_contains_token():
+    with pytest.raises(Exception) as exception_info:
+        requests_auth.OAuth2Implicit("http://test_url", header_value="Bearer token")
+    assert str(exception_info.value) == "header_value parameter must contains {token}."
+
+
 def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing(
     authenticated_service, token_cache, responses: RequestsMock
 ):
