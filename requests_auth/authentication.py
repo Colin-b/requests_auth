@@ -519,10 +519,12 @@ class OAuth2PKCE(requests.auth.AuthBase):
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
         code_field_name = extra_parameters.pop("code_field_name", "code")
-        if _get_query_parameter(self.authorization_url, "response_type"):
-            extra_parameters.pop(
-                "response_type", None
-            )  # Ensure provided value will not be overridden
+        authorization_url_without_response_type, response_type = _pop_parameter(
+            self.authorization_url, "response_type"
+        )
+        if response_type:
+            # Ensure provided value will not be overridden
+            extra_parameters["response_type"] = response_type
         else:
             # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
             extra_parameters.setdefault("response_type", "code")
@@ -531,7 +533,7 @@ class OAuth2PKCE(requests.auth.AuthBase):
             "redirect_uri", None
         ) or "http://localhost:{0}/{1}".format(redirect_uri_port, redirect_uri_endpoint)
         authorization_url_without_nonce = _add_parameters(
-            self.authorization_url, extra_parameters
+            authorization_url_without_response_type, extra_parameters
         )
         authorization_url_without_nonce, nonce = _pop_parameter(
             authorization_url_without_nonce, "nonce"

@@ -198,3 +198,57 @@ def test_oauth2_authorization_code_and_multiple_authentication_can_be_combined(
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
     assert header.get("X-Api-Key2") == "my_provided_api_key2"
+
+
+def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
+    authenticated_service, token_cache, responses: RequestsMock
+):
+    pkce_auth = requests_auth.OAuth2PKCE(
+        TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
+        "http://provide_access_token",
+        timeout=TIMEOUT,
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+    )
+    api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
+    header = get_header(responses, pkce_auth + api_key_auth)
+    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    assert header.get("X-Api-Key") == "my_provided_api_key"
+
+
+def test_oauth2_pkce_and_multiple_authentication_can_be_combined(
+    authenticated_service, token_cache, responses: RequestsMock
+):
+    pkce_auth = requests_auth.OAuth2PKCE(
+        TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
+        "http://provide_access_token",
+        timeout=TIMEOUT,
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+    )
+    api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
+    api_key_auth2 = requests_auth.HeaderApiKey(
+        "my_provided_api_key2", header_name="X-Api-Key2"
+    )
+    header = get_header(responses, pkce_auth + (api_key_auth + api_key_auth2))
+    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    assert header.get("X-Api-Key") == "my_provided_api_key"
+    assert header.get("X-Api-Key2") == "my_provided_api_key2"
