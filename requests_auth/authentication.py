@@ -32,7 +32,7 @@ def generate_code_verifier(n_bytes=64):
     Returns:
         Bytestring, representing urlsafe base64-encoded random data.
     """
-    verifier = base64.urlsafe_b64encode(os.urandom(n_bytes)).rstrip(b'=')
+    verifier = base64.urlsafe_b64encode(os.urandom(n_bytes)).rstrip(b"=")
     # https://tools.ietf.org/html/rfc7636#section-4.1
     # minimum length of 43 characters and a maximum length of 128 characters.
     if len(verifier) < 43:
@@ -56,7 +56,7 @@ def generate_code_challenge(verifier):
             without '=' padding.
     """
     digest = sha256(verifier).digest()
-    return base64.urlsafe_b64encode(digest).rstrip(b'=')
+    return base64.urlsafe_b64encode(digest).rstrip(b"=")
 
 
 def _add_parameters(initial_url, extra_parameters):
@@ -521,71 +521,93 @@ class OAuth2PKCE(requests.auth.AuthBase):
         """
         self.authorization_url = authorization_url
         if not self.authorization_url:
-            raise Exception('Authorization URL is mandatory.')
+            raise Exception("Authorization URL is mandatory.")
 
         self.token_url = token_url
         if not self.token_url:
-            raise Exception('Token URL is mandatory.')
+            raise Exception("Token URL is mandatory.")
         self.kwargs = kwargs
 
         extra_parameters = dict(kwargs)
-        self.header_name = extra_parameters.pop('header_name', None) or 'Authorization'
-        self.header_value = extra_parameters.pop('header_value', None) or 'Bearer {token}'
-        if '{token}' not in self.header_value:
-            raise Exception('header_value parameter must contains {token}.')
+        self.header_name = extra_parameters.pop("header_name", None) or "Authorization"
+        self.header_value = (
+            extra_parameters.pop("header_value", None) or "Bearer {token}"
+        )
+        if "{token}" not in self.header_value:
+            raise Exception("header_value parameter must contains {token}.")
 
-        redirect_uri_endpoint = extra_parameters.pop('redirect_uri_endpoint', None) or ''
-        redirect_uri_port = int(extra_parameters.pop('redirect_uri_port', None) or 5000)
+        redirect_uri_endpoint = (
+            extra_parameters.pop("redirect_uri_endpoint", None) or ""
+        )
+        redirect_uri_port = int(extra_parameters.pop("redirect_uri_port", None) or 5000)
 
-        self.token_field_name = extra_parameters.pop('token_field_name', None) or 'access_token'
+        self.token_field_name = (
+            extra_parameters.pop("token_field_name", None) or "access_token"
+        )
 
         # Time is expressed in seconds
-        self.timeout = int(extra_parameters.pop('timeout', None) or 60)
+        self.timeout = int(extra_parameters.pop("timeout", None) or 60)
         # Time is expressed in milliseconds
-        success_display_time = int(extra_parameters.pop('success_display_time', None) or 1)
+        success_display_time = int(
+            extra_parameters.pop("success_display_time", None) or 1
+        )
         # Time is expressed in milliseconds
-        failure_display_time = int(extra_parameters.pop('failure_display_time', None) or 5000)
+        failure_display_time = int(
+            extra_parameters.pop("failure_display_time", None) or 5000
+        )
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
-        code_field_name = extra_parameters.pop('code_field_name', 'code')
-        if _get_query_parameter(self.authorization_url, 'response_type'):
-            extra_parameters.pop('response_type', None)  # Ensure provided value will not be overridden
+        code_field_name = extra_parameters.pop("code_field_name", "code")
+        if _get_query_parameter(self.authorization_url, "response_type"):
+            extra_parameters.pop(
+                "response_type", None
+            )  # Ensure provided value will not be overridden
         else:
             # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
-            extra_parameters.setdefault('response_type', 'code')
+            extra_parameters.setdefault("response_type", "code")
 
-        redirect_uri = extra_parameters.pop("redirect_uri", None) or 'http://localhost:{0}/{1}'.format(redirect_uri_port, redirect_uri_endpoint)
-        authorization_url_without_nonce = _add_parameters(self.authorization_url, extra_parameters)
-        authorization_url_without_nonce, nonce = _pop_parameter(authorization_url_without_nonce, 'nonce')
-        self.state = sha512(authorization_url_without_nonce.encode('unicode_escape')).hexdigest()
-        custom_code_parameters = {'state': self.state, 'redirect_uri': redirect_uri}
+        redirect_uri = extra_parameters.pop(
+            "redirect_uri", None
+        ) or "http://localhost:{0}/{1}".format(redirect_uri_port, redirect_uri_endpoint)
+        authorization_url_without_nonce = _add_parameters(
+            self.authorization_url, extra_parameters
+        )
+        authorization_url_without_nonce, nonce = _pop_parameter(
+            authorization_url_without_nonce, "nonce"
+        )
+        self.state = sha512(
+            authorization_url_without_nonce.encode("unicode_escape")
+        ).hexdigest()
+        custom_code_parameters = {"state": self.state, "redirect_uri": redirect_uri}
         if nonce:
-            custom_code_parameters['nonce'] = nonce
+            custom_code_parameters["nonce"] = nonce
 
         # generate PKCE code verifier and challenge
         code_verifier = generate_code_verifier()
         code_challenge = generate_code_challenge(code_verifier)
 
         # add code challenge parameters to the authorization_url request
-        custom_code_parameters['code_challenge'] = code_challenge
-        custom_code_parameters['code_challenge_method'] = 'S256'
+        custom_code_parameters["code_challenge"] = code_challenge
+        custom_code_parameters["code_challenge_method"] = "S256"
 
-        code_grant_url = _add_parameters(authorization_url_without_nonce, custom_code_parameters)
+        code_grant_url = _add_parameters(
+            authorization_url_without_nonce, custom_code_parameters
+        )
         self.code_grant_details = oauth2_authentication_responses_server.GrantDetails(
             code_grant_url,
             code_field_name,
             self.timeout,
             success_display_time,
             failure_display_time,
-            redirect_uri_port
+            redirect_uri_port,
         )
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
         # include the PKCE code verifier used in the second part of the flow
         self.token_data = {
-            'code_verifier': code_verifier,
-            'grant_type': 'authorization_code',
-            'redirect_uri': redirect_uri,
+            "code_verifier": code_verifier,
+            "grant_type": "authorization_code",
+            "redirect_uri": redirect_uri,
         }
         self.token_data.update(extra_parameters)
 
@@ -596,10 +618,12 @@ class OAuth2PKCE(requests.auth.AuthBase):
 
     def request_new_token(self):
         # Request code
-        state, code = oauth2_authentication_responses_server.request_new_grant(self.code_grant_details)
+        state, code = oauth2_authentication_responses_server.request_new_grant(
+            self.code_grant_details
+        )
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
-        self.token_data['code'] = code
+        self.token_data["code"] = code
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.4
         token, expires_in = request_new_grant_with_post(
             self.token_url, self.token_data, self.token_field_name, self.timeout
@@ -607,14 +631,15 @@ class OAuth2PKCE(requests.auth.AuthBase):
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
-
     def __add__(self, other):
         if isinstance(other, Auths):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
     def __str__(self):
-        addition_args_str = ', '.join(["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()])
+        addition_args_str = ", ".join(
+            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
+        )
         return "OAuth2PKCE('{0}', '{1}', {2})".format(
             self.authorization_url, self.token_url, addition_args_str
         )
@@ -753,8 +778,6 @@ class OAuth2Implicit(requests.auth.AuthBase):
         return "OAuth2Implicit('{0}', {1})".format(
             self.authorization_url, addition_args_str
         )
-
-
 
 
 class AzureActiveDirectoryImplicit(OAuth2Implicit):
