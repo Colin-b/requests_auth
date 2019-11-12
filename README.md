@@ -6,14 +6,12 @@
 
 Provides authentication classes to be used with [`requests`][1] [authentication parameter][2].
 
-<pre>
-    <p align="center">
-        <a href="https://oauth.net/2/"><img alt="OAuth2" src="https://oauth.net/images/oauth-2-sm.png"></a>
-        <a href="https://www.okta.com"><img alt="OKTA" src="https://www.okta.com/sites/all/themes/Okta/images/logos/developer/Dev_Logo-03_Large.png" height="120"></a>
-        <a href="https://azure.microsoft.com/en-us/services/active-directory/"><img alt="Azure Active Directory (AD)" src="https://azurecomcdn.azureedge.net/cvt-cda59ccd0aa5ced6ff5a2052417cf596b92980921e88e667127eaca2232a31ab/images/shared/services/pricing-glyph-lock.svg" height="120"></a>
-    </p>
-    <p align="center">Some of the supported authentication</p>
-</pre>
+<p align="center">
+    <a href="https://oauth.net/2/"><img alt="OAuth2" src="https://oauth.net/images/oauth-2-sm.png"></a>
+    <a href="https://www.okta.com"><img alt="OKTA" src="https://www.okta.com/sites/all/themes/Okta/images/logos/developer/Dev_Logo-03_Large.png" height="120"></a>
+    <a href="https://azure.microsoft.com/en-us/services/active-directory/"><img alt="Azure Active Directory (AD)" src="https://azurecomcdn.azureedge.net/cvt-cda59ccd0aa5ced6ff5a2052417cf596b92980921e88e667127eaca2232a31ab/images/shared/services/pricing-glyph-lock.svg" height="120"></a>
+</p>
+<p align="center">Some of the supported authentication</p>
 
 ## Available authentication
 
