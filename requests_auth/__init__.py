@@ -1,12 +1,11 @@
 from enum import Enum, auto
 
-from .authentication import (
+from requests_auth.authentication import (
     Basic,
     HeaderApiKey,
     QueryApiKey,
     NTLM,
     Auths,
-
     OAuth2,
     OAuth2PKCE,
     OAuth2Implicit,
@@ -14,22 +13,28 @@ from .authentication import (
     OktaImplicitIdToken,
     AzureActiveDirectoryImplicit,
     AzureActiveDirectoryImplicitIdToken,
-
     OAuth2AuthorizationCode,
-
+    OktaAuthorizationCode,
     OAuth2ClientCredentials,
+    OktaClientCredentials,
     OAuth2ResourceOwnerPasswordCredentials,
 )
-from .oauth2_tokens import JsonTokenFileCache
+from requests_auth.oauth2_tokens import JsonTokenFileCache
+from requests_auth.errors import (
+    GrantNotProvided,
+    TimeoutOccurred,
+    AuthenticationFailed,
+    StateNotProvided,
+)
+from requests_auth.version import __version__
 
 
 class OAuth2Flow(Enum):
-    Implicit = auto(),
-    PasswordCredentials = auto(),  # Also called Resource Owner Password Credentials
-    ClientCredentials = auto(),  # Also called Application
-    AuthorizationCode = auto(),  # Also called AccessCode
-    PKCE = auto(),
-
+    Implicit = (auto(),)
+    PasswordCredentials = (auto(),)  # Also called Resource Owner Password Credentials
+    ClientCredentials = (auto(),)  # Also called Application
+    AuthorizationCode = (auto(),)  # Also called AccessCode
+    PKCE = (auto(),)
 
 def oauth2(flow, *args, **kwargs):
     """
@@ -63,7 +68,11 @@ def okta(flow, *args, **kwargs):
     """
     if OAuth2Flow.Implicit == flow:
         return OktaImplicit(*args, **kwargs)
-    raise Exception('{0} flow is not handled yet in OKTA.'.format(flow))
+    if OAuth2Flow.AuthorizationCode == flow:
+        return OktaAuthorizationCode(*args, **kwargs)
+    if OAuth2Flow.ClientCredentials == flow:
+        return OktaClientCredentials(*args, **kwargs)
+    raise Exception("{0} flow is not handled yet in OKTA.".format(flow))
 
 
 def aad(flow, *args, **kwargs):
@@ -77,4 +86,6 @@ def aad(flow, *args, **kwargs):
     """
     if OAuth2Flow.Implicit == flow:
         return AzureActiveDirectoryImplicit(*args, **kwargs)
-    raise Exception('{0} flow is not handled yet in Azure Active Directory.'.format(flow))
+    raise Exception(
+        "{0} flow is not handled yet in Azure Active Directory.".format(flow)
+    )

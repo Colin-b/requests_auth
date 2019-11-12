@@ -1,12 +1,35 @@
-# Easy Authentication for Requests #
+<h2 align="center">Easy Authentication for Requests</h2>
+
+<p align="center">
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+</p>
 
 This module provides you authentication classes to be used with [`requests`][1].
 
-To use a specific authentication in combination with requests, use the [authentication parameter on `requests` module][2].
+To use a specific authentication in combination with requests, use the [authentication parameter on `requests` module][2].  
 
-## OAuth 2 ##
+## Contents
 
-### Authorization Code flow ###
+- [OAuth2](#oauth-2)
+  - [Authorization Code Flow](#authorization-code-flow)
+  - [Resource Owner Password Credentials flow](#resource-owner-password-credentials-flow)
+  - [Client Credentials Flow](#client-credentials-flow)
+  - [Implicit Flow](#implicit-flow)
+    - [Azure AD (Access Token)](#microsoft---azure-active-directory-oauth2-access-token)
+    - [Azure AD (ID token)](#microsoft---azure-active-directory-openid-connect-id-token)
+    - [OKTA (Access Token)](#okta-oauth2-access-token)
+    - [OKTA (ID token)](#okta-openid-connect-id-token)
+  - [Managing token cache](#managing-token-cache)
+- API key
+  - [In header](#api-key-in-header)
+  - [In query](#api-key-in-query)
+- [Basic](#basic)
+- [NTLM (Windows)](#ntlm)
+- [Multiple authentication at once](#multiple-authentication-at-once)
+
+## OAuth 2
+
+### Authorization Code flow
 
 Sample:
 
@@ -26,7 +49,7 @@ from requests_auth import oauth2, OAuth2Flow
 requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.AuthorizationCode, 'https://www.authorization.url', 'https://www.token.url'))
 ```
 
-#### Parameters ####
+#### Parameters
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
@@ -55,7 +78,7 @@ Usual parameters are:
 | `client_secret` | If client is not authenticated with the authorization server         |
 | `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
 
-### PKCE flow ###
+### PKCE flow 
 
 Sample:
 
@@ -75,7 +98,7 @@ from requests_auth import oauth2, OAuth2Flow
 requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PKCE, 'https://www.authorization.url', 'https://www.token.url'))
 ```
 
-#### Parameters ####
+#### Parameters 
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
@@ -102,7 +125,7 @@ Usual parameters are:
 | `client_secret` | If client is not authenticated with the authorization server         |
 | `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
 
-### Resource Owner Password Credentials flow ###
+### Resource Owner Password Credentials flow 
 
 Sample:
 
@@ -122,7 +145,7 @@ from requests_auth import oauth2, OAuth2Flow
 requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PasswordCredentials, 'https://www.token.url', 'user name', 'user password'))
 ```
 
-#### Parameters ####
+#### Parameters
 
 | Name               | Description                                  | Mandatory | Default value |
 |:-------------------|:---------------------------------------------|:----------|:--------------|
@@ -137,7 +160,7 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PasswordCredential
 
 Any other parameter will be put as body parameter in the token URL.
 
-### Client Credentials flow ###
+### Client Credentials flow
 
 Sample:
 
@@ -157,7 +180,7 @@ from requests_auth import oauth2, OAuth2Flow
 requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.ClientCredentials, 'https://www.token.url', 'user name', 'user password'))
 ```
 
-#### Parameters ####
+#### Parameters
 
 | Name               | Description                                  | Mandatory | Default value |
 |:-------------------|:---------------------------------------------|:----------|:--------------|
@@ -172,7 +195,7 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.ClientCredentials,
 
 Any other parameter will be put as body parameter in the token URL.
 
-### Implicit flow ###
+### Implicit flow
 
 Sample:
 
@@ -192,7 +215,7 @@ from requests_auth import oauth2, OAuth2Flow
 requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.Implicit, 'https://www.authorization.url'))
 ```
 
-#### Parameters ####
+#### Parameters
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
@@ -217,9 +240,9 @@ Usual parameters are:
 | `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-#### Common providers ####
+#### Common providers
 
-##### Microsoft - Azure Active Directory (OAuth2 Access Token) #####
+##### Microsoft - Azure Active Directory (OAuth2 Access Token)
 
 Sample:
 
@@ -241,7 +264,7 @@ from requests_auth import aad, OAuth2Flow
 requests.get('http://www.example.com', auth=aad(OAuth2Flow.Implicit, tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd'))
 ```
 
-###### Parameters ######
+###### Parameters
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
@@ -266,7 +289,7 @@ Usual parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-##### Microsoft - Azure Active Directory (OpenID Connect ID token) #####
+##### Microsoft - Azure Active Directory (OpenID Connect ID token)
 
 Sample:
 
@@ -279,7 +302,7 @@ aad = AzureActiveDirectoryImplicitIdToken(tenant_id='45239d18-c68c-4c47-8bdd-ce7
 requests.get('http://www.example.com', auth=aad)
 ```
 
-###### Parameters ######
+###### Parameters
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
@@ -304,7 +327,7 @@ Usual parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-##### OKTA (OAuth2 Access Token) #####
+##### OKTA (OAuth2 Access Token)
 
 Sample:
 
@@ -326,7 +349,7 @@ from requests_auth import okta, OAuth2Flow
 requests.get('http://www.example.com', auth=okta(OAuth2Flow.Implicit, instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd'))
 ```
 
-###### Parameters ######
+###### Parameters
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
@@ -336,7 +359,7 @@ requests.get('http://www.example.com', auth=okta(OAuth2Flow.Implicit, instance='
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | ['openid', 'profile', 'email'] |
-| `authorization_server`  | OKTA authorization server. | Optional | '' |
+| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
@@ -353,7 +376,7 @@ Usual parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-##### OKTA (OpenID Connect ID token) #####
+##### OKTA (OpenID Connect ID token)
 
 Sample:
 
@@ -366,7 +389,7 @@ okta = OktaImplicitIdToken(instance='testserver.okta-emea.com', client_id='54239
 requests.get('http://www.example.com', auth=okta)
 ```
 
-###### Parameters ######
+###### Parameters
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
@@ -376,7 +399,7 @@ requests.get('http://www.example.com', auth=okta)
 | `token_field_name`      | Field name containing the token. | Optional | id_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | ['openid', 'profile', 'email'] |
-| `authorization_server`  | OKTA authorization server. | Optional | '' |
+| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
@@ -393,7 +416,7 @@ Usual parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-### Managing token cache ###
+### Managing token cache
 
 To avoid asking for a new token every new request, a token cache is used.
 
@@ -406,7 +429,7 @@ OAuth2.token_cache = JsonTokenFileCache('my_token_cache')
 ```
 
 
-## API key in header ##
+## API key in header
 
 Sample:
 
@@ -417,14 +440,14 @@ from requests_auth import HeaderApiKey
 requests.get('http://www.example.com', auth=HeaderApiKey('my_api_key'))
 ```
 
-### Parameters ###
+### Parameters
 
 | Name                    | Description                    | Mandatory | Default value |
 |:------------------------|:-------------------------------|:----------|:--------------|
 | `api_key`               | The API key that will be sent. | Mandatory |               |
 | `header_name`           | Name of the header field.      | Optional  | "X-API-Key"   |
 
-## API key in query ##
+## API key in query
 
 Sample:
 
@@ -435,14 +458,14 @@ from requests_auth import QueryApiKey
 requests.get('http://www.example.com', auth=QueryApiKey('my_api_key'))
 ```
 
-### Parameters ###
+### Parameters
 
 | Name                    | Description                    | Mandatory | Default value |
 |:------------------------|:-------------------------------|:----------|:--------------|
 | `api_key`               | The API key that will be sent. | Mandatory |               |
 | `query_parameter_name`  | Name of the query parameter.   | Optional  | "api_key"     |
 
-## Basic ##
+## Basic
 
 Sample:
 
@@ -453,14 +476,14 @@ from requests_auth import Basic
 requests.get('http://www.example.com', auth=Basic('username', 'password'))
 ```
 
-### Parameters ###
+### Parameters
 
 | Name                    | Description                    | Mandatory | Default value |
 |:------------------------|:-------------------------------|:----------|:--------------|
 | `username`              | User name.                     | Mandatory |               |
 | `password`              | User password.                 | Mandatory |               |
 
-## NTLM ##
+## NTLM
 
 Requires [requests-negotiate-sspi module][4] or [requests_ntlm module][5] depending on provided parameters.
 
@@ -473,24 +496,24 @@ from requests_auth import NTLM
 requests.get('http://www.example.com', auth=NTLM())
 ```
 
-### Parameters ###
+### Parameters
 
 | Name                    | Description                    | Mandatory | Default value |
 |:------------------------|:-------------------------------|:----------|:--------------|
 | `username`              | User name.                     | Mandatory if requests_negotiate_sspi module is not installed. In such a case requests_ntlm module is mandatory. |               |
 | `password`              | User password.                 | Mandatory if requests_negotiate_sspi module is not installed. In such a case requests_ntlm module is mandatory. |               |
 
-## Multiple authentication at once ##
+## Multiple authentication at once
 
-You can also use a combination of authentication as in the following sample:
+You can also use a combination of authentication using `+` as in the following sample:
 
 ```python
 import requests
-from requests_auth import Auths, HeaderApiKey, OAuth2Implicit
+from requests_auth import HeaderApiKey, OAuth2Implicit
 
 api_key = HeaderApiKey('my_api_key')
 oauth2 = OAuth2Implicit('https://www.example.com')
-requests.get('http://www.example.com', auth=Auths(api_key, oauth2))
+requests.get('http://www.example.com', auth=api_key + oauth2)
 ```
 
 [1]: https://pypi.python.org/pypi/requests "requests module"
