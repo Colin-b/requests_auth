@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Auths class will be considered as internal in the future and should not be used anymore. Use "+" instead.
 - This is the latest release to support Python 2.7, next release will be 3.6+ only.
 - requests_auth.errors will be renamed into requests_auth.exceptions in next release.
+- str representation of authentication classes will be removed in next release.
 
 ### Fixed
 - Avoid fixing dependencies to a specific version.
