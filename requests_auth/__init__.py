@@ -7,6 +7,7 @@ from requests_auth.authentication import (
     NTLM,
     Auths,
     OAuth2,
+    OAuth2PKCE,
     OAuth2Implicit,
     OktaImplicit,
     OktaImplicitIdToken,
@@ -33,7 +34,7 @@ class OAuth2Flow(Enum):
     PasswordCredentials = (auto(),)  # Also called Resource Owner Password Credentials
     ClientCredentials = (auto(),)  # Also called Application
     AuthorizationCode = (auto(),)  # Also called AccessCode
-
+    PKCE = (auto(),)
 
 def oauth2(flow, *args, **kwargs):
     """
@@ -48,6 +49,8 @@ def oauth2(flow, *args, **kwargs):
         return OAuth2Implicit(*args, **kwargs)
     if OAuth2Flow.AuthorizationCode == flow:
         return OAuth2AuthorizationCode(*args, **kwargs)
+    if OAuth2Flow.PKCE == flow:
+        return OAuth2PKCE(*args, **kwargs)
     if OAuth2Flow.ClientCredentials == flow:
         return OAuth2ClientCredentials(*args, **kwargs)
     if OAuth2Flow.PasswordCredentials == flow:
