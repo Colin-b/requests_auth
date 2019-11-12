@@ -438,14 +438,14 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
 
 class OAuth2PKCE(requests.auth.AuthBase):
     """
-    PKCE
+    Proof Key for Code Exchange
 
-    Describes an OAuth 2 PKCE flow requests authentication.
+    Describes an OAuth 2 Proof Key for Code Exchange (PKCE) flow requests authentication.
 
     Request a code with client browser, then request a token using this code.
     Store the token and use it for subsequent valid requests.
 
-    More details can be found in https://tools.ietf.org/html/rfc6749#section-4.1
+    More details can be found in https://tools.ietf.org/html/rfc7636
     """
 
     def __init__(self, authorization_url, token_url, **kwargs):

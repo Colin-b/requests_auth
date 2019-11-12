@@ -12,6 +12,7 @@ To use a specific authentication in combination with requests, use the [authenti
 
 - [OAuth2](#oauth-2)
   - [Authorization Code Flow](#authorization-code-flow)
+  - [PKCE Flow](#proof-key-for-code-exchange-flow)
   - [Resource Owner Password Credentials flow](#resource-owner-password-credentials-flow)
   - [Client Credentials Flow](#client-credentials-flow)
   - [Implicit Flow](#implicit-flow)
@@ -78,7 +79,7 @@ Usual parameters are:
 | `client_secret` | If client is not authenticated with the authorization server         |
 | `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
 
-### PKCE flow 
+### Proof Key for Code Exchange flow
 
 Sample:
 
