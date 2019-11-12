@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - multiple authentication is now possible using "+" sign.
 - OktaAuthorizationCode is now available.
 - OktaClientCredentials is now available.
+- OAuth2PKCE is now available.
 - Exception classes defined in requests_auth.errors are now available via requests_auth.
 
 ### Deprecated

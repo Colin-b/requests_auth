@@ -64,7 +64,7 @@ def test_scope_is_sent_as_is_when_provided_as_str(
     )
     assert (
         get_request(responses, "http://provide_access_token/").body
-        == "grant_type=password&username=test_user&password=test_pwd&scope=my_scope+my_other_scope"
+        == "grant_type=password&username=test_user&password=test_pwd&scope=my_scope%2Bmy_other_scope"
     )
 
 

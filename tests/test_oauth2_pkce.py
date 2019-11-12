@@ -2,7 +2,12 @@ from responses import RequestsMock
 
 import requests_auth
 from tests.auth_helper import get_header
-from tests.oauth2_helper import TIMEOUT, TEST_SERVICE_HOST
+from tests.oauth2_helper import (
+    authenticated_service,
+    token_cache,
+    TIMEOUT,
+    TEST_SERVICE_HOST,
+)
 
 
 def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
