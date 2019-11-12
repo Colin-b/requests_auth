@@ -1,20 +1,19 @@
-<h2 align="center">Easy Authentication for Requests</h2>
+<h2 align="center">Authentication for Requests</h2>
 
 <p align="center">
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 </p>
 
-This module provides you authentication classes to be used with [`requests`][1].
+Provides authentication classes to be used with [`requests`][1] [authentication parameter][2].
 
-To use a specific authentication in combination with requests, use the [authentication parameter on `requests` module][2].  
-
-Here are some of the supported authentication:
-<p align="center">
-<a href="https://oauth.net/2/"><img alt="OAuth2" src="https://oauth.net/images/oauth-2-sm.png"></a>
-<a href="https://www.okta.com"><img alt="OKTA" src="https://www.okta.com/sites/all/themes/Okta/images/logos/developer/Dev_Logo-03_Large.png" height="120"></a>
-<a href="https://azure.microsoft.com/en-us/services/active-directory/"><img alt="Azure Active Directory (AD)" src="https://azurecomcdn.azureedge.net/cvt-cda59ccd0aa5ced6ff5a2052417cf596b92980921e88e667127eaca2232a31ab/images/shared/services/pricing-glyph-lock.svg" height="120"></a>
-</p>
-
+<pre>
+    <p align="center">
+        <a href="https://oauth.net/2/"><img alt="OAuth2" src="https://oauth.net/images/oauth-2-sm.png"></a>
+        <a href="https://www.okta.com"><img alt="OKTA" src="https://www.okta.com/sites/all/themes/Okta/images/logos/developer/Dev_Logo-03_Large.png" height="120"></a>
+        <a href="https://azure.microsoft.com/en-us/services/active-directory/"><img alt="Azure Active Directory (AD)" src="https://azurecomcdn.azureedge.net/cvt-cda59ccd0aa5ced6ff5a2052417cf596b92980921e88e667127eaca2232a31ab/images/shared/services/pricing-glyph-lock.svg" height="120"></a>
+    </p>
+    <p align="center">Some of the supported authentication</p>
+</pre>
 
 ## Available authentication
 
