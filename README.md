@@ -21,14 +21,15 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
 
 - [OAuth2](#oauth-2)
   - [Authorization Code Flow](#authorization-code-flow)
+    - [OKTA](#okta-oauth2-authorization-code)
   - [PKCE Flow](#proof-key-for-code-exchange-flow)
   - [Resource Owner Password Credentials flow](#resource-owner-password-credentials-flow)
   - [Client Credentials Flow](#client-credentials-flow)
   - [Implicit Flow](#implicit-flow)
     - [Azure AD (Access Token)](#microsoft---azure-active-directory-oauth2-access-token)
     - [Azure AD (ID token)](#microsoft---azure-active-directory-openid-connect-id-token)
-    - [OKTA (Access Token)](#okta-oauth2-access-token)
-    - [OKTA (ID token)](#okta-openid-connect-id-token)
+    - [OKTA (Access Token)](#okta-oauth2-implicit-access-token)
+    - [OKTA (ID token)](#okta-openid-connect-implicit-id-token)
   - [Managing token cache](#managing-token-cache)
 - API key
   - [In header](#api-key-in-header)
@@ -84,6 +85,54 @@ Usual extra parameters are:
 | `client_id`     | Corresponding to your Application ID (in Microsoft Azure app portal) |
 | `client_secret` | If client is not authenticated with the authorization server         |
 | `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
+
+#### Common providers
+
+Most of [OAuth2](https://oauth.net/2/) Authorization Code Grant providers are supported.
+
+If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
+
+##### OKTA (OAuth2 Authorization Code)
+
+[OKTA Authorization Code Grant](https://developer.okta.com/docs/guides/implement-auth-code/overview/) providing access tokens is supported.
+
+Use `requests_auth.OktaAuthorizationCode` to configure this kind of authentication.
+
+```python
+import requests
+from requests_auth import OktaAuthorizationCode
+
+
+okta = OktaAuthorizationCode(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
+requests.get('http://www.example.com', auth=okta)
+```
+
+###### Parameters
+
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | token |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
+| `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | openid |
+| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+
+Any other parameter will be put as query parameter in the authorization URL.        
+
+Usual extra parameters are:
+        
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
 ### Proof Key for Code Exchange flow
 
@@ -305,7 +354,7 @@ Usual extra parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-##### OKTA (OAuth2 Access Token)
+##### OKTA (OAuth2 Implicit Access Token)
 
 [OKTA Implicit Grant](https://developer.okta.com/docs/guides/implement-implicit/overview/) providing access tokens is supported.
 
@@ -325,7 +374,7 @@ requests.get('http://www.example.com', auth=okta)
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
 | `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
-| `client_id`             | Microsoft Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | token |
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
@@ -347,7 +396,7 @@ Usual extra parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-##### OKTA (OpenID Connect ID token)
+##### OKTA (OpenID Connect Implicit ID token)
 
 [OKTA Implicit Grant](https://developer.okta.com/docs/guides/implement-implicit/overview/) providing ID tokens is supported.
 
@@ -367,7 +416,7 @@ requests.get('http://www.example.com', auth=okta)
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
 | `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
-| `client_id`             | Microsoft Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | id_token |
 | `token_field_name`      | Field name containing the token. | Optional | id_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
