@@ -54,6 +54,24 @@ def test_save_bearer_tokens(token_cache, request):
     assert same_cache.get_token("key2") == token2
 
 
+def test_save_bearer_token_exception_handling(token_cache, request, monkeypatch):
+    def failing_dump(*args):
+        raise Exception("Failure")
+
+    monkeypatch.setattr(requests_auth.oauth2_tokens.json, "dump", failing_dump)
+
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    token1 = jwt.encode({"exp": expiry_in_1_hour}, "secret").decode("unicode_escape")
+
+    # Assert that the exception is not thrown
+    token_cache.add_bearer_token("key1", token1)
+
+    same_cache = requests_auth.JsonTokenFileCache(request.node.name + ".cache")
+    with pytest.raises(requests_auth.AuthenticationFailed) as exception_info:
+        same_cache.get_token("key1")
+    assert str(exception_info.value) == "User was not authenticated."
+
+
 def test_missing_token(token_cache):
     with pytest.raises(requests_auth.AuthenticationFailed):
         token_cache.get_token("key1")
