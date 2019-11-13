@@ -874,6 +874,8 @@ class AzureActiveDirectoryImplicitIdToken(OAuth2Implicit):
 class OktaImplicit(OAuth2Implicit):
     """
     Describes an OKTA (OAuth 2) "Access Token" implicit flow requests authentication.
+
+    https://developer.okta.com/docs/guides/implement-implicit/overview/
     """
 
     def __init__(self, instance, client_id, **kwargs):

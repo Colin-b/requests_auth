@@ -35,24 +35,21 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
 
 ## OAuth 2
 
+Most of [OAuth2](https://oauth.net/2/) flows are supported.
+
+If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
+
 ### Authorization Code flow
 
-Sample:
+Authorization Code Grant is implemented following [rfc6749](https://tools.ietf.org/html/rfc6749#section-4.1).
+
+Use `requests_auth.OAuth2AuthorizationCode` to configure this kind of authentication.
 
 ```python
 import requests
 from requests_auth import OAuth2AuthorizationCode
 
 requests.get('http://www.example.com', auth=OAuth2AuthorizationCode('https://www.authorization.url', 'https://www.token.url'))
-```
-
-or
-
-```python
-import requests
-from requests_auth import oauth2, OAuth2Flow
-
-requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.AuthorizationCode, 'https://www.authorization.url', 'https://www.token.url'))
 ```
 
 #### Parameters
@@ -76,7 +73,7 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.AuthorizationCode,
 
 Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
 
-Usual parameters are:
+Usual extra parameters are:
         
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
@@ -86,22 +83,15 @@ Usual parameters are:
 
 ### Proof Key for Code Exchange flow
 
-Sample:
+Proof Key for Code Exchange is implemented following [rfc7636](https://tools.ietf.org/html/rfc7636).
+
+Use `requests_auth.OAuth2PKCE` to configure this kind of authentication.
 
 ```python
 import requests
 from requests_auth import OAuth2PKCE
 
 requests.get('http://www.example.com', auth=OAuth2PKCE('https://www.authorization.url', 'https://www.token.url'))
-```
-
-or
-
-```python
-import requests
-from requests_auth import oauth2, OAuth2Flow
-
-requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PKCE, 'https://www.authorization.url', 'https://www.token.url'))
 ```
 
 #### Parameters 
@@ -123,7 +113,7 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PKCE, 'https://www
 
 Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
 
-Usual parameters are:
+Usual extra parameters are:
         
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
@@ -133,22 +123,15 @@ Usual parameters are:
 
 ### Resource Owner Password Credentials flow 
 
-Sample:
+Resource Owner Password Credentials Grant is implemented following [rfc6749](https://tools.ietf.org/html/rfc6749#section-4.3).
+
+Use `requests_auth.OAuth2ResourceOwnerPasswordCredentials` to configure this kind of authentication.
 
 ```python
 import requests
 from requests_auth import OAuth2ResourceOwnerPasswordCredentials
 
 requests.get('http://www.example.com', auth=OAuth2ResourceOwnerPasswordCredentials('https://www.token.url', 'user name', 'user password'))
-```
-
-or
-
-```python
-import requests
-from requests_auth import oauth2, OAuth2Flow
-
-requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.PasswordCredentials, 'https://www.token.url', 'user name', 'user password'))
 ```
 
 #### Parameters
@@ -168,22 +151,15 @@ Any other parameter will be put as body parameter in the token URL.
 
 ### Client Credentials flow
 
-Sample:
+Client Credentials Grant is implemented following [rfc6749](https://tools.ietf.org/html/rfc6749#section-4.4).
+
+Use `requests_auth.OAuth2ClientCredentials` to configure this kind of authentication.
 
 ```python
 import requests
 from requests_auth import OAuth2ClientCredentials
 
 requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', 'user name', 'user password'))
-```
-
-or
-
-```python
-import requests
-from requests_auth import oauth2, OAuth2Flow
-
-requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.ClientCredentials, 'https://www.token.url', 'user name', 'user password'))
 ```
 
 #### Parameters
@@ -203,22 +179,15 @@ Any other parameter will be put as body parameter in the token URL.
 
 ### Implicit flow
 
-Sample:
+Implicit Grant is implemented following [rfc6749](https://tools.ietf.org/html/rfc6749#section-4.2).
+
+Use `requests_auth.OAuth2Implicit` to configure this kind of authentication.
 
 ```python
 import requests
 from requests_auth import OAuth2Implicit
 
 requests.get('http://www.example.com', auth=OAuth2Implicit('https://www.authorization.url'))
-```
-
-or
-
-```python
-import requests
-from requests_auth import oauth2, OAuth2Flow
-
-requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.Implicit, 'https://www.authorization.url'))
 ```
 
 #### Parameters
@@ -238,8 +207,8 @@ requests.get('http://www.example.com', auth=oauth2(OAuth2Flow.Implicit, 'https:/
 
 Any other parameter will be put as query parameter in the authorization URL.        
 
-Usual parameters are:
-
+Usual extra parameters are:
+        
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
 | `client_id`     | Corresponding to your Application ID (in Microsoft Azure app portal) |
@@ -248,9 +217,15 @@ Usual parameters are:
 
 #### Common providers
 
+Most of [OAuth2](https://oauth.net/2/) Implicit Grant providers are supported.
+
+If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
+
 ##### Microsoft - Azure Active Directory (OAuth2 Access Token)
 
-Sample:
+[Microsoft identity platform access tokens](https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens) are supported.
+
+Use `requests_auth.AzureActiveDirectoryImplicit` to configure this kind of authentication.
 
 ```python
 import requests
@@ -259,15 +234,6 @@ from requests_auth import AzureActiveDirectoryImplicit
 
 aad = AzureActiveDirectoryImplicit(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=aad)
-```
-
-or
-
-```python
-import requests
-from requests_auth import aad, OAuth2Flow
-
-requests.get('http://www.example.com', auth=aad(OAuth2Flow.Implicit, tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd'))
 ```
 
 ###### Parameters
@@ -289,15 +255,17 @@ requests.get('http://www.example.com', auth=aad(OAuth2Flow.Implicit, tenant_id='
 
 Any other parameter will be put as query parameter in the authorization URL.        
 
-Usual parameters are:
-
+Usual extra parameters are:
+        
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
 ##### Microsoft - Azure Active Directory (OpenID Connect ID token)
 
-Sample:
+[Microsoft identity platform ID tokens](https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens) are supported.
+
+Use `requests_auth.AzureActiveDirectoryImplicitIdToken` to configure this kind of authentication.
 
 ```python
 import requests
@@ -327,15 +295,17 @@ requests.get('http://www.example.com', auth=aad)
 
 Any other parameter will be put as query parameter in the authorization URL.        
 
-Usual parameters are:
-
+Usual extra parameters are:
+        
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
 ##### OKTA (OAuth2 Access Token)
 
-Sample:
+[OKTA Implicit Grant](https://developer.okta.com/docs/guides/implement-implicit/overview/) providing access tokens is supported.
+
+Use `requests_auth.OktaImplicit` to configure this kind of authentication.
 
 ```python
 import requests
@@ -344,15 +314,6 @@ from requests_auth import OktaImplicit
 
 okta = OktaImplicit(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=okta)
-```
-
-or
-
-```python
-import requests
-from requests_auth import okta, OAuth2Flow
-
-requests.get('http://www.example.com', auth=okta(OAuth2Flow.Implicit, instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd'))
 ```
 
 ###### Parameters
@@ -376,15 +337,17 @@ requests.get('http://www.example.com', auth=okta(OAuth2Flow.Implicit, instance='
 
 Any other parameter will be put as query parameter in the authorization URL.        
 
-Usual parameters are:
-
+Usual extra parameters are:
+        
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
 ##### OKTA (OpenID Connect ID token)
 
-Sample:
+[OKTA Implicit Grant](https://developer.okta.com/docs/guides/implement-implicit/overview/) providing ID tokens is supported.
+
+Use `requests_auth.OktaImplicitIdToken` to configure this kind of authentication.
 
 ```python
 import requests
@@ -416,8 +379,8 @@ requests.get('http://www.example.com', auth=okta)
 
 Any other parameter will be put as query parameter in the authorization URL.        
 
-Usual parameters are:
-
+Usual extra parameters are:
+        
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
@@ -426,18 +389,21 @@ Usual parameters are:
 
 To avoid asking for a new token every new request, a token cache is used.
 
-Default cache is in memory but it is also possible to use a physical cache using the following method:
+Default cache is in memory but it is also possible to use a physical cache.
+
+You need to provide the location of your token cache file. It can be a full or relative path.
+
+If the file already exists it will be used, if the file do not exists it will be created.
 
 ```python
 from requests_auth import OAuth2, JsonTokenFileCache
 
-OAuth2.token_cache = JsonTokenFileCache('my_token_cache')
+OAuth2.token_cache = JsonTokenFileCache('path/to/my_token_cache.json')
 ```
-
 
 ## API key in header
 
-Sample:
+You can send an API key inside the header of your request using `requests_auth.HeaderApiKey`.
 
 ```python
 import requests
@@ -455,7 +421,7 @@ requests.get('http://www.example.com', auth=HeaderApiKey('my_api_key'))
 
 ## API key in query
 
-Sample:
+You can send an API key inside the query parameters of your request using `requests_auth.QueryApiKey`.
 
 ```python
 import requests
@@ -473,7 +439,9 @@ requests.get('http://www.example.com', auth=QueryApiKey('my_api_key'))
 
 ## Basic
 
-Sample:
+You can use basic authentication using `requests_auth.Basic`.
+
+The only advantage of using this class instead of `requests` native support of basic authentication, is to be able to use it in [multiple authentication](#multiple-authentication-at-once).
 
 ```python
 import requests
@@ -493,7 +461,7 @@ requests.get('http://www.example.com', auth=Basic('username', 'password'))
 
 Requires [requests-negotiate-sspi module][4] or [requests_ntlm module][5] depending on provided parameters.
 
-Sample:
+You can use Windows authentication using `requests_auth.NTLM`.
 
 ```python
 import requests
