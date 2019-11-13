@@ -16,8 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 - Auths class will be considered as internal in the future and should not be used anymore. Use "+" instead.
 - This is the latest release to support Python 2.7, next release will be 3.6+ only.
-- requests_auth.errors will be renamed into requests_auth.exceptions in next release.
-- str representation of authentication classes will be removed in next release.
+- requests_auth.errors will be renamed into requests_auth.exceptions in the future.
+- str representation of authentication classes will be removed in the future.
+- requests_auth.oauth2 function will be removed in the future. Use specific class instead.
+- requests_auth.aad function will be removed in the future. Use specific class instead.
+- requests_auth.okta function will be removed in the future. Use specific class instead.
 
 ### Fixed
 - Avoid fixing dependencies to a specific version.

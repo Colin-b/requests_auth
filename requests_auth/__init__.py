@@ -1,4 +1,5 @@
 from enum import Enum, auto
+import warnings
 
 from requests_auth.authentication import (
     Basic,
@@ -36,6 +37,7 @@ class OAuth2Flow(Enum):
     AuthorizationCode = (auto(),)  # Also called AccessCode
     PKCE = (auto(),)
 
+
 def oauth2(flow, *args, **kwargs):
     """
     Create a new generic OAuth2 authentication class.
@@ -45,6 +47,10 @@ def oauth2(flow, *args, **kwargs):
     :param kwargs: optional parameters that can be provided for this flow.
     :return: The newly created OAuth2 authentication class.
     """
+    warnings.warn(
+        "oauth2 function will be removed in the future. Use Oauth2* class instead.",
+        DeprecationWarning,
+    )
     if OAuth2Flow.Implicit == flow:
         return OAuth2Implicit(*args, **kwargs)
     if OAuth2Flow.AuthorizationCode == flow:
@@ -66,6 +72,10 @@ def okta(flow, *args, **kwargs):
     :param kwargs: optional parameters that can be provided for this flow.
     :return: The newly created OKTA authentication class.
     """
+    warnings.warn(
+        "okta function will be removed in the future. Use Okta* class instead.",
+        DeprecationWarning,
+    )
     if OAuth2Flow.Implicit == flow:
         return OktaImplicit(*args, **kwargs)
     if OAuth2Flow.AuthorizationCode == flow:
@@ -84,6 +94,10 @@ def aad(flow, *args, **kwargs):
     :param kwargs: optional parameters that can be provided for this flow.
     :return: The newly created Azure Active Directory authentication class.
     """
+    warnings.warn(
+        "aad function will be removed in the future. Use AzureActiveDirectory* class instead.",
+        DeprecationWarning,
+    )
     if OAuth2Flow.Implicit == flow:
         return AzureActiveDirectoryImplicit(*args, **kwargs)
     raise Exception(
