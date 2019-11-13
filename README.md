@@ -25,6 +25,7 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
   - [PKCE Flow](#proof-key-for-code-exchange-flow)
   - [Resource Owner Password Credentials flow](#resource-owner-password-credentials-flow)
   - [Client Credentials Flow](#client-credentials-flow)
+    - [OKTA](#okta-oauth2-client-credentials)
   - [Implicit Flow](#implicit-flow)
     - [Azure AD (Access Token)](#microsoft---azure-active-directory-oauth2-access-token)
     - [Azure AD (ID token)](#microsoft---azure-active-directory-openid-connect-id-token)
@@ -229,6 +230,43 @@ requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www
 | `token_field_name` | Field name containing the token.             | Optional  | access_token  |
 
 Any other parameter will be put as body parameter in the token URL.
+
+#### Common providers
+
+Most of [OAuth2](https://oauth.net/2/) Client Credentials Grant providers are supported.
+
+If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
+
+##### OKTA (OAuth2 Client Credentials)
+
+[OKTA Client Credentials Grant](https://developer.okta.com/docs/guides/implement-client-creds/overview/) providing access tokens is supported.
+
+Use `requests_auth.OktaClientCredentials` to configure this kind of authentication.
+
+```python
+import requests
+from requests_auth import OktaClientCredentials
+
+
+okta = OktaClientCredentials(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_secret="secret")
+requests.get('http://www.example.com', auth=okta)
+```
+
+###### Parameters
+
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `client_secret`         | Resource owner password.                     | Mandatory |               |
+| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | openid |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+
+Any other parameter will be put as query parameter in the token URL.        
 
 ### Implicit flow
 
