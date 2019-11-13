@@ -26,6 +26,8 @@ from requests_auth.errors import (
     TimeoutOccurred,
     AuthenticationFailed,
     StateNotProvided,
+    InvalidToken,
+    TokenExpiryNotProvided,
 )
 from requests_auth.version import __version__
 

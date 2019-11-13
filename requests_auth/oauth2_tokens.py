@@ -42,15 +42,16 @@ class TokenMemoryCache:
         :param key: key identifier of the token
         :param token: value
         :raise InvalidToken: In case token is invalid.
+        :raise TokenExpiryNotProvided: In case expiry is not provided.
         """
         if not token:
             raise InvalidToken(token)
 
         header, body, other = token.split(".")
         body = json.loads(decode_base64(body))
-        if "exp" not in body:
-            raise TokenExpiryNotProvided(body)
-        expiry = body["exp"]
+        expiry = body.get("exp")
+        if not expiry:
+            raise TokenExpiryNotProvided(expiry)
 
         self._add_token(key, token, expiry)
 
@@ -62,6 +63,9 @@ class TokenMemoryCache:
         :param expires_in: Number of seconds before token expiry
         :raise InvalidToken: In case token is invalid.
         """
+        if not token:
+            raise InvalidToken(token)
+
         expiry = datetime.datetime.utcnow().replace(
             tzinfo=datetime.timezone.utc
         ) + datetime.timedelta(seconds=expires_in)
@@ -73,13 +77,8 @@ class TokenMemoryCache:
         :param key: key identifier of the token
         :param token: value
         :param expiry: UTC timestamp of expiry
-        :raise InvalidToken: In case token is invalid.
         """
-        if not token:
-            raise InvalidToken(token)
         with self.forbid_concurrent_cache_access:
-            if not expiry:
-                raise TokenExpiryNotProvided(expiry)
             self.tokens[key] = token, expiry
             self._save_tokens()
             logger.debug(

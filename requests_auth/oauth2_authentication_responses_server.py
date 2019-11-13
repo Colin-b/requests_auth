@@ -179,11 +179,17 @@ class FixedHttpServer(HTTPServer):
         raise TimeoutOccurred(self.timeout)
 
     def __enter__(self):
-        """Support for context manager use with Python < 3.6"""
+        """
+        Support for context manager use with Python < 3.6
+        TODO Remove once dropping support for those python version
+        """
         return self
 
     def __exit__(self, *args):
-        """Support for context manager use with Python < 3.6"""
+        """
+        Support for context manager use with Python < 3.6
+        TODO Remove once dropping support for those python version
+        """
         self.server_close()
 
 

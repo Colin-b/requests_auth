@@ -104,6 +104,42 @@ def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_defa
     assert re.match("^Bearer .*", get_header(responses, auth).get("Authorization"))
 
 
+def test_state_change(authenticated_service, token_cache, responses: RequestsMock):
+    auth = requests_auth.OAuth2Implicit(
+        TEST_SERVICE_HOST + "/provide_token_as_access_token_with_another_state",
+        timeout=TIMEOUT,
+    )
+    assert re.match("^Bearer .*", get_header(responses, auth).get("Authorization"))
+
+
+def test_empty_token_is_invalid(
+    authenticated_service, token_cache, responses: RequestsMock
+):
+    with pytest.raises(requests_auth.InvalidToken) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit(
+                TEST_SERVICE_HOST + "/provide_empty_token_as_access_token",
+                timeout=TIMEOUT,
+            ),
+        )
+    assert str(exception_info.value) == " is invalid."
+
+
+def test_token_without_expiry_is_invalid(
+    authenticated_service, token_cache, responses: RequestsMock
+):
+    with pytest.raises(requests_auth.TokenExpiryNotProvided) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit(
+                TEST_SERVICE_HOST + "/provide_token_without_exp_as_access_token",
+                timeout=TIMEOUT,
+            ),
+        )
+    assert str(exception_info.value) == "Expiry (exp) is not provided in None."
+
+
 def test_oauth2_implicit_flow_get_token_is_sent_in_authorization_header_by_default(
     authenticated_service, token_cache, responses: RequestsMock
 ):

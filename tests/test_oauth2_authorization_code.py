@@ -1,5 +1,6 @@
 from responses import RequestsMock
 import pytest
+import requests
 
 import requests_auth
 from tests.oauth2_helper import (
@@ -38,6 +39,30 @@ def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header
         get_request(responses, "http://provide_access_token/").body
         == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
     )
+
+
+def test_empty_token_is_invalid(
+    authenticated_service, token_cache, responses: RequestsMock
+):
+    auth = requests_auth.OAuth2AuthorizationCode(
+        TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
+        "http://provide_access_token",
+        timeout=TIMEOUT,
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "access_token": "",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+    )
+    with pytest.raises(requests_auth.InvalidToken) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert str(exception_info.value) == ""
 
 
 def test_nonce_is_sent_if_provided_in_authorization_url(
