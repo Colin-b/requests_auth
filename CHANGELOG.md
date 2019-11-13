@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.1.0] - 2019-11-13
 ### Added
 - module version is now publicly available.
 - multiple authentication is now possible using "+" sign.
@@ -85,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v4.0.1...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v4.1.0...HEAD
+[4.1.0]: https://github.com/Colin-b/requests_auth/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/Colin-b/requests_auth/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/Colin-b/requests_auth/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/Colin-b/requests_auth/compare/v2.0.0...v3.0.0
