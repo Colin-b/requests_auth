@@ -1,33 +1,44 @@
 from enum import Enum, auto
+import warnings
 
-from .authentication import (
+from requests_auth.authentication import (
     Basic,
     HeaderApiKey,
     QueryApiKey,
     NTLM,
     Auths,
-
     OAuth2,
-
+    OAuth2AuthorizationCodePKCE,
+    OktaAuthorizationCodePKCE,
     OAuth2Implicit,
     OktaImplicit,
     OktaImplicitIdToken,
     AzureActiveDirectoryImplicit,
     AzureActiveDirectoryImplicitIdToken,
-
     OAuth2AuthorizationCode,
-
+    OktaAuthorizationCode,
     OAuth2ClientCredentials,
+    OktaClientCredentials,
     OAuth2ResourceOwnerPasswordCredentials,
 )
-from .oauth2_tokens import JsonTokenFileCache
+from requests_auth.oauth2_tokens import JsonTokenFileCache
+from requests_auth.errors import (
+    GrantNotProvided,
+    TimeoutOccurred,
+    AuthenticationFailed,
+    StateNotProvided,
+    InvalidToken,
+    TokenExpiryNotProvided,
+)
+from requests_auth.version import __version__
 
 
 class OAuth2Flow(Enum):
-    Implicit = auto(),
-    PasswordCredentials = auto(),  # Also called Resource Owner Password Credentials
-    ClientCredentials = auto(),  # Also called Application
-    AuthorizationCode = auto(),  # Also called AccessCode
+    Implicit = (auto(),)
+    PasswordCredentials = (auto(),)  # Also called Resource Owner Password Credentials
+    ClientCredentials = (auto(),)  # Also called Application
+    AuthorizationCode = (auto(),)  # Also called AccessCode
+    PKCE = (auto(),)
 
 
 def oauth2(flow, *args, **kwargs):
@@ -39,10 +50,16 @@ def oauth2(flow, *args, **kwargs):
     :param kwargs: optional parameters that can be provided for this flow.
     :return: The newly created OAuth2 authentication class.
     """
+    warnings.warn(
+        "oauth2 function will be removed in the future. Use Oauth2* class instead.",
+        DeprecationWarning,
+    )
     if OAuth2Flow.Implicit == flow:
         return OAuth2Implicit(*args, **kwargs)
     if OAuth2Flow.AuthorizationCode == flow:
         return OAuth2AuthorizationCode(*args, **kwargs)
+    if OAuth2Flow.PKCE == flow:
+        return OAuth2AuthorizationCodePKCE(*args, **kwargs)
     if OAuth2Flow.ClientCredentials == flow:
         return OAuth2ClientCredentials(*args, **kwargs)
     if OAuth2Flow.PasswordCredentials == flow:
@@ -58,9 +75,17 @@ def okta(flow, *args, **kwargs):
     :param kwargs: optional parameters that can be provided for this flow.
     :return: The newly created OKTA authentication class.
     """
+    warnings.warn(
+        "okta function will be removed in the future. Use Okta* class instead.",
+        DeprecationWarning,
+    )
     if OAuth2Flow.Implicit == flow:
         return OktaImplicit(*args, **kwargs)
-    raise Exception('{0} flow is not handled yet in OKTA.'.format(flow))
+    if OAuth2Flow.AuthorizationCode == flow:
+        return OktaAuthorizationCode(*args, **kwargs)
+    if OAuth2Flow.ClientCredentials == flow:
+        return OktaClientCredentials(*args, **kwargs)
+    raise Exception("{0} flow is not handled yet in OKTA.".format(flow))
 
 
 def aad(flow, *args, **kwargs):
@@ -72,6 +97,12 @@ def aad(flow, *args, **kwargs):
     :param kwargs: optional parameters that can be provided for this flow.
     :return: The newly created Azure Active Directory authentication class.
     """
+    warnings.warn(
+        "aad function will be removed in the future. Use AzureActiveDirectory* class instead.",
+        DeprecationWarning,
+    )
     if OAuth2Flow.Implicit == flow:
         return AzureActiveDirectoryImplicit(*args, **kwargs)
-    raise Exception('{0} flow is not handled yet in Azure Active Directory.'.format(flow))
+    raise Exception(
+        "{0} flow is not handled yet in Azure Active Directory.".format(flow)
+    )
