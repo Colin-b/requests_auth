@@ -60,9 +60,12 @@ def test_empty_token_is_invalid(
             "example_parameter": "example_value",
         },
     )
-    with pytest.raises(requests_auth.InvalidToken) as exception_info:
+    with pytest.raises(requests_auth.GrantNotProvided) as exception_info:
         requests.get("http://authorized_only", auth=auth)
-    assert str(exception_info.value) == ""
+    assert (
+        str(exception_info.value)
+        == "access_token not provided within {'access_token': '', 'token_type': 'example', 'expires_in': 3600, 'refresh_token': 'tGzv3JOkF0XG5Qx2TlKWIA', 'example_parameter': 'example_value'}."
+    )
 
 
 def test_nonce_is_sent_if_provided_in_authorization_url(

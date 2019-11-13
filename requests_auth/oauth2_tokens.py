@@ -63,9 +63,6 @@ class TokenMemoryCache:
         :param expires_in: Number of seconds before token expiry
         :raise InvalidToken: In case token is invalid.
         """
-        if not token:
-            raise InvalidToken(token)
-
         expiry = datetime.datetime.utcnow().replace(
             tzinfo=datetime.timezone.utc
         ) + datetime.timedelta(seconds=expires_in)
