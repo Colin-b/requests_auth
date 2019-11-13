@@ -104,6 +104,68 @@ def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_defa
     assert re.match("^Bearer .*", get_header(responses, auth).get("Authorization"))
 
 
+def test_browser_opening_failure(
+    authenticated_service, token_cache, responses: RequestsMock, monkeypatch
+):
+    import requests_auth.oauth2_authentication_responses_server
+
+    auth = requests_auth.OAuth2Implicit(
+        TEST_SERVICE_HOST + "/provide_token_as_access_token", timeout=TIMEOUT
+    )
+
+    class FakeBrowser:
+        def open(self, url, new):
+            return False
+
+    monkeypatch.setattr(
+        requests_auth.oauth2_authentication_responses_server.webbrowser,
+        "get",
+        lambda *args: FakeBrowser(),
+    )
+
+    responses.add(
+        responses.GET,
+        "http://localhost:5001/provide_token_as_access_token?response_type=token&state=cff2b2458bda8efd4978b2896ca43c754655fb625dee68359621cd34bca9280ae83b5b854afd01e24094c1bdb15286dd765c7c172a00d7f983137ea6c8b97c04&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+    )
+    with pytest.raises(requests_auth.TimeoutOccurred) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert str(
+        exception_info.value
+    ) == "User authentication was not received within {} seconds.".format(TIMEOUT)
+
+
+def test_browser_error(
+    authenticated_service, token_cache, responses: RequestsMock, monkeypatch
+):
+    import requests_auth.oauth2_authentication_responses_server
+
+    auth = requests_auth.OAuth2Implicit(
+        TEST_SERVICE_HOST + "/provide_token_as_access_token", timeout=TIMEOUT
+    )
+
+    class FakeBrowser:
+        def open(self, url, new):
+            import webbrowser
+
+            raise webbrowser.Error("Failure")
+
+    monkeypatch.setattr(
+        requests_auth.oauth2_authentication_responses_server.webbrowser,
+        "get",
+        lambda *args: FakeBrowser(),
+    )
+
+    responses.add(
+        responses.GET,
+        "http://localhost:5001/provide_token_as_access_token?response_type=token&state=cff2b2458bda8efd4978b2896ca43c754655fb625dee68359621cd34bca9280ae83b5b854afd01e24094c1bdb15286dd765c7c172a00d7f983137ea6c8b97c04&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+    )
+    with pytest.raises(requests_auth.TimeoutOccurred) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert str(
+        exception_info.value
+    ) == "User authentication was not received within {} seconds.".format(TIMEOUT)
+
+
 def test_state_change(authenticated_service, token_cache, responses: RequestsMock):
     auth = requests_auth.OAuth2Implicit(
         TEST_SERVICE_HOST + "/provide_token_as_access_token_with_another_state",

@@ -3,7 +3,7 @@
 <p align="center">
 <a href="https://pypi.org/project/requests-auth/"><img alt="pypi version" src="https://img.shields.io/pypi/v/requests_auth"></a>
 <img alt="Build status" src="https://img.shields.io/badge/build-passing-brightgreen">
-<img alt="Coverage" src="https://img.shields.io/badge/coverage-93%25-brightgreen">
+<img alt="Coverage" src="https://img.shields.io/badge/coverage-94%25-brightgreen">
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 <img alt="Number of tests" src="https://img.shields.io/badge/tests-86 passed-blue">
 </p>
