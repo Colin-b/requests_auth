@@ -5,7 +5,7 @@
 <img alt="Build status" src="https://img.shields.io/badge/build-passing-brightgreen">
 <img alt="Coverage" src="https://img.shields.io/badge/coverage-94%25-brightgreen">
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<img alt="Number of tests" src="https://img.shields.io/badge/tests-86 passed-blue">
+<img alt="Number of tests" src="https://img.shields.io/badge/tests-95 passed-blue">
 </p>
 
 Provides authentication classes to be used with [`requests`][1] [authentication parameter][2].
@@ -22,7 +22,8 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
 - [OAuth2](#oauth-2)
   - [Authorization Code Flow](#authorization-code-flow)
     - [OKTA](#okta-oauth2-authorization-code)
-  - [PKCE Flow](#proof-key-for-code-exchange-flow)
+  - [Authorization Code Flow with PKCE](#authorization-code-flow-with-proof-key-for-code-exchange)
+    - [OKTA](#okta-oauth2-proof-key-for-code-exchange)
   - [Resource Owner Password Credentials flow](#resource-owner-password-credentials-flow)
   - [Client Credentials Flow](#client-credentials-flow)
     - [OKTA](#okta-oauth2-client-credentials)
@@ -135,17 +136,17 @@ Usual extra parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-### Proof Key for Code Exchange flow
+### Authorization Code Flow with Proof Key for Code Exchange
 
 Proof Key for Code Exchange is implemented following [rfc7636](https://tools.ietf.org/html/rfc7636).
 
-Use `requests_auth.OAuth2PKCE` to configure this kind of authentication.
+Use `requests_auth.OAuth2AuthorizationCodePKCE` to configure this kind of authentication.
 
 ```python
 import requests
-from requests_auth import OAuth2PKCE
+from requests_auth import OAuth2AuthorizationCodePKCE
 
-requests.get('http://www.example.com', auth=OAuth2PKCE('https://www.authorization.url', 'https://www.token.url'))
+requests.get('http://www.example.com', auth=OAuth2AuthorizationCodePKCE('https://www.authorization.url', 'https://www.token.url'))
 ```
 
 #### Parameters 
@@ -174,6 +175,56 @@ Usual extra parameters are:
 | `client_id`     | Corresponding to your Application ID (in Microsoft Azure app portal) |
 | `client_secret` | If client is not authenticated with the authorization server         |
 | `nonce`         | Refer to [OpenID ID Token specifications][3] for more details        |
+
+#### Common providers
+
+Most of [OAuth2](https://oauth.net/2/) Proof Key for Code Exchange providers are supported.
+
+If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
+
+##### OKTA (OAuth2 Proof Key for Code Exchange)
+
+[OKTA Proof Key for Code Exchange](https://developer.okta.com/docs/guides/implement-auth-code-pkce/overview/) providing access tokens is supported.
+
+Use `requests_auth.OktaAuthorizationCodePKCE` to configure this kind of authentication.
+
+```python
+import requests
+from requests_auth import OktaAuthorizationCodePKCE
+
+
+okta = OktaAuthorizationCodePKCE(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
+requests.get('http://www.example.com', auth=okta)
+```
+
+###### Parameters
+
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | code |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `code_field_name`      | Field name containing the code. | Optional | code |
+| `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
+| `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | openid |
+| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser. | Optional | 1 |
+| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+
+Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
+
+Usual extra parameters are:
+        
+| Name            | Description                                                          |
+|:----------------|:---------------------------------------------------------------------|
+| `client_secret`        | If client is not authenticated with the authorization server     |
+| `nonce`        | Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details     |
 
 ### Resource Owner Password Credentials flow 
 

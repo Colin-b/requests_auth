@@ -301,7 +301,7 @@ def test_oauth2_authorization_code_and_multiple_authentication_can_be_combined(
 def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
     authenticated_service, token_cache, responses: RequestsMock
 ):
-    pkce_auth = requests_auth.OAuth2PKCE(
+    pkce_auth = requests_auth.OAuth2AuthorizationCodePKCE(
         TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
         "http://provide_access_token",
         timeout=TIMEOUT,
@@ -326,7 +326,7 @@ def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
 def test_oauth2_pkce_and_multiple_authentication_can_be_combined(
     authenticated_service, token_cache, responses: RequestsMock
 ):
-    pkce_auth = requests_auth.OAuth2PKCE(
+    pkce_auth = requests_auth.OAuth2AuthorizationCodePKCE(
         TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
         "http://provide_access_token",
         timeout=TIMEOUT,

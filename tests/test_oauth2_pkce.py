@@ -15,7 +15,7 @@ def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
     authenticated_service, token_cache, responses: RequestsMock, monkeypatch
 ):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
-    auth = requests_auth.OAuth2PKCE(
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
         TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
         "http://provide_access_token",
         timeout=TIMEOUT,
@@ -46,7 +46,7 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
     authenticated_service, token_cache, responses: RequestsMock, monkeypatch
 ):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
-    auth = requests_auth.OAuth2PKCE(
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
         TEST_SERVICE_HOST + "/provide_code_as_anchor_code?nonce=123456",
         "http://provide_access_token",
         timeout=TIMEOUT,
@@ -77,7 +77,7 @@ def test_response_type_can_be_provided_in_url(
     authenticated_service, token_cache, responses: RequestsMock, monkeypatch
 ):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
-    auth = requests_auth.OAuth2PKCE(
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
         TEST_SERVICE_HOST + "/provide_code_as_anchor_code?response_type=code",
         "http://provide_access_token",
         timeout=TIMEOUT,
@@ -107,19 +107,19 @@ def test_response_type_can_be_provided_in_url(
 
 def test_authorization_url_is_mandatory():
     with pytest.raises(Exception) as exception_info:
-        requests_auth.OAuth2PKCE("", "http://test_url")
+        requests_auth.OAuth2AuthorizationCodePKCE("", "http://test_url")
     assert str(exception_info.value) == "Authorization URL is mandatory."
 
 
 def test_token_url_is_mandatory():
     with pytest.raises(Exception) as exception_info:
-        requests_auth.OAuth2PKCE("http://test_url", "")
+        requests_auth.OAuth2AuthorizationCodePKCE("http://test_url", "")
     assert str(exception_info.value) == "Token URL is mandatory."
 
 
 def test_header_value_must_contains_token():
     with pytest.raises(Exception) as exception_info:
-        requests_auth.OAuth2PKCE(
+        requests_auth.OAuth2AuthorizationCodePKCE(
             "http://test_url", "http://test_url", header_value="Bearer token"
         )
     assert str(exception_info.value) == "header_value parameter must contains {token}."
