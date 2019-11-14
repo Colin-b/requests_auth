@@ -75,7 +75,14 @@ class OAuth2:
     token_cache = oauth2_tokens.TokenMemoryCache()
 
 
-class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
+class SupportMultiAuth:
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
+
+
+class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMultiAuth):
     """
     Resource Owner Password Credentials Grant
 
@@ -156,13 +163,8 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-
-class OAuth2ClientCredentials(requests.auth.AuthBase):
+class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
     """
     Client Credentials Grant
 
@@ -239,13 +241,8 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-
-class OAuth2AuthorizationCode(requests.auth.AuthBase):
+class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth):
     """
     Authorization Code Grant
 
@@ -398,13 +395,8 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-
-class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
+class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase, SupportMultiAuth):
     """
     Proof Key for Code Exchange
 
@@ -595,13 +587,8 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
         digest = sha256(verifier).digest()
         return base64.urlsafe_b64encode(digest).rstrip(b"=")
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-
-class OAuth2Implicit(requests.auth.AuthBase):
+class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth):
     """
     Implicit Grant
 
@@ -719,11 +706,6 @@ class OAuth2Implicit(requests.auth.AuthBase):
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
-
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
 
 class AzureActiveDirectoryImplicit(OAuth2Implicit):
@@ -1076,7 +1058,7 @@ class OktaClientCredentials(OAuth2ClientCredentials):
         )
 
 
-class HeaderApiKey(requests.auth.AuthBase):
+class HeaderApiKey(requests.auth.AuthBase, SupportMultiAuth):
     """Describes an API Key requests authentication."""
 
     def __init__(self, api_key: str, header_name: str = None):
@@ -1093,13 +1075,8 @@ class HeaderApiKey(requests.auth.AuthBase):
         r.headers[self.header_name] = self.api_key
         return r
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-
-class QueryApiKey(requests.auth.AuthBase):
+class QueryApiKey(requests.auth.AuthBase, SupportMultiAuth):
     """Describes an API Key requests authentication."""
 
     def __init__(self, api_key: str, query_parameter_name: str = None):
@@ -1116,25 +1093,15 @@ class QueryApiKey(requests.auth.AuthBase):
         r.url = _add_parameters(r.url, {self.query_parameter_name: self.api_key})
         return r
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-
-class Basic(requests.auth.HTTPBasicAuth):
+class Basic(requests.auth.HTTPBasicAuth, SupportMultiAuth):
     """Describes a basic requests authentication."""
 
     def __init__(self, username: str, password: str):
         requests.auth.HTTPBasicAuth.__init__(self, username, password)
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-
-class NTLM:
+class NTLM(requests.auth.AuthBase, SupportMultiAuth):
     """Describes a NTLM requests authentication."""
 
     def __init__(self, username: str = None, password: str = None):
@@ -1172,11 +1139,6 @@ class NTLM:
     def __call__(self, r):
         self.auth.__call__(r)
         return r
-
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
 
 class Auths(requests.auth.AuthBase):
