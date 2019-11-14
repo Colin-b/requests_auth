@@ -1,8 +1,8 @@
 import base64
 import os
-import sys
 import uuid
 from hashlib import sha256, sha512
+from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
 
 import requests
 import requests.auth
@@ -10,14 +10,6 @@ import warnings
 
 from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
 from requests_auth.errors import *
-
-if sys.version_info.major > 2:
-    # Python 3
-    from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
-else:
-    # Python 2
-    from urllib import urlencode
-    from urlparse import parse_qs, urlsplit, urlunsplit
 
 
 def _add_parameters(initial_url, extra_parameters):
@@ -364,9 +356,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
             # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
             extra_parameters.setdefault("response_type", "code")
 
-        redirect_uri = "http://localhost:{0}/{1}".format(
-            redirect_uri_port, redirect_uri_endpoint
-        )
+        redirect_uri = f"http://localhost:{redirect_uri_port}/{redirect_uri_endpoint}"
         authorization_url_without_nonce = _add_parameters(
             self.authorization_url, extra_parameters
         )
@@ -529,9 +519,10 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
             # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
             extra_parameters.setdefault("response_type", "code")
 
-        redirect_uri = extra_parameters.pop(
-            "redirect_uri", None
-        ) or "http://localhost:{0}/{1}".format(redirect_uri_port, redirect_uri_endpoint)
+        redirect_uri = (
+            extra_parameters.pop("redirect_uri", None)
+            or f"http://localhost:{redirect_uri_port}/{redirect_uri_endpoint}"
+        )
         authorization_url_without_nonce = _add_parameters(
             authorization_url_without_response_type, extra_parameters
         )
@@ -727,9 +718,7 @@ class OAuth2Implicit(requests.auth.AuthBase):
                 "id_token" if "id_token" == response_type else "access_token"
             )
 
-        redirect_uri = "http://localhost:{0}/{1}".format(
-            redirect_uri_port, redirect_uri_endpoint
-        )
+        redirect_uri = f"http://localhost:{redirect_uri_port}/{redirect_uri_endpoint}"
         authorization_url_without_nonce = _add_parameters(
             self.authorization_url, extra_parameters
         )
@@ -815,10 +804,10 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
         """
         OAuth2Implicit.__init__(
             self,
-            "https://login.microsoftonline.com/{0}/oauth2/authorize".format(tenant_id),
+            f"https://login.microsoftonline.com/{tenant_id}/oauth2/authorize",
             client_id=client_id,
             nonce=kwargs.pop("nonce", None) or str(uuid.uuid4()),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -862,12 +851,12 @@ class AzureActiveDirectoryImplicitIdToken(OAuth2Implicit):
         """
         OAuth2Implicit.__init__(
             self,
-            "https://login.microsoftonline.com/{0}/oauth2/authorize".format(tenant_id),
+            f"https://login.microsoftonline.com/{tenant_id}/oauth2/authorize",
             client_id=client_id,
             response_type=kwargs.pop("response_type", "id_token"),
             token_field_name=kwargs.pop("token_field_name", "id_token"),
             nonce=kwargs.pop("nonce", None) or str(uuid.uuid4()),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -919,12 +908,10 @@ class OktaImplicit(OAuth2Implicit):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2Implicit.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
             client_id=client_id,
             nonce=kwargs.pop("nonce", None) or str(uuid.uuid4()),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -974,14 +961,12 @@ class OktaImplicitIdToken(OAuth2Implicit):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2Implicit.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
             client_id=client_id,
             response_type=kwargs.pop("response_type", "id_token"),
             token_field_name=kwargs.pop("token_field_name", "id_token"),
             nonce=kwargs.pop("nonce", None) or str(uuid.uuid4()),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -1031,14 +1016,10 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2AuthorizationCode.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/token".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
+            f"https://{instance}/oauth2/{authorization_server}/v1/token",
             client_id=client_id,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -1090,14 +1071,10 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2AuthorizationCodePKCE.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/token".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
+            f"https://{instance}/oauth2/{authorization_server}/v1/token",
             client_id=client_id,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -1130,12 +1107,10 @@ class OktaClientCredentials(OAuth2ClientCredentials):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2ClientCredentials.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/token".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/token",
             username=client_id,
             password=client_secret,
-            **kwargs
+            **kwargs,
         )
 
 

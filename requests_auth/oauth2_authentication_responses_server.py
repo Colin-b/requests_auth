@@ -2,13 +2,7 @@ import webbrowser
 import logging
 import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
-
-try:
-    # Python 3
-    from urllib.parse import parse_qs, urlparse
-except ImportError:
-    # Python 2
-    from urlparse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse
 
 from requests_auth.errors import *
 
@@ -24,7 +18,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             )
             return self.send_html("Favicon is not provided.")
 
-        logger.debug("GET received on {0}".format(self.path))
+        logger.debug(f"GET received on {self.path}")
         try:
             args = self._get_params()
             if self.server.grant_details.name in args or args.pop(
@@ -38,13 +32,11 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
             self.send_html(
-                self.error_page(
-                    "Unable to properly perform authentication: {0}".format(e)
-                )
+                self.error_page(f"Unable to properly perform authentication: {e}")
             )
 
     def do_POST(self):
-        logger.debug("POST received on {0}".format(self.path))
+        logger.debug(f"POST received on {self.path}")
         try:
             form_dict = self._get_form()
             self._parse_grant(form_dict)
@@ -52,29 +44,25 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
             self.send_html(
-                self.error_page(
-                    "Unable to properly perform authentication: {0}".format(e)
-                )
+                self.error_page(f"Unable to properly perform authentication: {e}")
             )
 
     def _parse_grant(self, arguments):
         grants = arguments.get(self.server.grant_details.name)
         if not grants or len(grants) > 1:
             raise GrantNotProvided(self.server.grant_details.name, arguments)
-        logger.debug("Received grants: {0}".format(grants))
+        logger.debug(f"Received grants: {grants}")
         grant = grants[0]
 
         states = arguments.get("state")
         if not states or len(states) > 1:
             raise StateNotProvided(arguments)
-        logger.debug("Received states: {0}".format(states))
+        logger.debug(f"Received states: {states}")
         state = states[0]
         self.server.grant = state, grant
         self.send_html(
             self.success_page(
-                "You are now authenticated on {0}. You may close this tab.".format(
-                    state
-                )
+                f"You are now authenticated on {state}. You may close this tab."
             )
         )
 
@@ -94,30 +82,26 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         logger.debug("HTML content sent to client.")
 
     def success_page(self, text):
-        return """<body onload="window.open('', '_self', ''); window.setTimeout(close, {0})" style="
+        return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {self.server.grant_details.reception_success_display_time})" style="
         color: #4F8A10;
         background-color: #DFF2BF;
         font-size: xx-large;
         display: flex;
         align-items: center;
         justify-content: center;">
-            <div style="border: 1px solid;">{1}</div>
-        </body>""".format(
-            self.server.grant_details.reception_success_display_time, text
-        )
+            <div style="border: 1px solid;">{text}</div>
+        </body>"""
 
     def error_page(self, text):
-        return """<body onload="window.open('', '_self', ''); window.setTimeout(close, {0})" style="
+        return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {self.server.grant_details.reception_failure_display_time})" style="
         color: #D8000C;
         background-color: #FFBABA;
         font-size: xx-large;
         display: flex;
         align-items: center;
         justify-content: center;">
-            <div style="border: 1px solid;">{1}</div>
-        </body>""".format(
-            self.server.grant_details.reception_failure_display_time, text
-        )
+            <div style="border: 1px solid;">{text}</div>
+        </body>"""
 
     def fragment_redirect_page(self):
         """Return a page with JS that calls back the server on the url
@@ -158,7 +142,7 @@ class FixedHttpServer(HTTPServer):
             self, ("", grant_details.redirect_uri_port), OAuth2ResponseHandler
         )
         self.timeout = grant_details.reception_timeout
-        logger.debug("Timeout is set to {0} seconds.".format(self.timeout))
+        logger.debug(f"Timeout is set to {self.timeout} seconds.")
         self.grant_details = grant_details
         self.request_error = None
         self.grant = False
@@ -177,20 +161,6 @@ class FixedHttpServer(HTTPServer):
 
     def handle_timeout(self):
         raise TimeoutOccurred(self.timeout)
-
-    def __enter__(self):
-        """
-        Support for context manager use with Python < 3.6
-        TODO Remove once dropping support for those python version
-        """
-        return self
-
-    def __exit__(self, *args):
-        """
-        Support for context manager use with Python < 3.6
-        TODO Remove once dropping support for those python version
-        """
-        self.server_close()
 
 
 class GrantDetails:
@@ -223,7 +193,7 @@ def request_new_grant(grant_details):
         * redirect_uri_port
     :return:A tuple (state, grant) or an Exception if not retrieved within timeout.
     """
-    logger.debug("Requesting new {0}...".format(grant_details.name))
+    logger.debug(f"Requesting new {grant_details.name}...")
 
     with FixedHttpServer(grant_details) as server:
         _open_url(grant_details.url)
@@ -240,7 +210,7 @@ def _open_url(url):
             if hasattr(webbrowser, "iexplore")
             else webbrowser.get()
         )
-        logger.info("Opening browser on {0}".format(url))
+        logger.info(f"Opening browser on {url}")
         if not browser.open(url, new=1):
             logger.warning("Unable to open URL, try with a GET request.")
             requests.get(url)

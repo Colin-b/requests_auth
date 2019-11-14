@@ -2,7 +2,7 @@ import datetime
 import logging
 import sys
 
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, request, redirect
 import jwt
 
 logging.basicConfig(
@@ -29,9 +29,7 @@ def post_token_as_my_custom_token():
     response_type = request.args.get("response_type")
     if "custom_token" != response_type:
         raise Exception(
-            "custom_token was expected to be received as response_type. Got {0} instead.".format(
-                response_type
-            )
+            f"custom_token was expected to be received as response_type. Got {response_type} instead."
         )
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     return submit_a_form_with_a_token(create_token(expiry_in_1_hour), "custom_token")
@@ -123,12 +121,12 @@ def close_page_so_that_client_timeout_waiting_for_token():
 def submit_a_form_with_a_token(token, token_field_name, state=None):
     redirect_uri = request.args.get("redirect_uri")
     state = state or request.args.get("state")
-    return """
+    return f"""
 <html>
     <body>
-        <form method="POST" name="hiddenform" action="{0}">
-            <input type="hidden" name="{1}" value="{2}" />
-            <input type="hidden" name="state" value="{3}" />
+        <form method="POST" name="hiddenform" action="{redirect_uri}">
+            <input type="hidden" name="{token_field_name}" value="{token}" />
+            <input type="hidden" name="state" value="{state}" />
             <noscript>
                 <p>Script is disabled. Click Submit to continue.</p>
                 <input type="submit" value="Submit" />
@@ -137,36 +135,30 @@ def submit_a_form_with_a_token(token, token_field_name, state=None):
         <script language="javascript">document.forms[0].submit();</script>
     </body>
 </html>
-        """.format(
-        redirect_uri, token_field_name, token, state
-    )
+        """
 
 
 def redirect_with_a_token(token_expiry, response_type):
     redirect_uri = request.args.get("redirect_uri")
     state = request.args.get("state")
     token = create_token(token_expiry)
-    return redirect(
-        "{0}#{1}={2}&state={3}".format(redirect_uri, response_type, token, state)
-    )
+    return redirect(f"{redirect_uri}#{response_type}={token}&state={state}")
 
 
 def redirect_with_a_code(code_field_name, code_value):
     redirect_uri = request.args.get("redirect_uri")
     state = request.args.get("state")
-    return redirect(
-        "{0}#{1}={2}&state={3}".format(redirect_uri, code_field_name, code_value, state)
-    )
+    return redirect(f"{redirect_uri}#{code_field_name}={code_value}&state={state}")
 
 
 def submit_a_form_without_state(token_expiry, response_type):
     redirect_uri = request.args.get("redirect_uri")
     token = create_token(token_expiry)
-    return """
+    return f"""
 <html>
     <body>
-        <form method="POST" name="hiddenform" action="{0}">
-            <input type="hidden" name="{1}" value="{2}" />
+        <form method="POST" name="hiddenform" action="{redirect_uri}">
+            <input type="hidden" name="{response_type}" value="{token}" />
             <noscript>
                 <p>Script is disabled. Click Submit to continue.</p>
                 <input type="submit" value="Submit" />
@@ -175,23 +167,21 @@ def submit_a_form_without_state(token_expiry, response_type):
         <script language="javascript">document.forms[0].submit();</script>
     </body>
 </html>
-        """.format(
-        redirect_uri, response_type, token
-    )
+        """
 
 
 def redirect_with_a_token_without_state(token_expiry, response_type):
     redirect_uri = request.args.get("redirect_uri")
     token = create_token(token_expiry)
-    return redirect("{0}#{1}={2}".format(redirect_uri, response_type, token))
+    return redirect(f"{redirect_uri}#{response_type}={token}")
 
 
 def submit_an_empty_form():
     redirect_uri = request.args.get("redirect_uri")
-    return """
+    return f"""
 <html>
     <body>
-        <form method="POST" name="hiddenform" action="{0}">
+        <form method="POST" name="hiddenform" action="{redirect_uri}">
             <noscript>
                 <p>Script is disabled. Click Submit to continue.</p>
                 <input type="submit" value="Submit" />
@@ -200,14 +190,11 @@ def submit_an_empty_form():
         <script language="javascript">document.forms[0].submit();</script>
     </body>
 </html>
-        """.format(
-        redirect_uri
-    )
+        """
 
 
 def redirect_without_a_token():
-    redirect_uri = request.args.get("redirect_uri")
-    return redirect("{0}".format(redirect_uri))
+    return redirect(request.args.get("redirect_uri"))
 
 
 def close_page():
@@ -227,5 +214,5 @@ def create_token(expiry):
 
 
 def start_server(port):
-    logger.info("Starting test server on port {0}.".format(port))
+    logger.info(f"Starting test server on port {port}.")
     app.run(port=port)

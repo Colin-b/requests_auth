@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2019-XX-XX
+### Removed
+- Support for Python < 3.6
+
 ## [4.1.0] - 2019-11-13
 ### Added
 - module version is now publicly available.
@@ -87,7 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.0.0...HEAD
+[5.0.0]: https://github.com/Colin-b/requests_auth/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/Colin-b/requests_auth/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/Colin-b/requests_auth/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/Colin-b/requests_auth/compare/v3.0.0...v4.0.0

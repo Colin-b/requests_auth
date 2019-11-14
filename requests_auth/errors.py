@@ -10,8 +10,7 @@ class TimeoutOccurred(Exception):
 
     def __init__(self, timeout):
         Exception.__init__(
-            self,
-            "User authentication was not received within {0} seconds.".format(timeout),
+            self, f"User authentication was not received within {timeout} seconds."
         )
 
 
@@ -19,7 +18,7 @@ class InvalidToken(Exception):
     """ Token is invalid. """
 
     def __init__(self, token_name):
-        Exception.__init__(self, "{0} is invalid.".format(token_name))
+        Exception.__init__(self, f"{token_name} is invalid.")
 
 
 class GrantNotProvided(Exception):
@@ -27,8 +26,7 @@ class GrantNotProvided(Exception):
 
     def __init__(self, grant_name, dictionary_without_grant):
         Exception.__init__(
-            self,
-            "{0} not provided within {1}.".format(grant_name, dictionary_without_grant),
+            self, f"{grant_name} not provided within {dictionary_without_grant}."
         )
 
 
@@ -37,7 +35,7 @@ class StateNotProvided(Exception):
 
     def __init__(self, dictionary_without_state):
         Exception.__init__(
-            self, "state not provided within {0}.".format(dictionary_without_state)
+            self, f"state not provided within {dictionary_without_state}."
         )
 
 
@@ -45,6 +43,4 @@ class TokenExpiryNotProvided(Exception):
     """ Token expiry was not provided. """
 
     def __init__(self, token_body):
-        Exception.__init__(
-            self, "Expiry (exp) is not provided in {0}.".format(token_body)
-        )
+        Exception.__init__(self, f"Expiry (exp) is not provided in {token_body}.")

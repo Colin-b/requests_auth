@@ -18,7 +18,7 @@ TIMEOUT = 10
 def can_connect_to_server(port: int):
     try:
         response = urllib.request.urlopen(
-            "http://localhost:{0}/status".format(port), timeout=0.5
+            f"http://localhost:{port}/status", timeout=0.5
         )
         return response.code == 200
     except:
