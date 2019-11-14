@@ -47,7 +47,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
                 self.error_page(f"Unable to properly perform authentication: {e}")
             )
 
-    def _parse_grant(self, arguments):
+    def _parse_grant(self, arguments: dict):
         grants = arguments.get(self.server.grant_details.name)
         if not grants or len(grants) > 1:
             raise GrantNotProvided(self.server.grant_details.name, arguments)
@@ -74,14 +74,14 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
     def _get_params(self):
         return parse_qs(urlparse(self.path).query)
 
-    def send_html(self, html_content):
+    def send_html(self, html_content: str):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
         self.wfile.write(str.encode(html_content))
         logger.debug("HTML content sent to client.")
 
-    def success_page(self, text):
+    def success_page(self, text: str):
         return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {self.server.grant_details.reception_success_display_time})" style="
         color: #4F8A10;
         background-color: #DFF2BF;
@@ -92,7 +92,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             <div style="border: 1px solid;">{text}</div>
         </body>"""
 
-    def error_page(self, text):
+    def error_page(self, text: str):
         return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {self.server.grant_details.reception_failure_display_time})" style="
         color: #D8000C;
         background-color: #FFBABA;
@@ -122,13 +122,31 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         window.location.replace(new_url)
         </script></body></html>"""
 
-    def log_message(self, format, *args):
+    def log_message(self, format: str, *args):
         """Make sure that messages are logged even with pythonw (seems like a bug in BaseHTTPRequestHandler)."""
         logger.info(format, *args)
 
 
+class GrantDetails:
+    def __init__(
+        self,
+        url: str,
+        name: str,
+        reception_timeout: int,
+        reception_success_display_time: int,
+        reception_failure_display_time: int,
+        redirect_uri_port: int,
+    ):
+        self.url = url
+        self.name = name
+        self.reception_timeout = reception_timeout
+        self.reception_success_display_time = reception_success_display_time
+        self.reception_failure_display_time = reception_failure_display_time
+        self.redirect_uri_port = redirect_uri_port
+
+
 class FixedHttpServer(HTTPServer):
-    def __init__(self, grant_details):
+    def __init__(self, grant_details: GrantDetails):
         """
 
         :param grant_details: Must be a class providing the following attributes:
@@ -163,25 +181,7 @@ class FixedHttpServer(HTTPServer):
         raise TimeoutOccurred(self.timeout)
 
 
-class GrantDetails:
-    def __init__(
-        self,
-        url,
-        name,
-        reception_timeout,
-        reception_success_display_time,
-        reception_failure_display_time,
-        redirect_uri_port,
-    ):
-        self.url = url
-        self.name = name
-        self.reception_timeout = reception_timeout
-        self.reception_success_display_time = reception_success_display_time
-        self.reception_failure_display_time = reception_failure_display_time
-        self.redirect_uri_port = redirect_uri_port
-
-
-def request_new_grant(grant_details):
+def request_new_grant(grant_details: GrantDetails):
     """
     Ask for a new OAuth2 grant.
     :param grant_details: Must be a class providing the following attributes:
@@ -200,7 +200,7 @@ def request_new_grant(grant_details):
         return _wait_for_grant(server)
 
 
-def _open_url(url):
+def _open_url(url: str):
     # Default to Microsoft Internet Explorer to be able to open a new window
     # otherwise this parameter is not taken into account by most browsers
     # Opening a new window allows to focus back once authenticated (JavaScript is closing the only tab)
@@ -219,7 +219,7 @@ def _open_url(url):
         requests.get(url)
 
 
-def _wait_for_grant(server):
+def _wait_for_grant(server: FixedHttpServer):
     logger.debug("Waiting for user authentication...")
     while not server.grant:
         server.handle_request()

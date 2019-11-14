@@ -9,7 +9,7 @@ from requests_auth.errors import *
 logger = logging.getLogger(__name__)
 
 
-def decode_base64(base64_encoded_string):
+def decode_base64(base64_encoded_string: str):
     """
     Decode base64, padding being optional.
 
@@ -22,7 +22,7 @@ def decode_base64(base64_encoded_string):
     return base64.b64decode(base64_encoded_string).decode("unicode_escape")
 
 
-def is_expired(expiry):
+def is_expired(expiry: float):
     return datetime.datetime.utcfromtimestamp(expiry) < datetime.datetime.utcnow()
 
 
@@ -36,7 +36,7 @@ class TokenMemoryCache:
         self.forbid_concurrent_cache_access = threading.Lock()
         self.forbid_concurrent_missing_token_function_call = threading.Lock()
 
-    def add_bearer_token(self, key, token):
+    def add_bearer_token(self, key: str, token: str):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -55,7 +55,7 @@ class TokenMemoryCache:
 
         self._add_token(key, token, expiry)
 
-    def add_access_token(self, key, token, expires_in):
+    def add_access_token(self, key: str, token: str, expires_in: int):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -68,7 +68,7 @@ class TokenMemoryCache:
         ) + datetime.timedelta(seconds=expires_in)
         self._add_token(key, token, expiry.timestamp())
 
-    def _add_token(self, key, token, expiry):
+    def _add_token(self, key: str, token: str, expiry: float):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -82,7 +82,7 @@ class TokenMemoryCache:
                 f'Inserting token expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC) with "{key}" key: {token}'
             )
 
-    def get_token(self, key, on_missing_token=None, *on_missing_token_args):
+    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args):
         """
         Return the bearer token.
         :param key: key identifier of the token
@@ -153,7 +153,7 @@ class JsonTokenFileCache(TokenMemoryCache):
     Class to manage tokens using a cache file.
     """
 
-    def __init__(self, tokens_path):
+    def __init__(self, tokens_path: str):
         TokenMemoryCache.__init__(self)
         self.tokens_path = tokens_path
         self.last_save_time = 0

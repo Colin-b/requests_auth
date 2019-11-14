@@ -12,7 +12,7 @@ from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
 from requests_auth.errors import *
 
 
-def _add_parameters(initial_url, extra_parameters):
+def _add_parameters(initial_url: str, extra_parameters: dict) -> str:
     """
     Add parameters to an URL and return the new URL.
 
@@ -32,7 +32,7 @@ def _add_parameters(initial_url, extra_parameters):
     return urlunsplit((scheme, netloc, path, new_query_string, fragment))
 
 
-def _pop_parameter(url, query_parameter_name):
+def _pop_parameter(url: str, query_parameter_name: str) -> tuple:
     """
     Remove and return parameter of an URL.
 
@@ -51,14 +51,16 @@ def _pop_parameter(url, query_parameter_name):
     )
 
 
-def _get_query_parameter(url, param_name):
+def _get_query_parameter(url: str, param_name: str) -> str:
     scheme, netloc, path, query_string, fragment = urlsplit(url)
     query_params = parse_qs(query_string)
     all_values = query_params.get(param_name)
     return all_values[0] if all_values else None
 
 
-def request_new_grant_with_post(url, data, grant_name, timeout, auth=None):
+def request_new_grant_with_post(
+    url: str, data, grant_name: str, timeout: int, auth=None
+) -> tuple:
     response = requests.post(url, data=data, timeout=timeout, auth=auth)
     response.raise_for_status()
 
@@ -81,7 +83,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.3
     """
 
-    def __init__(self, token_url, username, password, **kwargs):
+    def __init__(self, token_url: str, username: str, password: str, **kwargs):
         """
         :param token_url: OAuth 2 token URL.
         :param username: Resource owner user name.
@@ -159,14 +161,6 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2ResourceOwnerPasswordCredentials('{0}', '{1}', '{2}', {3})".format(
-            self.token_url, self.username, self.password, addition_args_str
-        )
-
 
 class OAuth2ClientCredentials(requests.auth.AuthBase):
     """
@@ -176,7 +170,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.4
     """
 
-    def __init__(self, token_url, username, password, **kwargs):
+    def __init__(self, token_url: str, username: str, password: str, **kwargs):
         """
         :param token_url: OAuth 2 token URL.
         :param username: Resource owner user name.
@@ -233,7 +227,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
-    def request_new_token(self):
+    def request_new_token(self) -> tuple:
         # As described in https://tools.ietf.org/html/rfc6749#section-4.4.3
         token, expires_in = request_new_grant_with_post(
             self.token_url,
@@ -250,14 +244,6 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2ClientCredentials('{0}', '{1}', '{2}', {3})".format(
-            self.token_url, self.username, self.password, addition_args_str
-        )
-
 
 class OAuth2AuthorizationCode(requests.auth.AuthBase):
     """
@@ -271,7 +257,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.1
     """
 
-    def __init__(self, authorization_url, token_url, **kwargs):
+    def __init__(self, authorization_url: str, token_url: str, **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param token_url: OAuth 2 token URL.
@@ -417,14 +403,6 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2AuthorizationCode('{0}', '{1}', {2})".format(
-            self.authorization_url, self.token_url, addition_args_str
-        )
-
 
 class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
     """
@@ -438,7 +416,7 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc7636
     """
 
-    def __init__(self, authorization_url, token_url, **kwargs):
+    def __init__(self, authorization_url: str, token_url: str, **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param token_url: OAuth 2 token URL.
@@ -570,7 +548,7 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
-    def request_new_token(self):
+    def request_new_token(self) -> tuple:
         # Request code
         state, code = oauth2_authentication_responses_server.request_new_grant(
             self.code_grant_details
@@ -622,14 +600,6 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2PKCE('{0}', '{1}', {2})".format(
-            self.authorization_url, self.token_url, addition_args_str
-        )
-
 
 class OAuth2Implicit(requests.auth.AuthBase):
     """
@@ -643,7 +613,7 @@ class OAuth2Implicit(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.2
     """
 
-    def __init__(self, authorization_url, **kwargs):
+    def __init__(self, authorization_url: str, **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param response_type: Value of the response_type query parameter if not already provided in authorization URL.
@@ -755,14 +725,6 @@ class OAuth2Implicit(requests.auth.AuthBase):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2Implicit('{0}', {1})".format(
-            self.authorization_url, addition_args_str
-        )
-
 
 class AzureActiveDirectoryImplicit(OAuth2Implicit):
     """
@@ -770,7 +732,7 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
     https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens
     """
 
-    def __init__(self, tenant_id, client_id, **kwargs):
+    def __init__(self, tenant_id: str, client_id: str, **kwargs):
         """
         :param tenant_id: Microsoft Tenant Identifier (formatted as an Universal Unique Identifier)
         :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
@@ -817,7 +779,7 @@ class AzureActiveDirectoryImplicitIdToken(OAuth2Implicit):
     https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens
     """
 
-    def __init__(self, tenant_id, client_id, **kwargs):
+    def __init__(self, tenant_id: str, client_id: str, **kwargs):
         """
         :param tenant_id: Microsoft Tenant Identifier (formatted as an Universal Unique Identifier)
         :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
@@ -867,7 +829,7 @@ class OktaImplicit(OAuth2Implicit):
     https://developer.okta.com/docs/guides/implement-implicit/overview/
     """
 
-    def __init__(self, instance, client_id, **kwargs):
+    def __init__(self, instance: str, client_id: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -920,7 +882,7 @@ class OktaImplicitIdToken(OAuth2Implicit):
     Describes an OKTA (OpenID Connect) "ID Token" implicit flow requests authentication.
     """
 
-    def __init__(self, instance, client_id, **kwargs):
+    def __init__(self, instance: str, client_id: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -975,7 +937,7 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
     Describes an OKTA (OAuth 2) "Access Token" authorization code flow requests authentication.
     """
 
-    def __init__(self, instance, client_id, **kwargs):
+    def __init__(self, instance: str, client_id: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -1028,7 +990,7 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
     Describes an OKTA (OAuth 2) "Access Token" Proof Key for Code Exchange (PKCE) flow requests authentication.
     """
 
-    def __init__(self, instance, client_id, **kwargs):
+    def __init__(self, instance: str, client_id: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -1083,7 +1045,7 @@ class OktaClientCredentials(OAuth2ClientCredentials):
     Describes an OKTA (OAuth 2) client credentials (also called application) flow requests authentication.
     """
 
-    def __init__(self, instance, client_id, client_secret, **kwargs):
+    def __init__(self, instance: str, client_id: str, client_secret: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -1117,7 +1079,7 @@ class OktaClientCredentials(OAuth2ClientCredentials):
 class HeaderApiKey(requests.auth.AuthBase):
     """Describes an API Key requests authentication."""
 
-    def __init__(self, api_key, header_name=None):
+    def __init__(self, api_key: str, header_name: str = None):
         """
         :param api_key: The API key that will be sent.
         :param header_name: Name of the header field. "X-API-Key" by default.
@@ -1136,14 +1098,11 @@ class HeaderApiKey(requests.auth.AuthBase):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        return "HeaderApiKey('{0}', '{1}')".format(self.api_key, self.header_name)
-
 
 class QueryApiKey(requests.auth.AuthBase):
     """Describes an API Key requests authentication."""
 
-    def __init__(self, api_key, query_parameter_name=None):
+    def __init__(self, api_key: str, query_parameter_name: str = None):
         """
         :param api_key: The API key that will be sent.
         :param query_parameter_name: Name of the query parameter. "api_key" by default.
@@ -1162,16 +1121,11 @@ class QueryApiKey(requests.auth.AuthBase):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        return "QueryApiKey('{0}', '{1}')".format(
-            self.api_key, self.query_parameter_name
-        )
-
 
 class Basic(requests.auth.HTTPBasicAuth):
     """Describes a basic requests authentication."""
 
-    def __init__(self, username, password):
+    def __init__(self, username: str, password: str):
         requests.auth.HTTPBasicAuth.__init__(self, username, password)
 
     def __add__(self, other):
@@ -1179,14 +1133,11 @@ class Basic(requests.auth.HTTPBasicAuth):
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        return "Basic('{0}', '{1}')".format(self.username, self.password)
-
 
 class NTLM:
     """Describes a NTLM requests authentication."""
 
-    def __init__(self, username=None, password=None):
+    def __init__(self, username: str = None, password: str = None):
         """
         :param username: Mandatory if requests_negotiate_sspi module is not installed.
         :param password: Mandatory if requests_negotiate_sspi module is not installed.
@@ -1227,11 +1178,6 @@ class NTLM:
             return Auths(self, *other.authentication_modes)
         return Auths(self, other)
 
-    def __str__(self):
-        if self.username and self.password:
-            return "NTLM('{0}', '{1}')".format(self.username, self.password)
-        return "NTLM()"
-
 
 class Auths(requests.auth.AuthBase):
     """Authentication using multiple authentication methods."""
@@ -1252,6 +1198,3 @@ class Auths(requests.auth.AuthBase):
         if isinstance(other, Auths):
             return Auths(*self.authentication_modes, *other.authentication_modes)
         return Auths(*self.authentication_modes, other)
-
-    def __str__(self):
-        return "Auths(" + ", ".join(map(str, self.authentication_modes)) + ")"

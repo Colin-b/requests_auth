@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.0.0] - 2019-XX-XX
 ### Removed
 - Support for Python < 3.6
+- requests_auth.OAuth2Flow enum, use the proper auth class instead.
+- requests_auth.okta function, use the proper auth class instead.
+- requests_auth.aad function, use the proper auth class instead.
+- requests_auth.oauth2 function, use the proper auth class instead.
+- str representation of auth classes.
 
 ## [4.1.0] - 2019-11-13
 ### Added
