@@ -265,7 +265,7 @@ Use `requests_auth.OAuth2ClientCredentials` to configure this kind of authentica
 import requests
 from requests_auth import OAuth2ClientCredentials
 
-requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', 'user name', 'user password'))
+requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', client_id='id', client_secret='secret'))
 ```
 
 #### Parameters
@@ -273,8 +273,8 @@ requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www
 | Name               | Description                                  | Mandatory | Default value |
 |:-------------------|:---------------------------------------------|:----------|:--------------|
 | `token_url`        | OAuth 2 token URL.                           | Mandatory |               |
-| `username`         | Resource owner user name.                    | Mandatory |               |
-| `password`         | Resource owner password.                     | Mandatory |               |
+| `client_id`         | Resource owner user name.                    | Mandatory |               |
+| `client_secret`         | Resource owner password.                     | Mandatory |               |
 | `timeout`          | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60            |
 | `header_name`      | Name of the header field used to send token. | Optional  | Authorization |
 | `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |

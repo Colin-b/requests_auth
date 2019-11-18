@@ -189,8 +189,8 @@ def test_oauth2_client_credential_and_api_key_authentication_can_be_combined(
 ):
     resource_owner_password_auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token",
-        username="test_user",
-        password="test_pwd",
+        client_id="test_user",
+        client_secret="test_pwd",
         timeout=TIMEOUT,
     )
     responses.add(
@@ -215,8 +215,8 @@ def test_oauth2_client_credential_and_multiple_authentication_can_be_combined(
 ):
     resource_owner_password_auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token",
-        username="test_user",
-        password="test_pwd",
+        client_id="test_user",
+        client_secret="test_pwd",
         timeout=TIMEOUT,
     )
     responses.add(

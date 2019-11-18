@@ -11,8 +11,8 @@ def test_oauth2_client_credentials_flow_token_is_sent_in_authorization_header_by
 ):
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token",
-        username="test_user",
-        password="test_pwd",
+        client_id="test_user",
+        client_secret="test_pwd",
         timeout=TIMEOUT,
     )
     responses.add(
@@ -38,16 +38,16 @@ def test_token_url_is_mandatory():
     assert str(exception_info.value) == "Token URL is mandatory."
 
 
-def test_user_name_is_mandatory():
+def test_client_id_is_mandatory():
     with pytest.raises(Exception) as exception_info:
         requests_auth.OAuth2ClientCredentials("http://test_url", "", "test_pwd")
-    assert str(exception_info.value) == "User name is mandatory."
+    assert str(exception_info.value) == "client_id is mandatory."
 
 
-def test_password_is_mandatory():
+def test_client_secret_is_mandatory():
     with pytest.raises(Exception) as exception_info:
         requests_auth.OAuth2ClientCredentials("http://test_url", "test_user", "")
-    assert str(exception_info.value) == "Password is mandatory."
+    assert str(exception_info.value) == "client_secret is mandatory."
 
 
 def test_header_value_must_contains_token():

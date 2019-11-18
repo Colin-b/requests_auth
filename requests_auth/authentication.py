@@ -206,11 +206,11 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.4
     """
 
-    def __init__(self, token_url: str, username: str, password: str, **kwargs):
+    def __init__(self, token_url: str, client_id: str, client_secret: str, **kwargs):
         """
         :param token_url: OAuth 2 token URL.
-        :param username: Resource owner user name.
-        :param password: Resource owner password.
+        :param client_id: Resource owner user name.
+        :param client_secret: Resource owner password.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
         :param header_name: Name of the header field used to send token.
@@ -225,12 +225,12 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
         self.token_url = token_url
         if not self.token_url:
             raise Exception("Token URL is mandatory.")
-        self.username = username
-        if not self.username:
-            raise Exception("User name is mandatory.")
-        self.password = password
-        if not self.password:
-            raise Exception("Password is mandatory.")
+        self.client_id = client_id
+        if not self.client_id:
+            raise Exception("client_id is mandatory.")
+        self.client_secret = client_secret
+        if not self.client_secret:
+            raise Exception("client_secret is mandatory.")
         self.kwargs = kwargs
 
         extra_parameters = dict(kwargs)
@@ -270,7 +270,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
             self.data,
             self.token_field_name,
             self.timeout,
-            auth=(self.username, self.password),
+            auth=(self.client_id, self.client_secret),
         )
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
@@ -1029,8 +1029,8 @@ class OktaClientCredentials(OAuth2ClientCredentials):
         OAuth2ClientCredentials.__init__(
             self,
             f"https://{instance}/oauth2/{authorization_server}/v1/token",
-            username=client_id,
-            password=client_secret,
+            client_id=client_id,
+            client_secret=client_secret,
             **kwargs,
         )
 
