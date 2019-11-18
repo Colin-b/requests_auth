@@ -3,24 +3,20 @@ import pytest
 
 import requests_auth
 from tests.auth_helper import get_header, get_request
-from tests.oauth2_helper import (
-    authenticated_service,
-    token_cache,
-    TIMEOUT,
-    TEST_SERVICE_HOST,
-)
+from tests.oauth2_helper import token_cache, TIMEOUT, browser_mock, BrowserMock
 
 
 def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
-    authenticated_service, token_cache, responses: RequestsMock, monkeypatch
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
-        TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
-        "http://provide_access_token",
-        timeout=TIMEOUT,
+        "http://provide_code", "http://provide_access_token", timeout=TIMEOUT
     )
-
+    browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
     responses.add(
         responses.POST,
         "http://provide_access_token",
@@ -43,15 +39,18 @@ def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
 
 
 def test_nonce_is_sent_if_provided_in_authorization_url(
-    authenticated_service, token_cache, responses: RequestsMock, monkeypatch
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
-        TEST_SERVICE_HOST + "/provide_code_as_anchor_code?nonce=123456",
+        "http://provide_code?nonce=123456",
         "http://provide_access_token",
         timeout=TIMEOUT,
     )
-
+    browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
     responses.add(
         responses.POST,
         "http://provide_access_token",
@@ -74,16 +73,19 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
 
 
 def test_response_type_can_be_provided_in_url(
-    authenticated_service, token_cache, responses: RequestsMock, monkeypatch
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
-        TEST_SERVICE_HOST + "/provide_code_as_anchor_code?response_type=code",
+        "http://provide_code?response_type=my_code",
         "http://provide_access_token",
         timeout=TIMEOUT,
         response_type="not_used",
     )
-
+    browser_mock.add_response(
+        opened_url="http://provide_code?response_type=%5B%27my_code%27%5D&state=b32e05720bd3722e0ac87bf72897a78b669a0810adf8da46b675793dcfe0f41a40f7d7fdda952bd73ea533a2462907d805adf8c1a162d51b99b2ddec0d411feb&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=b32e05720bd3722e0ac87bf72897a78b669a0810adf8da46b675793dcfe0f41a40f7d7fdda952bd73ea533a2462907d805adf8c1a162d51b99b2ddec0d411feb",
+    )
     responses.add(
         responses.POST,
         "http://provide_access_token",
@@ -101,7 +103,7 @@ def test_response_type_can_be_provided_in_url(
     )
     assert (
         get_request(responses, "http://provide_access_token/").body
-        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
+        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=my_code&code=SplxlOBeZQQYbYS6WxSbIA"
     )
 
 
