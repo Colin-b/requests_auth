@@ -3,22 +3,19 @@ import pytest
 import requests
 
 import requests_auth
-from tests.oauth2_helper import (
-    authenticated_service,
-    token_cache,
-    TIMEOUT,
-    TEST_SERVICE_HOST,
-)
+from tests.oauth2_helper import token_cache, TIMEOUT, browser_mock, BrowserMock
 from tests.auth_helper import get_header, get_request
 
 
 def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header_by_default(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2AuthorizationCode(
-        TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
-        "http://provide_access_token",
-        timeout=TIMEOUT,
+        "http://provide_code", "http://provide_access_token", timeout=TIMEOUT
+    )
+    browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
     responses.add(
         responses.POST,
@@ -42,12 +39,14 @@ def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header
 
 
 def test_empty_token_is_invalid(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2AuthorizationCode(
-        TEST_SERVICE_HOST + "/provide_code_as_anchor_code",
-        "http://provide_access_token",
-        timeout=TIMEOUT,
+        "http://provide_code", "http://provide_access_token", timeout=TIMEOUT
+    )
+    browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
     responses.add(
         responses.POST,
@@ -69,12 +68,16 @@ def test_empty_token_is_invalid(
 
 
 def test_nonce_is_sent_if_provided_in_authorization_url(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2AuthorizationCode(
-        TEST_SERVICE_HOST + "/provide_code_as_anchor_code?nonce=123456",
+        "http://provide_code?nonce=123456",
         "http://provide_access_token",
         timeout=TIMEOUT,
+    )
+    browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
     responses.add(
         responses.POST,
@@ -98,13 +101,17 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
 
 
 def test_response_type_can_be_provided_in_url(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2AuthorizationCode(
-        TEST_SERVICE_HOST + "/provide_code_as_anchor_code?response_type=code",
+        "http://provide_code?response_type=my_code",
         "http://provide_access_token",
         timeout=TIMEOUT,
         response_type="not_used",
+    )
+    browser_mock.add_response(
+        opened_url="http://provide_code?response_type=my_code&state=49b67a19e70f692c3fc09dd124e5782b41a86f4f4931e1cc938ccbb466eecf1b730edb9eb01e42005de77ce3dd5a016418f8e780f30c4477d71102fe03e39e62&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=49b67a19e70f692c3fc09dd124e5782b41a86f4f4931e1cc938ccbb466eecf1b730edb9eb01e42005de77ce3dd5a016418f8e780f30c4477d71102fe03e39e62",
     )
     responses.add(
         responses.POST,
@@ -120,6 +127,10 @@ def test_response_type_can_be_provided_in_url(
     assert (
         get_header(responses, auth).get("Authorization")
         == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
+    assert (
+        get_request(responses, "http://provide_access_token/").body
+        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code=SplxlOBeZQQYbYS6WxSbIA"
     )
 
 

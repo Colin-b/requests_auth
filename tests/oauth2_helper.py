@@ -1,6 +1,7 @@
 import multiprocessing
 import logging
 import urllib.request
+import threading
 
 import pytest
 
@@ -51,3 +52,59 @@ def authenticated_service():
 def token_cache():
     yield requests_auth.OAuth2.token_cache
     requests_auth.OAuth2.token_cache.clear()
+
+
+@pytest.fixture
+def browser_mock(monkeypatch):
+    mock = BrowserMock()
+    import requests_auth.oauth2_authentication_responses_server
+
+    monkeypatch.setattr(
+        requests_auth.oauth2_authentication_responses_server.webbrowser,
+        "get",
+        lambda *args: mock,
+    )
+    yield mock
+    mock.assert_checked()
+
+
+def send_reply(reply_url, data):
+    response = urllib.request.urlopen(reply_url, data=data)
+    # Simulate requests_auth JS to retrieve fragment
+    if (
+        response.read()
+        == b'<html><body><script>\n        var new_url = window.location.href.replace("#","?");\n        if (new_url.indexOf("?") !== -1) {\n            new_url += "&requests_auth_redirect=1";\n        } else {\n            new_url += "?requests_auth_redirect=1";\n        }\n        window.location.replace(new_url)\n        </script></body></html>'
+    ):
+        reply_url = reply_url.replace("#", "?")
+        reply_url += (
+            "&requests_auth_redirect=1"
+            if "?" in reply_url
+            else "?requests_auth_redirect=1"
+        )
+        urllib.request.urlopen(reply_url, data=data)
+
+
+class BrowserMock:
+    def __init__(self):
+        self.responses = {}
+        self.without_responses = []
+
+    def open(self, url: str, new: int):
+        assert new == 1
+        response = self.responses.pop(url, None)
+        if response:
+            # Simulate a browser by sending the response in another thread after a certain delay
+            threading.Thread(target=send_reply, args=response).start()
+        else:
+            self.without_responses.append(url)
+        return True
+
+    def assert_called(self, url: str):
+        self.without_responses.remove(url)
+
+    def add_response(self, opened_url: str, reply_url: str, data=None):
+        self.responses[opened_url] = reply_url, data
+
+    def assert_checked(self):
+        assert not self.responses
+        assert not self.without_responses
