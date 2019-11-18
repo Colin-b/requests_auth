@@ -2,12 +2,12 @@ from responses import RequestsMock
 import pytest
 
 import requests_auth
-from tests.oauth2_helper import authenticated_service, token_cache, TIMEOUT
+from tests.oauth2_helper import token_cache, TIMEOUT
 from tests.auth_helper import get_header
 
 
 def test_oauth2_client_credentials_flow_token_is_sent_in_authorization_header_by_default(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock
 ):
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token",

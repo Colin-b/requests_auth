@@ -3,12 +3,12 @@ import pytest
 import requests
 
 import requests_auth
-from tests.oauth2_helper import authenticated_service, token_cache, TIMEOUT
+from tests.oauth2_helper import token_cache, TIMEOUT
 from tests.auth_helper import get_header, get_request
 
 
 def test_oauth2_password_credentials_flow_token_is_sent_in_authorization_header_by_default(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock
 ):
     auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
         "http://provide_access_token",
@@ -37,9 +37,7 @@ def test_oauth2_password_credentials_flow_token_is_sent_in_authorization_header_
     )
 
 
-def test_scope_is_sent_as_is_when_provided_as_str(
-    authenticated_service, token_cache, responses: RequestsMock
-):
+def test_scope_is_sent_as_is_when_provided_as_str(token_cache, responses: RequestsMock):
     auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
         "http://provide_access_token",
         username="test_user",
@@ -69,7 +67,7 @@ def test_scope_is_sent_as_is_when_provided_as_str(
 
 
 def test_scope_is_sent_as_str_when_provided_as_list(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock
 ):
     auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
         "http://provide_access_token",
@@ -99,9 +97,7 @@ def test_scope_is_sent_as_str_when_provided_as_list(
     )
 
 
-def test_without_expected_token(
-    authenticated_service, token_cache, responses: RequestsMock
-):
+def test_without_expected_token(token_cache, responses: RequestsMock):
     auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
         "http://provide_access_token",
         username="test_user",
