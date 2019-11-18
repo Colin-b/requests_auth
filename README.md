@@ -379,6 +379,8 @@ aad = AzureActiveDirectoryImplicit(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50
 requests.get('http://www.example.com', auth=aad)
 ```
 
+You can retrieve Microsoft Azure Active Directory application information thanks to the [application list on Azure portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/AllApps/menuId/).
+
 ###### Parameters
 
 | Name                    | Description                | Mandatory | Default value |
@@ -418,6 +420,8 @@ from requests_auth import AzureActiveDirectoryImplicitIdToken
 aad = AzureActiveDirectoryImplicitIdToken(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=aad)
 ```
+
+You can retrieve Microsoft Azure Active Directory application information thanks to the [application list on Azure portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/AllApps/menuId/).
 
 ###### Parameters
 
