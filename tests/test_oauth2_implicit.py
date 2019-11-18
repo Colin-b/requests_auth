@@ -1,8 +1,10 @@
 import time
 import re
+import datetime
 
 import requests
 import pytest
+import jwt
 from responses import RequestsMock
 
 from tests.oauth2_helper import (
@@ -10,9 +12,18 @@ from tests.oauth2_helper import (
     token_cache,
     TEST_SERVICE_HOST,
     TIMEOUT,
+    browser_mock,
+    BrowserMock,
 )
 from tests.auth_helper import get_header
 import requests_auth
+
+
+def create_token(expiry):
+    token = (
+        jwt.encode({"exp": expiry}, "secret") if expiry else jwt.encode({}, "secret")
+    )
+    return token.decode("unicode_escape")
 
 
 def test_oauth2_implicit_flow_url_is_mandatory():
@@ -28,26 +39,37 @@ def test_header_value_must_contains_token():
 
 
 def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth1 = requests_auth.OAuth2Implicit(
-        TEST_SERVICE_HOST
-        + "/provide_token_as_custom_token?response_type=custom_token&fake_param=1",
+        "http://provide_token?response_type=custom_token&fake_param=1",
         timeout=TIMEOUT,
         token_field_name="custom_token",
+    )
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    browser_mock.add_response(
+        opened_url="http://provide_token?response_type=custom_token&fake_param=1&state=5652a8138e3a99dab7b94532c73ed5b10f19405316035d1efdc8bf7e0713690485254c2eaff912040eac44031889ef0a5ed5730c8a111541120d64a898c31afe&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000",
+        data=f"custom_token={create_token(expiry_in_1_hour)}&state=5652a8138e3a99dab7b94532c73ed5b10f19405316035d1efdc8bf7e0713690485254c2eaff912040eac44031889ef0a5ed5730c8a111541120d64a898c31afe",
     )
 
     token_on_auth1 = get_header(responses, auth1).get("Authorization")
     assert re.match("^Bearer .*", token_on_auth1)
 
-    # Ensure that the new generated token will be different than previous one
-    time.sleep(1)
+    # Ensure that the new token is different than previous one
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(
+        hours=1, seconds=1
+    )
 
     auth2 = requests_auth.OAuth2Implicit(
-        TEST_SERVICE_HOST
-        + "/provide_token_as_custom_token?response_type=custom_token&fake_param=2",
+        "http://provide_token?response_type=custom_token&fake_param=2",
         timeout=TIMEOUT,
         token_field_name="custom_token",
+    )
+    browser_mock.add_response(
+        opened_url="http://provide_token?response_type=custom_token&fake_param=2&state=5c3940ccf78ac6e7d6d8d06782d9fd95a533aa5425b616eaa38dc3ec9508fbd55152c58a0d8dd8a087e76b77902559285819a41cb78ce8713e5a3b974bf07ce9&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000",
+        data=f"custom_token={create_token(expiry_in_1_hour)}&state=5c3940ccf78ac6e7d6d8d06782d9fd95a533aa5425b616eaa38dc3ec9508fbd55152c58a0d8dd8a087e76b77902559285819a41cb78ce8713e5a3b974bf07ce9",
     )
     response = requests.get("http://authorized_only", auth=auth2)
     # Return headers received on this dummy URL
@@ -58,20 +80,24 @@ def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing
 
 
 def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth1 = requests_auth.OAuth2Implicit(
-        TEST_SERVICE_HOST
-        + "/provide_token_as_custom_token?response_type=custom_token&nonce=1",
+        "http://provide_token?response_type=custom_token&nonce=1",
         timeout=TIMEOUT,
         token_field_name="custom_token",
+    )
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    browser_mock.add_response(
+        opened_url="http://provide_token?response_type=custom_token&state=67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%271%27%5D",
+        reply_url="http://localhost:5000",
+        data=f"custom_token={create_token(expiry_in_1_hour)}&state=67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2",
     )
     token_on_auth1 = get_header(responses, auth1).get("Authorization")
     assert re.match("^Bearer .*", token_on_auth1)
 
     auth2 = requests_auth.OAuth2Implicit(
-        TEST_SERVICE_HOST
-        + "/provide_token_as_custom_token?response_type=custom_token&nonce=2",
+        "http://provide_token?response_type=custom_token&nonce=2",
         timeout=TIMEOUT,
         token_field_name="custom_token",
     )
@@ -224,24 +250,34 @@ def test_oauth2_implicit_flow_token_is_sent_in_requested_field(
 
 
 def test_oauth2_implicit_flow_can_send_a_custom_response_type_and_expects_token_to_be_received_with_this_name(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2Implicit(
-        TEST_SERVICE_HOST + "/provide_token_as_custom_token",
+        "http://provide_token",
         timeout=TIMEOUT,
         response_type="custom_token",
         token_field_name="custom_token",
+    )
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    browser_mock.add_response(
+        opened_url="http://provide_token?response_type=custom_token&state=67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000",
+        data=f"custom_token={create_token(expiry_in_1_hour)}&state=67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2",
     )
     assert re.match("^Bearer .*", get_header(responses, auth).get("Authorization"))
 
 
 def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_is_id_token(
-    authenticated_service, token_cache, responses: RequestsMock
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2Implicit(
-        TEST_SERVICE_HOST + "/provide_token_as_id_token",
-        timeout=TIMEOUT,
-        response_type="id_token",
+        "http://provide_token", timeout=TIMEOUT, response_type="id_token"
+    )
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    browser_mock.add_response(
+        opened_url="http://provide_token?response_type=id_token&state=87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000",
+        data=f"id_token={create_token(expiry_in_1_hour)}&state=87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a",
     )
     assert re.match("^Bearer .*", get_header(responses, auth).get("Authorization"))
 

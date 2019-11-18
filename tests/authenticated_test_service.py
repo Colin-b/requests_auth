@@ -24,17 +24,6 @@ def get_status():
     return "OK"
 
 
-@app.route("/provide_token_as_custom_token")
-def post_token_as_my_custom_token():
-    response_type = request.args.get("response_type")
-    if "custom_token" != response_type:
-        raise Exception(
-            f"custom_token was expected to be received as response_type. Got {response_type} instead."
-        )
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-    return submit_a_form_with_a_token(create_token(expiry_in_1_hour), "custom_token")
-
-
 @app.route("/provide_token_as_access_token")
 def post_token_as_access_token():
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)

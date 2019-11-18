@@ -102,7 +102,9 @@ class BrowserMock:
     def assert_called(self, url: str):
         self.without_responses.remove(url)
 
-    def add_response(self, opened_url: str, reply_url: str, data=None):
+    def add_response(self, opened_url: str, reply_url: str, data: str = None):
+        if data:
+            data = data.encode()
         self.responses[opened_url] = reply_url, data
 
     def assert_checked(self):
