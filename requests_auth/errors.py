@@ -8,7 +8,7 @@ class AuthenticationFailed(Exception):
 class TimeoutOccurred(Exception):
     """ No response within timeout interval. """
 
-    def __init__(self, timeout: int):
+    def __init__(self, timeout: float):
         Exception.__init__(
             self, f"User authentication was not received within {timeout} seconds."
         )

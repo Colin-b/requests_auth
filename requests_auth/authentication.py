@@ -92,7 +92,7 @@ class BrowserAuth:
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 code will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
-        Wait for 1 minute by default.
+        Wait for 1 minute (60 seconds) by default.
         :param success_display_time: In case a code is successfully received,
         this is the maximum amount of milliseconds the success page will be displayed in your browser.
         Display the page for 1 millisecond by default.
@@ -107,7 +107,7 @@ class BrowserAuth:
         )
 
         # Time is expressed in seconds
-        self.timeout = int(kwargs.pop("timeout", None) or 60)
+        self.timeout = float(kwargs.pop("timeout", None) or 60)
         # Time is expressed in milliseconds
         self.success_display_time = int(kwargs.pop("success_display_time", None) or 1)
         # Time is expressed in milliseconds

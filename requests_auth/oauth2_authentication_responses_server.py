@@ -3,6 +3,7 @@ import logging
 import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
+from socket import socket
 
 from requests_auth.errors import *
 
@@ -132,7 +133,7 @@ class GrantDetails:
         self,
         url: str,
         name: str,
-        reception_timeout: int,
+        reception_timeout: float,
         reception_success_display_time: int,
         reception_failure_display_time: int,
         redirect_uri_port: int,
@@ -165,7 +166,7 @@ class FixedHttpServer(HTTPServer):
         self.request_error = None
         self.grant = False
 
-    def finish_request(self, request, client_address):
+    def finish_request(self, request: socket, client_address):
         """Make sure that timeout is used by the request (seems like a bug in HTTPServer)."""
         request.settimeout(self.timeout)
         HTTPServer.finish_request(self, request, client_address)

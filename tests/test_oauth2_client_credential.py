@@ -2,7 +2,7 @@ from responses import RequestsMock
 import pytest
 
 import requests_auth
-from tests.oauth2_helper import token_cache, TIMEOUT
+from tests.oauth2_helper import token_cache
 from tests.auth_helper import get_header
 
 
@@ -10,10 +10,7 @@ def test_oauth2_client_credentials_flow_token_is_sent_in_authorization_header_by
     token_cache, responses: RequestsMock
 ):
     auth = requests_auth.OAuth2ClientCredentials(
-        "http://provide_access_token",
-        client_id="test_user",
-        client_secret="test_pwd",
-        timeout=TIMEOUT,
+        "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
     responses.add(
         responses.POST,

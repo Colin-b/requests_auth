@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - requests_auth.oauth2 function, use the proper auth class instead.
 - str representation of auth classes.
 
+### Fixed
+- timeout parameter can now be a floating point value. (was only integer previously)
+
 ## [4.1.0] - 2019-11-13
 ### Added
 - module version is now publicly available.

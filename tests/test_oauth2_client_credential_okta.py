@@ -1,7 +1,7 @@
 from responses import RequestsMock
 
 import requests_auth
-from tests.oauth2_helper import token_cache, TIMEOUT
+from tests.oauth2_helper import token_cache
 from tests.auth_helper import get_header
 
 
@@ -9,7 +9,7 @@ def test_okta_client_credentials_flow_token_is_sent_in_authorization_header_by_d
     token_cache, responses: RequestsMock
 ):
     auth = requests_auth.OktaClientCredentials(
-        "test_okta", client_id="test_user", client_secret="test_pwd", timeout=TIMEOUT
+        "test_okta", client_id="test_user", client_secret="test_pwd"
     )
     responses.add(
         responses.POST,

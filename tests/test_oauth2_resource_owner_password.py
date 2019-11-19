@@ -3,7 +3,7 @@ import pytest
 import requests
 
 import requests_auth
-from tests.oauth2_helper import token_cache, TIMEOUT
+from tests.oauth2_helper import token_cache
 from tests.auth_helper import get_header, get_request
 
 
@@ -11,10 +11,7 @@ def test_oauth2_password_credentials_flow_token_is_sent_in_authorization_header_
     token_cache, responses: RequestsMock
 ):
     auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
-        "http://provide_access_token",
-        username="test_user",
-        password="test_pwd",
-        timeout=TIMEOUT,
+        "http://provide_access_token", username="test_user", password="test_pwd"
     )
     responses.add(
         responses.POST,
@@ -42,7 +39,6 @@ def test_scope_is_sent_as_is_when_provided_as_str(token_cache, responses: Reques
         "http://provide_access_token",
         username="test_user",
         password="test_pwd",
-        timeout=TIMEOUT,
         scope="my_scope+my_other_scope",
     )
     responses.add(
@@ -73,7 +69,6 @@ def test_scope_is_sent_as_str_when_provided_as_list(
         "http://provide_access_token",
         username="test_user",
         password="test_pwd",
-        timeout=TIMEOUT,
         scope=["my_scope", "my_other_scope"],
     )
     responses.add(
@@ -103,7 +98,6 @@ def test_without_expected_token(token_cache, responses: RequestsMock):
         username="test_user",
         password="test_pwd",
         token_field_name="not_provided",
-        timeout=TIMEOUT,
     )
     responses.add(
         responses.POST,
