@@ -3,6 +3,7 @@ import urllib.request
 import threading
 from urllib.parse import urlsplit
 from typing import Dict, Optional
+import datetime
 
 import pytest
 import jwt
@@ -12,7 +13,7 @@ import requests_auth
 logger = logging.getLogger(__name__)
 
 
-def create_token(expiry):
+def create_token(expiry: Optional[datetime.datetime]):
     token = (
         jwt.encode({"exp": expiry}, "secret") if expiry else jwt.encode({}, "secret")
     )
@@ -23,20 +24,6 @@ def create_token(expiry):
 def token_cache():
     yield requests_auth.OAuth2.token_cache
     requests_auth.OAuth2.token_cache.clear()
-
-
-@pytest.fixture
-def browser_mock(monkeypatch):
-    mock = BrowserMock()
-    import requests_auth.oauth2_authentication_responses_server
-
-    monkeypatch.setattr(
-        requests_auth.oauth2_authentication_responses_server.webbrowser,
-        "get",
-        lambda *args: mock,
-    )
-    yield mock
-    mock.assert_checked()
 
 
 class Tab(threading.Thread):
@@ -121,3 +108,17 @@ class BrowserMock:
         for url, tab in self.tabs.items():
             tab.join()
             assert tab.checked, f"Response received on {url} was not checked properly."
+
+
+@pytest.fixture
+def browser_mock(monkeypatch) -> BrowserMock:
+    mock = BrowserMock()
+    import requests_auth.oauth2_authentication_responses_server
+
+    monkeypatch.setattr(
+        requests_auth.oauth2_authentication_responses_server.webbrowser,
+        "get",
+        lambda *args: mock,
+    )
+    yield mock
+    mock.assert_checked()
