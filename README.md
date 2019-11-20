@@ -3,9 +3,9 @@
 <p align="center">
 <a href="https://pypi.org/project/requests-auth/"><img alt="pypi version" src="https://img.shields.io/pypi/v/requests_auth"></a>
 <img alt="Build status" src="https://img.shields.io/badge/build-passing-brightgreen">
-<img alt="Coverage" src="https://img.shields.io/badge/coverage-94%25-brightgreen">
+<img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen">
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<img alt="Number of tests" src="https://img.shields.io/badge/tests-95 passed-blue">
+<img alt="Number of tests" src="https://img.shields.io/badge/tests-137 passed-blue">
 <a href="https://pypi.org/project/requests-auth/"><img alt="Number of downloads" src="https://img.shields.io/pypi/dm/requests_auth"></a>
 </p>
 
@@ -265,7 +265,7 @@ Use `requests_auth.OAuth2ClientCredentials` to configure this kind of authentica
 import requests
 from requests_auth import OAuth2ClientCredentials
 
-requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', 'user name', 'user password'))
+requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', client_id='id', client_secret='secret'))
 ```
 
 #### Parameters
@@ -273,8 +273,8 @@ requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www
 | Name               | Description                                  | Mandatory | Default value |
 |:-------------------|:---------------------------------------------|:----------|:--------------|
 | `token_url`        | OAuth 2 token URL.                           | Mandatory |               |
-| `username`         | Resource owner user name.                    | Mandatory |               |
-| `password`         | Resource owner password.                     | Mandatory |               |
+| `client_id`         | Resource owner user name.                    | Mandatory |               |
+| `client_secret`         | Resource owner password.                     | Mandatory |               |
 | `timeout`          | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60            |
 | `header_name`      | Name of the header field used to send token. | Optional  | Authorization |
 | `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
@@ -379,6 +379,8 @@ aad = AzureActiveDirectoryImplicit(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50
 requests.get('http://www.example.com', auth=aad)
 ```
 
+You can retrieve Microsoft Azure Active Directory application information thanks to the [application list on Azure portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/AllApps/menuId/).
+
 ###### Parameters
 
 | Name                    | Description                | Mandatory | Default value |
@@ -418,6 +420,8 @@ from requests_auth import AzureActiveDirectoryImplicitIdToken
 aad = AzureActiveDirectoryImplicitIdToken(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
 requests.get('http://www.example.com', auth=aad)
 ```
+
+You can retrieve Microsoft Azure Active Directory application information thanks to the [application list on Azure portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/AllApps/menuId/).
 
 ###### Parameters
 

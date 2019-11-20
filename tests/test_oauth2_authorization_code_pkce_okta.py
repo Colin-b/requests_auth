@@ -21,12 +21,20 @@ def test_corresponding_oauth2_authorization_code_flow_instance(monkeypatch):
     )
 
     assert (
-        str(okta) == "OAuth2PKCE("
-        "'https://testserver.okta-emea.com/oauth2/default/v1/authorize', "
-        "'https://testserver.okta-emea.com/oauth2/default/v1/token', "
-        "client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', "
-        "scope='openid')"
+        okta.authorization_url
+        == "https://testserver.okta-emea.com/oauth2/default/v1/authorize"
     )
+    assert okta.token_url == "https://testserver.okta-emea.com/oauth2/default/v1/token"
+    assert okta.token_data == {
+        "client_id": "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+        "code_verifier": b"MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx"
+        b"MTExMTExMTExMTExMTExMTExMTEx",
+        "grant_type": "authorization_code",
+        "redirect_uri": "http://localhost:5000/",
+        "response_type": "code",
+        "scope": "openid",
+    }
+    assert okta.code_grant_details.name == "code"
 
 
 def test_header_value_must_contains_token():

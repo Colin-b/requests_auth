@@ -9,7 +9,7 @@ from requests_auth.errors import *
 logger = logging.getLogger(__name__)
 
 
-def decode_base64(base64_encoded_string):
+def decode_base64(base64_encoded_string: str):
     """
     Decode base64, padding being optional.
 
@@ -22,7 +22,7 @@ def decode_base64(base64_encoded_string):
     return base64.b64decode(base64_encoded_string).decode("unicode_escape")
 
 
-def is_expired(expiry):
+def is_expired(expiry: float):
     return datetime.datetime.utcfromtimestamp(expiry) < datetime.datetime.utcnow()
 
 
@@ -36,7 +36,7 @@ class TokenMemoryCache:
         self.forbid_concurrent_cache_access = threading.Lock()
         self.forbid_concurrent_missing_token_function_call = threading.Lock()
 
-    def add_bearer_token(self, key, token):
+    def add_bearer_token(self, key: str, token: str):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -55,7 +55,7 @@ class TokenMemoryCache:
 
         self._add_token(key, token, expiry)
 
-    def add_access_token(self, key, token, expires_in):
+    def add_access_token(self, key: str, token: str, expires_in: int):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -68,7 +68,7 @@ class TokenMemoryCache:
         ) + datetime.timedelta(seconds=expires_in)
         self._add_token(key, token, expiry.timestamp())
 
-    def _add_token(self, key, token, expiry):
+    def _add_token(self, key: str, token: str, expiry: float):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -79,12 +79,10 @@ class TokenMemoryCache:
             self.tokens[key] = token, expiry
             self._save_tokens()
             logger.debug(
-                'Inserting token expiring on {0} (UTC) with "{1}" key: {2}'.format(
-                    datetime.datetime.utcfromtimestamp(expiry), key, token
-                )
+                f'Inserting token expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC) with "{key}" key: {token}'
             )
 
-    def get_token(self, key, on_missing_token=None, *on_missing_token_args):
+    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args):
         """
         Return the bearer token.
         :param key: key identifier of the token
@@ -93,21 +91,17 @@ class TokenMemoryCache:
         :return: the token
         :raise AuthenticationFailed: in case token cannot be retrieved.
         """
-        logger.debug('Retrieving token with "{0}" key.'.format(key))
+        logger.debug(f'Retrieving token with "{key}" key.')
         with self.forbid_concurrent_cache_access:
             self._load_tokens()
             if key in self.tokens:
                 bearer, expiry = self.tokens[key]
                 if is_expired(expiry):
-                    logger.debug(
-                        'Authentication token with "{0}" key is expired.'.format(key)
-                    )
+                    logger.debug(f'Authentication token with "{key}" key is expired.')
                     del self.tokens[key]
                 else:
                     logger.debug(
-                        "Using already received authentication, will expire on {0} (UTC).".format(
-                            datetime.datetime.utcfromtimestamp(expiry)
-                        )
+                        f"Using already received authentication, will expire on {datetime.datetime.utcfromtimestamp(expiry)} (UTC)."
                     )
                     return bearer
 
@@ -123,24 +117,18 @@ class TokenMemoryCache:
                     self.add_access_token(state, token, expires_in)
                 if key != state:
                     logger.warning(
-                        "Using a token received on another key than expected. Expecting {0} but was {1}.".format(
-                            key, state
-                        )
+                        f"Using a token received on another key than expected. Expecting {key} but was {state}."
                     )
             with self.forbid_concurrent_cache_access:
                 if state in self.tokens:
                     bearer, expiry = self.tokens[state]
                     logger.debug(
-                        "Using newly received authentication, expiring on {0} (UTC).".format(
-                            datetime.datetime.utcfromtimestamp(expiry)
-                        )
+                        f"Using newly received authentication, expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC)."
                     )
                     return bearer
 
         logger.debug(
-            "User was not authenticated: key {0} cannot be found in {1}.".format(
-                key, self.tokens
-            )
+            f"User was not authenticated: key {key} cannot be found in {self.tokens}."
         )
         raise AuthenticationFailed()
 
@@ -165,7 +153,7 @@ class JsonTokenFileCache(TokenMemoryCache):
     Class to manage tokens using a cache file.
     """
 
-    def __init__(self, tokens_path):
+    def __init__(self, tokens_path: str):
         TokenMemoryCache.__init__(self)
         self.tokens_path = tokens_path
         self.last_save_time = 0
