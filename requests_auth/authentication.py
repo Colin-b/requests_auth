@@ -9,7 +9,7 @@ import requests.auth
 import warnings
 
 from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
-from requests_auth.errors import *
+from requests_auth.errors import InvalidGrantRequest, GrantNotProvided
 
 
 def _add_parameters(initial_url: str, extra_parameters: dict) -> str:
@@ -62,7 +62,9 @@ def request_new_grant_with_post(
     url: str, data, grant_name: str, timeout: float, auth=None
 ) -> tuple:
     response = requests.post(url, data=data, timeout=timeout, auth=auth)
-    response.raise_for_status()
+    if not response:
+        # As described in https://tools.ietf.org/html/rfc6749#section-5.2
+        raise InvalidGrantRequest(response)
 
     content = response.json()
     token = content.get(grant_name)

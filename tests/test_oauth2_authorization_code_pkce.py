@@ -1,5 +1,6 @@
 from responses import RequestsMock
 import pytest
+import requests
 
 import requests_auth
 from tests.auth_helper import get_header, get_request
@@ -70,6 +71,327 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
     assert (
         get_request(responses, "http://provide_access_token/").body
         == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_no_json(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST, "http://provide_access_token", body="failure", status=400
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert str(exception_info.value) == "failure"
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_invalid_request_error(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"error": "invalid_request"},
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert (
+        str(exception_info.value)
+        == "invalid_request: The request is missing a required parameter, includes an "
+        "unsupported parameter value (other than grant type), repeats a parameter, "
+        "includes multiple credentials, utilizes more than one mechanism for "
+        "authenticating the client, or is otherwise malformed."
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_invalid_request_error_and_error_description(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"error": "invalid_request", "error_description": "desc of the error"},
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert str(exception_info.value) == "invalid_request: desc of the error"
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_invalid_request_error_and_error_description_and_uri(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "error": "invalid_request",
+            "error_description": "desc of the error",
+            "error_uri": "http://test_url",
+        },
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert (
+        str(exception_info.value)
+        == f"invalid_request: desc of the error\nMore information can be found on http://test_url"
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_invalid_request_error_and_error_description_and_uri_and_other_fields(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "error": "invalid_request",
+            "error_description": "desc of the error",
+            "error_uri": "http://test_url",
+            "other": "other info",
+        },
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert (
+        str(exception_info.value)
+        == f"invalid_request: desc of the error\nMore information can be found on http://test_url\nAdditional information: {{'other': 'other info'}}"
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_without_error(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"other": "other info"},
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert str(exception_info.value) == f'{{"other": "other info"}}'
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_invalid_client_error(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"error": "invalid_client"},
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert (
+        str(exception_info.value)
+        == "invalid_client: Client authentication failed (e.g., unknown client, no "
+        "client authentication included, or unsupported authentication method).  The "
+        "authorization server MAY return an HTTP 401 (Unauthorized) status code to "
+        "indicate which HTTP authentication schemes are supported.  If the client "
+        'attempted to authenticate via the "Authorization" request header field, the '
+        "authorization server MUST respond with an HTTP 401 (Unauthorized) status "
+        'code and include the "WWW-Authenticate" response header field matching the '
+        "authentication scheme used by the client."
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_invalid_grant_error(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"error": "invalid_grant"},
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert (
+        str(exception_info.value)
+        == "invalid_grant: The provided authorization grant (e.g., authorization code, "
+        "resource owner credentials) or refresh token is invalid, expired, revoked, "
+        "does not match the redirection URI used in the authorization request, or was "
+        "issued to another client."
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_unauthorized_client_error(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"error": "unauthorized_client"},
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert (
+        str(exception_info.value)
+        == "unauthorized_client: The authenticated client is not authorized to use this "
+        "authorization grant type."
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_unsupported_grant_type_error(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"error": "unsupported_grant_type"},
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert (
+        str(exception_info.value)
+        == "unsupported_grant_type: The authorization grant type is not supported by the "
+        "authorization server."
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_with_invalid_grant_request_invalid_scope_error(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code?nonce=123456", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"error": "invalid_scope"},
+        status=400,
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get("http://authorized_only", auth=auth)
+    assert (
+        str(exception_info.value)
+        == "invalid_scope: The requested scope is invalid, unknown, malformed, or "
+        "exceeds the scope granted by the resource owner."
     )
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."

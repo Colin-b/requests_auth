@@ -26,5 +26,6 @@ from requests_auth.errors import (
     StateNotProvided,
     InvalidToken,
     TokenExpiryNotProvided,
+    InvalidGrantRequest,
 )
 from requests_auth.version import __version__

@@ -6,10 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [5.0.0] - 2019-11-20
+## [5.0.0] - 2019-11-21
 ### Changed
 - OAuth2ClientCredentials username parameter is now client_id
 - OAuth2ClientCredentials password parameter is now client_secret
+- requests_auth.InvalidGrantRequest is now raised instead of requests.HTTPError in case a grant request was invalid. This exception contains more information.
 
 ### Removed
 - Support for Python < 3.6
