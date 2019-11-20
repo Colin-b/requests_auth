@@ -59,7 +59,7 @@ def _get_query_parameter(url: str, param_name: str) -> str:
 
 
 def request_new_grant_with_post(
-    url: str, data, grant_name: str, timeout: int, auth=None
+    url: str, data, grant_name: str, timeout: float, auth=None
 ) -> tuple:
     response = requests.post(url, data=data, timeout=timeout, auth=auth)
     response.raise_for_status()
