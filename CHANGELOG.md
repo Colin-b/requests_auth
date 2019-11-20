@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [5.0.0] - 2019-XX-XX
+## [5.0.0] - 2019-11-20
 ### Changed
 - OAuth2ClientCredentials username parameter is now client_id
 - OAuth2ClientCredentials password parameter is now client_secret
