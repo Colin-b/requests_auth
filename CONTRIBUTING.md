@@ -42,13 +42,13 @@ Before creating an issue please make sure that it was not already reported.
 2) Fetch all dev dependencies.
     * Install required python modules using `pip`: **python -m pip install .[testing]**
 3) Ensure tests are ok by running them using [`pytest`](http://doc.pytest.org/en/latest/index.html).
-2) Add your changes.
-3) Follow [Black](https://black.readthedocs.io/en/stable/) code formatting.
+4) Add your changes.
+5) Follow [Black](https://black.readthedocs.io/en/stable/) code formatting.
     * Install [pre-commit](https://pre-commit.com) python module using `pip`: **python -m pip install pre-commit**
     * To add the [pre-commit](https://pre-commit.com) hook, after the installation run: **pre-commit install**
-4) Add at least one [`pytest`](http://doc.pytest.org/en/latest/index.html) test case.
+6) Add at least one [`pytest`](http://doc.pytest.org/en/latest/index.html) test case.
     * Unless it is an internal refactoring request or a documentation update.
-5) Increment [version number](https://semver.org) and add related [changelog entry](https://keepachangelog.com/en/1.0.0/).
+7) Increment [version number](https://semver.org) and add related [changelog entry](https://keepachangelog.com/en/1.0.0/).
     * Unless it is a documentation update.
 
 ##### Changelog entry
