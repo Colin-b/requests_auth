@@ -6,7 +6,13 @@ import requests_auth
 from tests.auth_helper import get_header
 
 
-def test_requests_negotiate_sspi_is_used_when_nothing_is_provided_but_without_installed():
+def test_requests_negotiate_sspi_is_used_when_nothing_is_provided_but_without_installed(
+    monkeypatch,
+):
+    # load requests_negociate_sspi from the file in tests/failing_ntlm folder
+    monkeypatch.syspath_prepend(
+        os.path.join(os.path.abspath(os.path.dirname(__file__)), "failing_ntlm")
+    )
     with pytest.raises(Exception) as exception_info:
         requests_auth.NTLM()
     assert (
@@ -18,15 +24,23 @@ def test_requests_negotiate_sspi_is_used_when_nothing_is_provided_but_without_in
 def test_requests_negotiate_sspi_is_used_when_nothing_is_provided(
     monkeypatch, responses
 ):
-    # load requests_negociate_sspi from the file in tests folder
-    monkeypatch.syspath_prepend(os.path.abspath(os.path.dirname(__file__)))
+    # load requests_negociate_sspi from the file in tests/success_ntlm folder
+    monkeypatch.syspath_prepend(
+        os.path.join(os.path.abspath(os.path.dirname(__file__)), "success_ntlm")
+    )
     assert (
         get_header(responses, requests_auth.NTLM()).get("Authorization")
         == "HttpNegotiateAuth fake"
     )
 
 
-def test_requests_ntlm_is_used_when_user_and_pass_provided_but_without_installed():
+def test_requests_ntlm_is_used_when_user_and_pass_provided_but_without_installed(
+    monkeypatch,
+):
+    # load requests_ntlm from the file in tests/failing_ntlm folder
+    monkeypatch.syspath_prepend(
+        os.path.join(os.path.abspath(os.path.dirname(__file__)), "failing_ntlm")
+    )
     with pytest.raises(Exception) as exception_info:
         requests_auth.NTLM("fake_user", "fake_pwd")
     assert (
@@ -36,8 +50,10 @@ def test_requests_ntlm_is_used_when_user_and_pass_provided_but_without_installed
 
 
 def test_requests_ntlm_is_used_when_user_and_pass_provided(monkeypatch, responses):
-    # load requests_negociate_sspi from the file in tests folder
-    monkeypatch.syspath_prepend(os.path.abspath(os.path.dirname(__file__)))
+    # load requests_ntlm from the file in tests/success_ntlm folder
+    monkeypatch.syspath_prepend(
+        os.path.join(os.path.abspath(os.path.dirname(__file__)), "success_ntlm")
+    )
     assert (
         get_header(responses, requests_auth.NTLM("fake_user", "fake_pwd")).get(
             "Authorization"
