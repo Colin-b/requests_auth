@@ -172,9 +172,8 @@ class FixedHttpServer(HTTPServer):
         HTTPServer.finish_request(self, request, client_address)
 
     def ensure_no_error_occurred(self):
-        if (
-            self.request_error
-        ):  # Raise error encountered while processing a request if any
+        if self.request_error:
+            # Raise error encountered while processing a request if any
             raise self.request_error
         return not self.grant
 
@@ -193,7 +192,7 @@ def request_new_grant(grant_details: GrantDetails) -> (str, str):
         * reception_failure_display_time
         * redirect_uri_port
     :return: A tuple (state, grant)
-    :raises Exception: if not retrieved within timeout. # TODO Add more details
+    :raises TimeoutOccurred: if not retrieved within timeout. # TODO Add more details
     """
     logger.debug(f"Requesting new {grant_details.name}...")
 
@@ -224,7 +223,7 @@ def _open_url(url: str):
 def _wait_for_grant(server: FixedHttpServer) -> (str, str):
     """
     :return: A tuple (state, grant)
-    :raises Exception: if not retrieved within timeout. # TODO Add more details
+    :raises TimeoutOccurred: if not retrieved within timeout. # TODO Add more details
     """
     logger.debug("Waiting for user authentication...")
     while not server.grant:
