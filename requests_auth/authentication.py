@@ -1,26 +1,19 @@
 import base64
 import os
-import sys
 import uuid
 from hashlib import sha256, sha512
+from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
+from typing import Optional
 
 import requests
 import requests.auth
 import warnings
 
 from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
-from requests_auth.errors import *
-
-if sys.version_info.major > 2:
-    # Python 3
-    from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
-else:
-    # Python 2
-    from urllib import urlencode
-    from urlparse import parse_qs, urlsplit, urlunsplit
+from requests_auth.errors import InvalidGrantRequest, GrantNotProvided
 
 
-def _add_parameters(initial_url, extra_parameters):
+def _add_parameters(initial_url: str, extra_parameters: dict) -> str:
     """
     Add parameters to an URL and return the new URL.
 
@@ -40,7 +33,7 @@ def _add_parameters(initial_url, extra_parameters):
     return urlunsplit((scheme, netloc, path, new_query_string, fragment))
 
 
-def _pop_parameter(url, query_parameter_name):
+def _pop_parameter(url: str, query_parameter_name: str) -> (str, Optional[str]):
     """
     Remove and return parameter of an URL.
 
@@ -59,16 +52,20 @@ def _pop_parameter(url, query_parameter_name):
     )
 
 
-def _get_query_parameter(url, param_name):
+def _get_query_parameter(url: str, param_name: str) -> Optional[str]:
     scheme, netloc, path, query_string, fragment = urlsplit(url)
     query_params = parse_qs(query_string)
     all_values = query_params.get(param_name)
     return all_values[0] if all_values else None
 
 
-def request_new_grant_with_post(url, data, grant_name, timeout, auth=None):
+def request_new_grant_with_post(
+    url: str, data, grant_name: str, timeout: float, auth=None
+) -> (str, int):
     response = requests.post(url, data=data, timeout=timeout, auth=auth)
-    response.raise_for_status()
+    if not response:
+        # As described in https://tools.ietf.org/html/rfc6749#section-5.2
+        raise InvalidGrantRequest(response)
 
     content = response.json()
     token = content.get(grant_name)
@@ -81,7 +78,48 @@ class OAuth2:
     token_cache = oauth2_tokens.TokenMemoryCache()
 
 
-class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
+class SupportMultiAuth:
+    """Inherit from this class to be able to use your class with requests_auth provided authentication classes."""
+
+    def __add__(self, other):
+        if isinstance(other, Auths):
+            return Auths(self, *other.authentication_modes)
+        return Auths(self, other)
+
+
+class BrowserAuth:
+    def __init__(self, kwargs):
+        """
+        :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
+        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        :param redirect_uri_port: The port on which the server listening for the OAuth 2 code will be started.
+        Listen on port 5000 by default.
+        :param timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
+        Wait for 1 minute (60 seconds) by default.
+        :param success_display_time: In case a code is successfully received,
+        this is the maximum amount of milliseconds the success page will be displayed in your browser.
+        Display the page for 1 millisecond by default.
+        :param failure_display_time: In case received code is not valid,
+        this is the maximum amount of milliseconds the failure page will be displayed in your browser.
+        Display the page for 5 seconds by default.
+        """
+        redirect_uri_endpoint = kwargs.pop("redirect_uri_endpoint", None) or ""
+        self.redirect_uri_port = int(kwargs.pop("redirect_uri_port", None) or 5000)
+        self.redirect_uri = (
+            f"http://localhost:{self.redirect_uri_port}/{redirect_uri_endpoint}"
+        )
+
+        # Time is expressed in seconds
+        self.timeout = float(kwargs.pop("timeout", None) or 60)
+        # Time is expressed in milliseconds
+        self.success_display_time = int(kwargs.pop("success_display_time", None) or 1)
+        # Time is expressed in milliseconds
+        self.failure_display_time = int(
+            kwargs.pop("failure_display_time", None) or 5000
+        )
+
+
+class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMultiAuth):
     """
     Resource Owner Password Credentials Grant
 
@@ -89,7 +127,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.3
     """
 
-    def __init__(self, token_url, username, password, **kwargs):
+    def __init__(self, token_url: str, username: str, password: str, **kwargs):
         """
         :param token_url: OAuth 2 token URL.
         :param username: Resource owner user name.
@@ -162,21 +200,8 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase):
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2ResourceOwnerPasswordCredentials('{0}', '{1}', '{2}', {3})".format(
-            self.token_url, self.username, self.password, addition_args_str
-        )
-
-
-class OAuth2ClientCredentials(requests.auth.AuthBase):
+class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
     """
     Client Credentials Grant
 
@@ -184,11 +209,11 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.4
     """
 
-    def __init__(self, token_url, username, password, **kwargs):
+    def __init__(self, token_url: str, client_id: str, client_secret: str, **kwargs):
         """
         :param token_url: OAuth 2 token URL.
-        :param username: Resource owner user name.
-        :param password: Resource owner password.
+        :param client_id: Resource owner user name.
+        :param client_secret: Resource owner password.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
         :param header_name: Name of the header field used to send token.
@@ -203,12 +228,12 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         self.token_url = token_url
         if not self.token_url:
             raise Exception("Token URL is mandatory.")
-        self.username = username
-        if not self.username:
-            raise Exception("User name is mandatory.")
-        self.password = password
-        if not self.password:
-            raise Exception("Password is mandatory.")
+        self.client_id = client_id
+        if not self.client_id:
+            raise Exception("client_id is mandatory.")
+        self.client_secret = client_secret
+        if not self.client_secret:
+            raise Exception("client_secret is mandatory.")
         self.kwargs = kwargs
 
         extra_parameters = dict(kwargs)
@@ -241,33 +266,20 @@ class OAuth2ClientCredentials(requests.auth.AuthBase):
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
-    def request_new_token(self):
+    def request_new_token(self) -> tuple:
         # As described in https://tools.ietf.org/html/rfc6749#section-4.4.3
         token, expires_in = request_new_grant_with_post(
             self.token_url,
             self.data,
             self.token_field_name,
             self.timeout,
-            auth=(self.username, self.password),
+            auth=(self.client_id, self.client_secret),
         )
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2ClientCredentials('{0}', '{1}', '{2}', {3})".format(
-            self.token_url, self.username, self.password, addition_args_str
-        )
-
-
-class OAuth2AuthorizationCode(requests.auth.AuthBase):
+class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
     """
     Authorization Code Grant
 
@@ -279,7 +291,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.1
     """
 
-    def __init__(self, authorization_url, token_url, **kwargs):
+    def __init__(self, authorization_url: str, token_url: str, **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param token_url: OAuth 2 token URL.
@@ -320,55 +332,31 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         self.token_url = token_url
         if not self.token_url:
             raise Exception("Token URL is mandatory.")
-        self.kwargs = kwargs
 
-        extra_parameters = dict(kwargs)
-        self.header_name = extra_parameters.pop("header_name", None) or "Authorization"
-        self.header_value = (
-            extra_parameters.pop("header_value", None) or "Bearer {token}"
-        )
+        BrowserAuth.__init__(self, kwargs)
+
+        self.header_name = kwargs.pop("header_name", None) or "Authorization"
+        self.header_value = kwargs.pop("header_value", None) or "Bearer {token}"
         if "{token}" not in self.header_value:
             raise Exception("header_value parameter must contains {token}.")
 
-        redirect_uri_endpoint = (
-            extra_parameters.pop("redirect_uri_endpoint", None) or ""
-        )
-        redirect_uri_port = int(extra_parameters.pop("redirect_uri_port", None) or 5000)
+        self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
 
-        self.token_field_name = (
-            extra_parameters.pop("token_field_name", None) or "access_token"
-        )
-
-        # Time is expressed in seconds
-        self.timeout = int(extra_parameters.pop("timeout", None) or 60)
-        # Time is expressed in milliseconds
-        success_display_time = int(
-            extra_parameters.pop("success_display_time", None) or 1
-        )
-        # Time is expressed in milliseconds
-        failure_display_time = int(
-            extra_parameters.pop("failure_display_time", None) or 5000
-        )
-
-        username = extra_parameters.pop("username", None)
-        password = extra_parameters.pop("password", None)
+        username = kwargs.pop("username", None)
+        password = kwargs.pop("password", None)
         self.auth = (username, password) if username and password else None
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
-        code_field_name = extra_parameters.pop("code_field_name", "code")
+        code_field_name = kwargs.pop("code_field_name", "code")
         if _get_query_parameter(self.authorization_url, "response_type"):
-            extra_parameters.pop(
-                "response_type", None
-            )  # Ensure provided value will not be overridden
+            # Ensure provided value will not be overridden
+            kwargs.pop("response_type", None)
         else:
             # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
-            extra_parameters.setdefault("response_type", "code")
+            kwargs.setdefault("response_type", "code")
 
-        redirect_uri = "http://localhost:{0}/{1}".format(
-            redirect_uri_port, redirect_uri_endpoint
-        )
         authorization_url_without_nonce = _add_parameters(
-            self.authorization_url, extra_parameters
+            self.authorization_url, kwargs
         )
         authorization_url_without_nonce, nonce = _pop_parameter(
             authorization_url_without_nonce, "nonce"
@@ -376,7 +364,10 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         self.state = sha512(
             authorization_url_without_nonce.encode("unicode_escape")
         ).hexdigest()
-        custom_code_parameters = {"state": self.state, "redirect_uri": redirect_uri}
+        custom_code_parameters = {
+            "state": self.state,
+            "redirect_uri": self.redirect_uri,
+        }
         if nonce:
             custom_code_parameters["nonce"] = nonce
         code_grant_url = _add_parameters(
@@ -386,17 +377,17 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
             code_grant_url,
             code_field_name,
             self.timeout,
-            success_display_time,
-            failure_display_time,
-            redirect_uri_port,
+            self.success_display_time,
+            self.failure_display_time,
+            self.redirect_uri_port,
         )
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
         self.token_data = {
             "grant_type": "authorization_code",
-            "redirect_uri": redirect_uri,
+            "redirect_uri": self.redirect_uri,
         }
-        self.token_data.update(extra_parameters)
+        self.token_data.update(kwargs)
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
@@ -422,21 +413,10 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase):
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2AuthorizationCode('{0}', '{1}', {2})".format(
-            self.authorization_url, self.token_url, addition_args_str
-        )
-
-
-class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
+class OAuth2AuthorizationCodePKCE(
+    requests.auth.AuthBase, SupportMultiAuth, BrowserAuth
+):
     """
     Proof Key for Code Exchange
 
@@ -448,7 +428,7 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc7636
     """
 
-    def __init__(self, authorization_url, token_url, **kwargs):
+    def __init__(self, authorization_url: str, token_url: str, **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param token_url: OAuth 2 token URL.
@@ -487,53 +467,30 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
         self.token_url = token_url
         if not self.token_url:
             raise Exception("Token URL is mandatory.")
-        self.kwargs = kwargs
 
-        extra_parameters = dict(kwargs)
-        self.header_name = extra_parameters.pop("header_name", None) or "Authorization"
-        self.header_value = (
-            extra_parameters.pop("header_value", None) or "Bearer {token}"
-        )
+        BrowserAuth.__init__(self, kwargs)
+
+        self.header_name = kwargs.pop("header_name", None) or "Authorization"
+        self.header_value = kwargs.pop("header_value", None) or "Bearer {token}"
         if "{token}" not in self.header_value:
             raise Exception("header_value parameter must contains {token}.")
 
-        redirect_uri_endpoint = (
-            extra_parameters.pop("redirect_uri_endpoint", None) or ""
-        )
-        redirect_uri_port = int(extra_parameters.pop("redirect_uri_port", None) or 5000)
-
-        self.token_field_name = (
-            extra_parameters.pop("token_field_name", None) or "access_token"
-        )
-
-        # Time is expressed in seconds
-        self.timeout = int(extra_parameters.pop("timeout", None) or 60)
-        # Time is expressed in milliseconds
-        success_display_time = int(
-            extra_parameters.pop("success_display_time", None) or 1
-        )
-        # Time is expressed in milliseconds
-        failure_display_time = int(
-            extra_parameters.pop("failure_display_time", None) or 5000
-        )
+        self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
-        code_field_name = extra_parameters.pop("code_field_name", "code")
+        code_field_name = kwargs.pop("code_field_name", "code")
         authorization_url_without_response_type, response_type = _pop_parameter(
             self.authorization_url, "response_type"
         )
         if response_type:
             # Ensure provided value will not be overridden
-            extra_parameters["response_type"] = response_type
+            kwargs["response_type"] = response_type
         else:
             # As described in https://tools.ietf.org/html/rfc6749#section-4.1.1
-            extra_parameters.setdefault("response_type", "code")
+            kwargs.setdefault("response_type", "code")
 
-        redirect_uri = extra_parameters.pop(
-            "redirect_uri", None
-        ) or "http://localhost:{0}/{1}".format(redirect_uri_port, redirect_uri_endpoint)
         authorization_url_without_nonce = _add_parameters(
-            authorization_url_without_response_type, extra_parameters
+            authorization_url_without_response_type, kwargs
         )
         authorization_url_without_nonce, nonce = _pop_parameter(
             authorization_url_without_nonce, "nonce"
@@ -541,7 +498,10 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
         self.state = sha512(
             authorization_url_without_nonce.encode("unicode_escape")
         ).hexdigest()
-        custom_code_parameters = {"state": self.state, "redirect_uri": redirect_uri}
+        custom_code_parameters = {
+            "state": self.state,
+            "redirect_uri": self.redirect_uri,
+        }
         if nonce:
             custom_code_parameters["nonce"] = nonce
 
@@ -560,9 +520,9 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
             code_grant_url,
             code_field_name,
             self.timeout,
-            success_display_time,
-            failure_display_time,
-            redirect_uri_port,
+            self.success_display_time,
+            self.failure_display_time,
+            self.redirect_uri_port,
         )
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
@@ -570,16 +530,16 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
         self.token_data = {
             "code_verifier": code_verifier,
             "grant_type": "authorization_code",
-            "redirect_uri": redirect_uri,
+            "redirect_uri": self.redirect_uri,
         }
-        self.token_data.update(extra_parameters)
+        self.token_data.update(kwargs)
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
-    def request_new_token(self):
+    def request_new_token(self) -> tuple:
         # Request code
         state, code = oauth2_authentication_responses_server.request_new_grant(
             self.code_grant_details
@@ -626,21 +586,8 @@ class OAuth2AuthorizationCodePKCE(requests.auth.AuthBase):
         digest = sha256(verifier).digest()
         return base64.urlsafe_b64encode(digest).rstrip(b"=")
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2PKCE('{0}', '{1}', {2})".format(
-            self.authorization_url, self.token_url, addition_args_str
-        )
-
-
-class OAuth2Implicit(requests.auth.AuthBase):
+class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
     """
     Implicit Grant
 
@@ -652,7 +599,7 @@ class OAuth2Implicit(requests.auth.AuthBase):
     More details can be found in https://tools.ietf.org/html/rfc6749#section-4.2
     """
 
-    def __init__(self, authorization_url, **kwargs):
+    def __init__(self, authorization_url: str, **kwargs):
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param response_type: Value of the response_type query parameter if not already provided in authorization URL.
@@ -686,52 +633,31 @@ class OAuth2Implicit(requests.auth.AuthBase):
         self.authorization_url = authorization_url
         if not self.authorization_url:
             raise Exception("Authorization URL is mandatory.")
-        self.kwargs = kwargs
 
-        extra_parameters = dict(kwargs)
-        self.header_name = extra_parameters.pop("header_name", None) or "Authorization"
-        self.header_value = (
-            extra_parameters.pop("header_value", None) or "Bearer {token}"
-        )
+        BrowserAuth.__init__(self, kwargs)
+
+        self.header_name = kwargs.pop("header_name", None) or "Authorization"
+        self.header_value = kwargs.pop("header_value", None) or "Bearer {token}"
         if "{token}" not in self.header_value:
             raise Exception("header_value parameter must contains {token}.")
 
-        redirect_uri_endpoint = (
-            extra_parameters.pop("redirect_uri_endpoint", None) or ""
-        )
-        redirect_uri_port = int(extra_parameters.pop("redirect_uri_port", None) or 5000)
-        # Time is expressed in seconds
-        timeout = int(extra_parameters.pop("timeout", None) or 60)
-        # Time is expressed in milliseconds
-        success_display_time = int(
-            extra_parameters.pop("success_display_time", None) or 1
-        )
-        # Time is expressed in milliseconds
-        failure_display_time = int(
-            extra_parameters.pop("failure_display_time", None) or 5000
-        )
-
         response_type = _get_query_parameter(self.authorization_url, "response_type")
         if response_type:
-            extra_parameters.pop(
-                "response_type", None
-            )  # Ensure provided value will not be overridden
+            # Ensure provided value will not be overridden
+            kwargs.pop("response_type", None)
         else:
             # As described in https://tools.ietf.org/html/rfc6749#section-4.2.1
-            response_type = extra_parameters.setdefault("response_type", "token")
+            response_type = kwargs.setdefault("response_type", "token")
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.2.2
-        token_field_name = extra_parameters.pop("token_field_name", None)
+        token_field_name = kwargs.pop("token_field_name", None)
         if not token_field_name:
             token_field_name = (
                 "id_token" if "id_token" == response_type else "access_token"
             )
 
-        redirect_uri = "http://localhost:{0}/{1}".format(
-            redirect_uri_port, redirect_uri_endpoint
-        )
         authorization_url_without_nonce = _add_parameters(
-            self.authorization_url, extra_parameters
+            self.authorization_url, kwargs
         )
         authorization_url_without_nonce, nonce = _pop_parameter(
             authorization_url_without_nonce, "nonce"
@@ -739,17 +665,17 @@ class OAuth2Implicit(requests.auth.AuthBase):
         self.state = sha512(
             authorization_url_without_nonce.encode("unicode_escape")
         ).hexdigest()
-        custom_parameters = {"state": self.state, "redirect_uri": redirect_uri}
+        custom_parameters = {"state": self.state, "redirect_uri": self.redirect_uri}
         if nonce:
             custom_parameters["nonce"] = nonce
         grant_url = _add_parameters(authorization_url_without_nonce, custom_parameters)
         self.grant_details = oauth2_authentication_responses_server.GrantDetails(
             grant_url,
             token_field_name,
-            timeout,
-            success_display_time,
-            failure_display_time,
-            redirect_uri_port,
+            self.timeout,
+            self.success_display_time,
+            self.failure_display_time,
+            self.redirect_uri_port,
         )
 
     def __call__(self, r):
@@ -761,19 +687,6 @@ class OAuth2Implicit(requests.auth.AuthBase):
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
-
-    def __str__(self):
-        addition_args_str = ", ".join(
-            ["{0}='{1}'".format(key, value) for key, value in self.kwargs.items()]
-        )
-        return "OAuth2Implicit('{0}', {1})".format(
-            self.authorization_url, addition_args_str
-        )
-
 
 class AzureActiveDirectoryImplicit(OAuth2Implicit):
     """
@@ -781,7 +694,7 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
     https://docs.microsoft.com/en-us/azure/active-directory/develop/access-tokens
     """
 
-    def __init__(self, tenant_id, client_id, **kwargs):
+    def __init__(self, tenant_id: str, client_id: str, **kwargs):
         """
         :param tenant_id: Microsoft Tenant Identifier (formatted as an Universal Unique Identifier)
         :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
@@ -815,10 +728,10 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
         """
         OAuth2Implicit.__init__(
             self,
-            "https://login.microsoftonline.com/{0}/oauth2/authorize".format(tenant_id),
+            f"https://login.microsoftonline.com/{tenant_id}/oauth2/authorize",
             client_id=client_id,
             nonce=kwargs.pop("nonce", None) or str(uuid.uuid4()),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -828,7 +741,7 @@ class AzureActiveDirectoryImplicitIdToken(OAuth2Implicit):
     https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens
     """
 
-    def __init__(self, tenant_id, client_id, **kwargs):
+    def __init__(self, tenant_id: str, client_id: str, **kwargs):
         """
         :param tenant_id: Microsoft Tenant Identifier (formatted as an Universal Unique Identifier)
         :param client_id: Microsoft Application Identifier (formatted as an Universal Unique Identifier)
@@ -862,12 +775,12 @@ class AzureActiveDirectoryImplicitIdToken(OAuth2Implicit):
         """
         OAuth2Implicit.__init__(
             self,
-            "https://login.microsoftonline.com/{0}/oauth2/authorize".format(tenant_id),
+            f"https://login.microsoftonline.com/{tenant_id}/oauth2/authorize",
             client_id=client_id,
             response_type=kwargs.pop("response_type", "id_token"),
             token_field_name=kwargs.pop("token_field_name", "id_token"),
             nonce=kwargs.pop("nonce", None) or str(uuid.uuid4()),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -878,7 +791,7 @@ class OktaImplicit(OAuth2Implicit):
     https://developer.okta.com/docs/guides/implement-implicit/overview/
     """
 
-    def __init__(self, instance, client_id, **kwargs):
+    def __init__(self, instance: str, client_id: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -919,12 +832,10 @@ class OktaImplicit(OAuth2Implicit):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2Implicit.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
             client_id=client_id,
             nonce=kwargs.pop("nonce", None) or str(uuid.uuid4()),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -933,7 +844,7 @@ class OktaImplicitIdToken(OAuth2Implicit):
     Describes an OKTA (OpenID Connect) "ID Token" implicit flow requests authentication.
     """
 
-    def __init__(self, instance, client_id, **kwargs):
+    def __init__(self, instance: str, client_id: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -974,14 +885,12 @@ class OktaImplicitIdToken(OAuth2Implicit):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2Implicit.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
             client_id=client_id,
             response_type=kwargs.pop("response_type", "id_token"),
             token_field_name=kwargs.pop("token_field_name", "id_token"),
             nonce=kwargs.pop("nonce", None) or str(uuid.uuid4()),
-            **kwargs
+            **kwargs,
         )
 
 
@@ -990,7 +899,7 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
     Describes an OKTA (OAuth 2) "Access Token" authorization code flow requests authentication.
     """
 
-    def __init__(self, instance, client_id, **kwargs):
+    def __init__(self, instance: str, client_id: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -1031,14 +940,10 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2AuthorizationCode.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/token".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
+            f"https://{instance}/oauth2/{authorization_server}/v1/token",
             client_id=client_id,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -1047,7 +952,7 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
     Describes an OKTA (OAuth 2) "Access Token" Proof Key for Code Exchange (PKCE) flow requests authentication.
     """
 
-    def __init__(self, instance, client_id, **kwargs):
+    def __init__(self, instance: str, client_id: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -1090,14 +995,10 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2AuthorizationCodePKCE.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/authorize".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/token".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
+            f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
+            f"https://{instance}/oauth2/{authorization_server}/v1/token",
             client_id=client_id,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -1106,7 +1007,7 @@ class OktaClientCredentials(OAuth2ClientCredentials):
     Describes an OKTA (OAuth 2) client credentials (also called application) flow requests authentication.
     """
 
-    def __init__(self, instance, client_id, client_secret, **kwargs):
+    def __init__(self, instance: str, client_id: str, client_secret: str, **kwargs):
         """
         :param instance: OKTA instance (like "testserver.okta-emea.com")
         :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
@@ -1130,19 +1031,17 @@ class OktaClientCredentials(OAuth2ClientCredentials):
         kwargs["scope"] = " ".join(scopes) if isinstance(scopes, list) else scopes
         OAuth2ClientCredentials.__init__(
             self,
-            "https://{okta_instance}/oauth2/{okta_auth_server}/v1/token".format(
-                okta_instance=instance, okta_auth_server=authorization_server
-            ),
-            username=client_id,
-            password=client_secret,
-            **kwargs
+            f"https://{instance}/oauth2/{authorization_server}/v1/token",
+            client_id=client_id,
+            client_secret=client_secret,
+            **kwargs,
         )
 
 
-class HeaderApiKey(requests.auth.AuthBase):
+class HeaderApiKey(requests.auth.AuthBase, SupportMultiAuth):
     """Describes an API Key requests authentication."""
 
-    def __init__(self, api_key, header_name=None):
+    def __init__(self, api_key: str, header_name: str = None):
         """
         :param api_key: The API key that will be sent.
         :param header_name: Name of the header field. "X-API-Key" by default.
@@ -1156,19 +1055,11 @@ class HeaderApiKey(requests.auth.AuthBase):
         r.headers[self.header_name] = self.api_key
         return r
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-    def __str__(self):
-        return "HeaderApiKey('{0}', '{1}')".format(self.api_key, self.header_name)
-
-
-class QueryApiKey(requests.auth.AuthBase):
+class QueryApiKey(requests.auth.AuthBase, SupportMultiAuth):
     """Describes an API Key requests authentication."""
 
-    def __init__(self, api_key, query_parameter_name=None):
+    def __init__(self, api_key: str, query_parameter_name: str = None):
         """
         :param api_key: The API key that will be sent.
         :param query_parameter_name: Name of the query parameter. "api_key" by default.
@@ -1182,36 +1073,18 @@ class QueryApiKey(requests.auth.AuthBase):
         r.url = _add_parameters(r.url, {self.query_parameter_name: self.api_key})
         return r
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-    def __str__(self):
-        return "QueryApiKey('{0}', '{1}')".format(
-            self.api_key, self.query_parameter_name
-        )
-
-
-class Basic(requests.auth.HTTPBasicAuth):
+class Basic(requests.auth.HTTPBasicAuth, SupportMultiAuth):
     """Describes a basic requests authentication."""
 
-    def __init__(self, username, password):
+    def __init__(self, username: str, password: str):
         requests.auth.HTTPBasicAuth.__init__(self, username, password)
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
 
-    def __str__(self):
-        return "Basic('{0}', '{1}')".format(self.username, self.password)
-
-
-class NTLM:
+class NTLM(requests.auth.AuthBase, SupportMultiAuth):
     """Describes a NTLM requests authentication."""
 
-    def __init__(self, username=None, password=None):
+    def __init__(self, username: str = None, password: str = None):
         """
         :param username: Mandatory if requests_negotiate_sspi module is not installed.
         :param password: Mandatory if requests_negotiate_sspi module is not installed.
@@ -1247,16 +1120,6 @@ class NTLM:
         self.auth.__call__(r)
         return r
 
-    def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
-
-    def __str__(self):
-        if self.username and self.password:
-            return "NTLM('{0}', '{1}')".format(self.username, self.password)
-        return "NTLM()"
-
 
 class Auths(requests.auth.AuthBase):
     """Authentication using multiple authentication methods."""
@@ -1277,6 +1140,3 @@ class Auths(requests.auth.AuthBase):
         if isinstance(other, Auths):
             return Auths(*self.authentication_modes, *other.authentication_modes)
         return Auths(*self.authentication_modes, other)
-
-    def __str__(self):
-        return "Auths(" + ", ".join(map(str, self.authentication_modes)) + ")"

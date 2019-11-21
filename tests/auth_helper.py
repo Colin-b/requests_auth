@@ -1,8 +1,9 @@
 import requests
+import requests.auth
 from responses import RequestsMock, Response
 
 
-def get_header(responses: RequestsMock, auth):
+def get_header(responses: RequestsMock, auth: requests.auth.AuthBase) -> dict:
     # Mock a dummy response
     responses.add(responses.GET, "http://authorized_only")
     # Send a request to this dummy URL with authentication
@@ -11,7 +12,7 @@ def get_header(responses: RequestsMock, auth):
     return response.request.headers
 
 
-def get_query_args(responses: RequestsMock, auth):
+def get_query_args(responses: RequestsMock, auth: requests.auth.AuthBase) -> str:
     # Mock a dummy response
     responses.add(responses.GET, "http://authorized_only")
     # Send a request to this dummy URL with authentication

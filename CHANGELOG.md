@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2019-11-21
+### Changed
+- OAuth2ClientCredentials username parameter is now client_id
+- OAuth2ClientCredentials password parameter is now client_secret
+- requests_auth.InvalidGrantRequest is now raised instead of requests.HTTPError in case a grant request was invalid.
+- requests_auth.InvalidGrantRequest is now raised instead of requests_auth.GrantNotProvided in case a browser grant request was invalid.
+- There is no info logging anymore. If you want to have those information (browser opening on a specific URL, requests received by the OAUth2 server), you will have to put requests_auth logger to DEBUG.
+
+### Removed
+- Support for Python < 3.6
+- requests_auth.OAuth2Flow enum, use the proper auth class instead.
+- requests_auth.okta function, use the proper auth class instead.
+- requests_auth.aad function, use the proper auth class instead.
+- requests_auth.oauth2 function, use the proper auth class instead.
+- str representation of auth classes.
+
+### Fixed
+- timeout parameter can now be a floating point value. (was only integer previously)
+
 ## [4.1.0] - 2019-11-13
 ### Added
 - module version is now publicly available.
@@ -87,7 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.0.0...HEAD
+[5.0.0]: https://github.com/Colin-b/requests_auth/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/Colin-b/requests_auth/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/Colin-b/requests_auth/compare/v4.0.0...v4.0.1
 [4.0.0]: https://github.com/Colin-b/requests_auth/compare/v3.0.0...v4.0.0

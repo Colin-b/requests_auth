@@ -38,14 +38,17 @@ Before creating an issue please make sure that it was not already reported.
 
 #### Code
 
-1) Create a new branch based on *develop* branch.
-2) Add your changes.
-3) Follow [Black](https://black.readthedocs.io/en/stable/) code formatting.
-    * Install pre-commit python module using pip: **python -m pip install pre-commit**
-    * To add the pre-commit hook, after the installation run: **pre-commit install**
-4) Add at least one test case.
+1) Create a new branch based on `develop` branch.
+2) Fetch all dev dependencies.
+    * Install required python modules using `pip`: **python -m pip install .[testing]**
+3) Ensure tests are ok by running them using [`pytest`](http://doc.pytest.org/en/latest/index.html).
+4) Add your changes.
+5) Follow [Black](https://black.readthedocs.io/en/stable/) code formatting.
+    * Install [pre-commit](https://pre-commit.com) python module using `pip`: **python -m pip install pre-commit**
+    * To add the [pre-commit](https://pre-commit.com) hook, after the installation run: **pre-commit install**
+6) Add at least one [`pytest`](http://doc.pytest.org/en/latest/index.html) test case.
     * Unless it is an internal refactoring request or a documentation update.
-5) Increment [version number](https://semver.org) and add related [changelog entry](https://keepachangelog.com/en/1.0.0/).
+7) Increment [version number](https://semver.org) and add related [changelog entry](https://keepachangelog.com/en/1.0.0/).
     * Unless it is a documentation update.
 
 ##### Changelog entry
@@ -55,7 +58,7 @@ Once the changelog entry is added, please don't forget to also add the link to t
 #### Enter pull request
 
 1) Go to the *Pull requests* tab and click on the *New pull request* button.
-2) *base* should always be set to development and it should be compared to your branch.
+2) *base* should always be set to `develop` and it should be compared to your branch.
 3) Title should be a small sentence describing the request.
 3) The comment should contains as much information as possible
     * Actual behavior (before the new code)
