@@ -51,6 +51,8 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
     def _parse_grant(self, arguments: dict):
         grants = arguments.get(self.server.grant_details.name)
         if not grants or len(grants) > 1:
+            if "error" in arguments:
+                raise InvalidGrantRequest(arguments)
             raise GrantNotProvided(self.server.grant_details.name, arguments)
         logger.debug(f"Received grants: {grants}")
         grant = grants[0]
@@ -125,7 +127,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args):
         """Make sure that messages are logged even with pythonw (seems like a bug in BaseHTTPRequestHandler)."""
-        logger.info(format, *args)
+        logger.debug(format, *args)
 
 
 class GrantDetails:
@@ -176,7 +178,10 @@ def request_new_grant(grant_details: GrantDetails) -> (str, str):
     """
     Ask for a new OAuth2 grant.
     :return: A tuple (state, grant)
-    :raises TimeoutOccurred: if not retrieved within timeout. # TODO Add more details
+    :raises InvalidGrantRequest: If the request was invalid.
+    :raises TimeoutOccurred: If not retrieved within timeout.
+    :raises GrantNotProvided: If grant is not provided in response (but no error occurred).
+    :raises StateNotProvided: If state if not provided in addition to the grant.
     """
     logger.debug(f"Requesting new {grant_details.name}...")
 
@@ -195,7 +200,7 @@ def _open_url(url: str):
             if hasattr(webbrowser, "iexplore")
             else webbrowser.get()
         )
-        logger.info(f"Opening browser on {url}")
+        logger.debug(f"Opening browser on {url}")
         if not browser.open(url, new=1):
             logger.warning("Unable to open URL, try with a GET request.")
             requests.get(url)
@@ -207,7 +212,10 @@ def _open_url(url: str):
 def _wait_for_grant(server: FixedHttpServer) -> (str, str):
     """
     :return: A tuple (state, grant)
-    :raises TimeoutOccurred: if not retrieved within timeout. # TODO Add more details
+    :raises InvalidGrantRequest: If the request was invalid.
+    :raises TimeoutOccurred: If not retrieved within timeout.
+    :raises GrantNotProvided: If grant is not provided in response (but no error occurred).
+    :raises StateNotProvided: If state if not provided in addition to the grant.
     """
     logger.debug("Waiting for user authentication...")
     while not server.grant:

@@ -449,6 +449,213 @@ def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(
     )
 
 
+def test_with_invalid_token_request_invalid_request_error(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_request",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
+    )
+
+
+def test_with_invalid_token_request_invalid_request_error_and_error_description(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_request&error_description=desc",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert str(exception_info.value) == "invalid_request: desc"
+    tab.assert_failure(
+        "Unable to properly perform authentication: invalid_request: desc"
+    )
+
+
+def test_with_invalid_token_request_invalid_request_error_and_error_description_and_uri(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_request&error_description=desc&error_uri=http://test_url",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "invalid_request: desc\nMore information can be found on http://test_url"
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: invalid_request: desc\nMore information can be found on http://test_url"
+    )
+
+
+def test_with_invalid_token_request_invalid_request_error_and_error_description_and_uri_and_other_fields(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_request&error_description=desc&error_uri=http://test_url&other=test",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "invalid_request: desc\nMore information can be found on http://test_url\nAdditional information: {'other': ['test']}"
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: invalid_request: desc\nMore information can be found on http://test_url\nAdditional information: {'other': ['test']}"
+    )
+
+
+def test_with_invalid_token_request_unauthorized_client_error(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=unauthorized_client",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "unauthorized_client: The client is not authorized to request an authorization code or an access token using this method."
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: unauthorized_client: The client is not authorized to request an authorization code or an access token using this method."
+    )
+
+
+def test_with_invalid_token_request_access_denied_error(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=access_denied",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "access_denied: The resource owner or authorization server denied the request."
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: access_denied: The resource owner or authorization server denied the request."
+    )
+
+
+def test_with_invalid_token_request_unsupported_response_type_error(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=unsupported_response_type",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "unsupported_response_type: The authorization server does not support obtaining an authorization code or an access token using this method."
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: unsupported_response_type: The authorization server does not support obtaining an authorization code or an access token using this method."
+    )
+
+
+def test_with_invalid_token_request_invalid_scope_error(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_scope",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "invalid_scope: The requested scope is invalid, unknown, or malformed."
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: invalid_scope: The requested scope is invalid, unknown, or malformed."
+    )
+
+
+def test_with_invalid_token_request_server_error_error(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=server_error",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "server_error: The authorization server encountered an unexpected condition that prevented it from fulfilling the request. (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)"
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: server_error: The authorization server encountered an unexpected condition that prevented it from fulfilling the request. (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)"
+    )
+
+
+def test_with_invalid_token_request_temporarily_unavailable_error(
+    token_cache, browser_mock: BrowserMock
+):
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=temporarily_unavailable",
+    )
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
+        requests.get(
+            "http://authorized_only",
+            auth=requests_auth.OAuth2Implicit("http://provide_token"),
+        )
+    assert (
+        str(exception_info.value)
+        == "temporarily_unavailable: The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server.  (This error code is needed because a 503 Service Unavailable HTTP status code cannot be returned to the client via an HTTP redirect.)"
+    )
+    tab.assert_failure(
+        "Unable to properly perform authentication: temporarily_unavailable: The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server.  (This error code is needed because a 503 Service Unavailable HTTP status code cannot be returned to the client via an HTTP redirect.)"
+    )
+
+
 def test_oauth2_implicit_flow_failure_if_token_is_not_received_within_the_timeout_interval(
     token_cache, browser_mock: BrowserMock
 ):

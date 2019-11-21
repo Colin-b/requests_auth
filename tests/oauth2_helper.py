@@ -87,7 +87,7 @@ class BrowserMock:
 
     def open(self, url: str, new: int):
         assert new == 1
-        assert url in self.tabs
+        assert url in self.tabs, f"Browser call on {url} was not mocked."
         # Simulate a browser by sending the response in another thread
         self.tabs[url].start()
         return True
