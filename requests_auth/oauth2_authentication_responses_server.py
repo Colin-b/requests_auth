@@ -182,7 +182,7 @@ class FixedHttpServer(HTTPServer):
         raise TimeoutOccurred(self.timeout)
 
 
-def request_new_grant(grant_details: GrantDetails):
+def request_new_grant(grant_details: GrantDetails) -> (str, str):
     """
     Ask for a new OAuth2 grant.
     :param grant_details: Must be a class providing the following attributes:
@@ -192,7 +192,8 @@ def request_new_grant(grant_details: GrantDetails):
         * reception_success_display_time
         * reception_failure_display_time
         * redirect_uri_port
-    :return:A tuple (state, grant) or an Exception if not retrieved within timeout.
+    :return: A tuple (state, grant)
+    :raises Exception: if not retrieved within timeout. # TODO Add more details
     """
     logger.debug(f"Requesting new {grant_details.name}...")
 
@@ -220,7 +221,11 @@ def _open_url(url: str):
         requests.get(url)
 
 
-def _wait_for_grant(server: FixedHttpServer):
+def _wait_for_grant(server: FixedHttpServer) -> (str, str):
+    """
+    :return: A tuple (state, grant)
+    :raises Exception: if not retrieved within timeout. # TODO Add more details
+    """
     logger.debug("Waiting for user authentication...")
     while not server.grant:
         server.handle_request()

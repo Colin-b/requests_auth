@@ -9,7 +9,7 @@ from requests_auth.errors import *
 logger = logging.getLogger(__name__)
 
 
-def decode_base64(base64_encoded_string: str):
+def decode_base64(base64_encoded_string: str) -> str:
     """
     Decode base64, padding being optional.
 
@@ -22,7 +22,7 @@ def decode_base64(base64_encoded_string: str):
     return base64.b64decode(base64_encoded_string).decode("unicode_escape")
 
 
-def is_expired(expiry: float):
+def is_expired(expiry: float) -> bool:
     return datetime.datetime.utcfromtimestamp(expiry) < datetime.datetime.utcnow()
 
 
@@ -82,7 +82,7 @@ class TokenMemoryCache:
                 f'Inserting token expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC) with "{key}" key: {token}'
             )
 
-    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args):
+    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args) -> str:
         """
         Return the bearer token.
         :param key: key identifier of the token
