@@ -3,6 +3,7 @@ import os
 import uuid
 from hashlib import sha256, sha512
 from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
+from typing import Optional
 
 import requests
 import requests.auth
@@ -32,7 +33,7 @@ def _add_parameters(initial_url: str, extra_parameters: dict) -> str:
     return urlunsplit((scheme, netloc, path, new_query_string, fragment))
 
 
-def _pop_parameter(url: str, query_parameter_name: str) -> tuple:
+def _pop_parameter(url: str, query_parameter_name: str) -> (str, Optional[str]):
     """
     Remove and return parameter of an URL.
 
@@ -51,7 +52,7 @@ def _pop_parameter(url: str, query_parameter_name: str) -> tuple:
     )
 
 
-def _get_query_parameter(url: str, param_name: str) -> str:
+def _get_query_parameter(url: str, param_name: str) -> Optional[str]:
     scheme, netloc, path, query_string, fragment = urlsplit(url)
     query_params = parse_qs(query_string)
     all_values = query_params.get(param_name)
@@ -60,7 +61,7 @@ def _get_query_parameter(url: str, param_name: str) -> str:
 
 def request_new_grant_with_post(
     url: str, data, grant_name: str, timeout: float, auth=None
-) -> tuple:
+) -> (str, int):
     response = requests.post(url, data=data, timeout=timeout, auth=auth)
     if not response:
         # As described in https://tools.ietf.org/html/rfc6749#section-5.2

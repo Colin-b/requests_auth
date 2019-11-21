@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - OAuth2ClientCredentials username parameter is now client_id
 - OAuth2ClientCredentials password parameter is now client_secret
-- requests_auth.InvalidGrantRequest is now raised instead of requests.HTTPError in case a grant request was invalid. This exception contains more information.
+- requests_auth.InvalidGrantRequest is now raised instead of requests.HTTPError in case a grant request was invalid.
+- requests_auth.InvalidGrantRequest is now raised instead of requests_auth.GrantNotProvided in case a browser grant request was invalid.
+- There is no info logging anymore. If you want to have those information (browser opening on a specific URL, requests received by the OAUth2 server), you will have to put requests_auth logger to DEBUG.
 
 ### Removed
 - Support for Python < 3.6

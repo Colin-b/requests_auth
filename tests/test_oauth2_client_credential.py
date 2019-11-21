@@ -143,7 +143,7 @@ def test_with_invalid_grant_request_without_error(token_cache, responses: Reques
     )
     with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
         requests.get("http://authorized_only", auth=auth)
-    assert str(exception_info.value) == f'{{"other": "other info"}}'
+    assert str(exception_info.value) == "{'other': 'other info'}"
 
 
 def test_with_invalid_grant_request_invalid_client_error(

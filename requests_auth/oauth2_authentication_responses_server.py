@@ -51,6 +51,8 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
     def _parse_grant(self, arguments: dict):
         grants = arguments.get(self.server.grant_details.name)
         if not grants or len(grants) > 1:
+            if "error" in arguments:
+                raise InvalidGrantRequest(arguments)
             raise GrantNotProvided(self.server.grant_details.name, arguments)
         logger.debug(f"Received grants: {grants}")
         grant = grants[0]
@@ -125,7 +127,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args):
         """Make sure that messages are logged even with pythonw (seems like a bug in BaseHTTPRequestHandler)."""
-        logger.info(format, *args)
+        logger.debug(format, *args)
 
 
 class GrantDetails:
@@ -148,15 +150,6 @@ class GrantDetails:
 
 class FixedHttpServer(HTTPServer):
     def __init__(self, grant_details: GrantDetails):
-        """
-
-        :param grant_details: Must be a class providing the following attributes:
-            * name
-            * reception_success_display_time
-            * reception_failure_display_time
-            * redirect_uri_port
-            * reception_timeout
-        """
         HTTPServer.__init__(
             self, ("", grant_details.redirect_uri_port), OAuth2ResponseHandler
         )
@@ -172,9 +165,8 @@ class FixedHttpServer(HTTPServer):
         HTTPServer.finish_request(self, request, client_address)
 
     def ensure_no_error_occurred(self):
-        if (
-            self.request_error
-        ):  # Raise error encountered while processing a request if any
+        if self.request_error:
+            # Raise error encountered while processing a request if any
             raise self.request_error
         return not self.grant
 
@@ -182,17 +174,14 @@ class FixedHttpServer(HTTPServer):
         raise TimeoutOccurred(self.timeout)
 
 
-def request_new_grant(grant_details: GrantDetails):
+def request_new_grant(grant_details: GrantDetails) -> (str, str):
     """
     Ask for a new OAuth2 grant.
-    :param grant_details: Must be a class providing the following attributes:
-        * url
-        * name
-        * reception_timeout
-        * reception_success_display_time
-        * reception_failure_display_time
-        * redirect_uri_port
-    :return:A tuple (state, grant) or an Exception if not retrieved within timeout.
+    :return: A tuple (state, grant)
+    :raises InvalidGrantRequest: If the request was invalid.
+    :raises TimeoutOccurred: If not retrieved within timeout.
+    :raises GrantNotProvided: If grant is not provided in response (but no error occurred).
+    :raises StateNotProvided: If state if not provided in addition to the grant.
     """
     logger.debug(f"Requesting new {grant_details.name}...")
 
@@ -211,7 +200,7 @@ def _open_url(url: str):
             if hasattr(webbrowser, "iexplore")
             else webbrowser.get()
         )
-        logger.info(f"Opening browser on {url}")
+        logger.debug(f"Opening browser on {url}")
         if not browser.open(url, new=1):
             logger.warning("Unable to open URL, try with a GET request.")
             requests.get(url)
@@ -220,7 +209,14 @@ def _open_url(url: str):
         requests.get(url)
 
 
-def _wait_for_grant(server: FixedHttpServer):
+def _wait_for_grant(server: FixedHttpServer) -> (str, str):
+    """
+    :return: A tuple (state, grant)
+    :raises InvalidGrantRequest: If the request was invalid.
+    :raises TimeoutOccurred: If not retrieved within timeout.
+    :raises GrantNotProvided: If grant is not provided in response (but no error occurred).
+    :raises StateNotProvided: If state if not provided in addition to the grant.
+    """
     logger.debug("Waiting for user authentication...")
     while not server.grant:
         server.handle_request()
