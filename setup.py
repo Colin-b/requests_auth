@@ -14,7 +14,7 @@ setup(
     maintainer="Colin Bounouar",
     maintainer_email="colin.bounouar.dev@gmail.com",
     url="https://github.com/Colin-b/requests_auth",
-    description="Easy Authentication for Requests",
+    description="Authentication for Requests",
     long_description=long_description,
     long_description_content_type="text/markdown",
     download_url="https://pypi.org/project/requests-auth/",
