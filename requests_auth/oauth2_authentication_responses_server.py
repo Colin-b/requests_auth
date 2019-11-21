@@ -148,15 +148,6 @@ class GrantDetails:
 
 class FixedHttpServer(HTTPServer):
     def __init__(self, grant_details: GrantDetails):
-        """
-
-        :param grant_details: Must be a class providing the following attributes:
-            * name
-            * reception_success_display_time
-            * reception_failure_display_time
-            * redirect_uri_port
-            * reception_timeout
-        """
         HTTPServer.__init__(
             self, ("", grant_details.redirect_uri_port), OAuth2ResponseHandler
         )
@@ -184,13 +175,6 @@ class FixedHttpServer(HTTPServer):
 def request_new_grant(grant_details: GrantDetails) -> (str, str):
     """
     Ask for a new OAuth2 grant.
-    :param grant_details: Must be a class providing the following attributes:
-        * url
-        * name
-        * reception_timeout
-        * reception_success_display_time
-        * reception_failure_display_time
-        * redirect_uri_port
     :return: A tuple (state, grant)
     :raises TimeoutOccurred: if not retrieved within timeout. # TODO Add more details
     """
