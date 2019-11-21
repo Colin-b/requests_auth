@@ -96,10 +96,10 @@ def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(
 def test_oauth2_implicit_flow_token_can_be_requested_on_a_custom_server_port(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
+    # TODO Should use a method to retrieve a free port instead
+    available_port = 5002
     auth = requests_auth.OAuth2Implicit(
-        "http://provide_token",
-        # TODO Should use a method to retrieve a free port instead
-        redirect_uri_port=5002,
+        "http://provide_token", redirect_uri_port=available_port
     )
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
