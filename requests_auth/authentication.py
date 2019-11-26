@@ -82,9 +82,9 @@ class SupportMultiAuth:
     """Inherit from this class to be able to use your class with requests_auth provided authentication classes."""
 
     def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(self, *other.authentication_modes)
-        return Auths(self, other)
+        if isinstance(other, _MultiAuth):
+            return _MultiAuth(self, *other.authentication_modes)
+        return _MultiAuth(self, other)
 
 
 class BrowserAuth:
@@ -1121,14 +1121,10 @@ class NTLM(requests.auth.AuthBase, SupportMultiAuth):
         return r
 
 
-class Auths(requests.auth.AuthBase):
+class _MultiAuth(requests.auth.AuthBase):
     """Authentication using multiple authentication methods."""
 
     def __init__(self, *authentication_modes):
-        warnings.warn(
-            "Auths class will be removed in the future. Use + instead.",
-            DeprecationWarning,
-        )
         self.authentication_modes = authentication_modes
 
     def __call__(self, r):
@@ -1137,6 +1133,15 @@ class Auths(requests.auth.AuthBase):
         return r
 
     def __add__(self, other):
-        if isinstance(other, Auths):
-            return Auths(*self.authentication_modes, *other.authentication_modes)
-        return Auths(*self.authentication_modes, other)
+        if isinstance(other, _MultiAuth):
+            return _MultiAuth(*self.authentication_modes, *other.authentication_modes)
+        return _MultiAuth(*self.authentication_modes, other)
+
+
+class Auths(_MultiAuth):
+    def __init__(self, *authentication_modes):
+        warnings.warn(
+            "Auths class will be removed in the future. Use + instead.",
+            DeprecationWarning,
+        )
+        super().__init__(*authentication_modes)
