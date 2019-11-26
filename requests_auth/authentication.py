@@ -86,6 +86,11 @@ class SupportMultiAuth:
             return _MultiAuth(self, *other.authentication_modes)
         return _MultiAuth(self, other)
 
+    def __and__(self, other):
+        if isinstance(other, _MultiAuth):
+            return _MultiAuth(self, *other.authentication_modes)
+        return _MultiAuth(self, other)
+
 
 class BrowserAuth:
     def __init__(self, kwargs):
@@ -1133,6 +1138,11 @@ class _MultiAuth(requests.auth.AuthBase):
         return r
 
     def __add__(self, other):
+        if isinstance(other, _MultiAuth):
+            return _MultiAuth(*self.authentication_modes, *other.authentication_modes)
+        return _MultiAuth(*self.authentication_modes, other)
+
+    def __and__(self, other):
         if isinstance(other, _MultiAuth):
             return _MultiAuth(*self.authentication_modes, *other.authentication_modes)
         return _MultiAuth(*self.authentication_modes, other)
