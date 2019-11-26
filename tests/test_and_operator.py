@@ -351,7 +351,7 @@ def test_oauth2_implicit_and_api_key_authentication_can_be_combined(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     implicit_auth = requests_auth.OAuth2Implicit("http://provide_token")
-    expiry_in_1_hour = datetime.datetime.utcnow() & datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -371,7 +371,7 @@ def test_oauth2_implicit_and_multiple_authentication_can_be_combined(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     implicit_auth = requests_auth.OAuth2Implicit("http://provide_token")
-    expiry_in_1_hour = datetime.datetime.utcnow() & datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
