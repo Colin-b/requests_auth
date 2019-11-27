@@ -11,17 +11,7 @@ from tests.auth_helper import get_header
 def test_basic_and_api_key_authentication_can_be_combined(responses: RequestsMock):
     basic_auth = requests_auth.Basic("test_user", "test_pwd")
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, basic_auth + api_key_auth)
-    assert header.get("Authorization") == "Basic dGVzdF91c2VyOnRlc3RfcHdk"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-
-
-def test_basic_and_api_key_authentication_can_be_combined_deprecated(
-    responses: RequestsMock,
-):
-    basic_auth = requests_auth.Basic("test_user", "test_pwd")
-    api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, requests_auth.Auths(basic_auth, api_key_auth))
+    header = get_header(responses, basic_auth & api_key_auth)
     assert header.get("Authorization") == "Basic dGVzdF91c2VyOnRlc3RfcHdk"
     assert header.get("X-Api-Key") == "my_provided_api_key"
 
@@ -36,7 +26,7 @@ def test_header_api_key_and_multiple_authentication_can_be_combined(
     api_key_auth3 = requests_auth.HeaderApiKey(
         "my_provided_api_key3", header_name="X-Api-Key3"
     )
-    header = get_header(responses, api_key_auth + (api_key_auth2 + api_key_auth3))
+    header = get_header(responses, api_key_auth & (api_key_auth2 & api_key_auth3))
     assert header.get("X-Api-Key") == "my_provided_api_key"
     assert header.get("X-Api-Key2") == "my_provided_api_key2"
     assert header.get("X-Api-Key3") == "my_provided_api_key3"
@@ -52,7 +42,7 @@ def test_multiple_auth_and_header_api_key_can_be_combined(
     api_key_auth3 = requests_auth.HeaderApiKey(
         "my_provided_api_key3", header_name="X-Api-Key3"
     )
-    header = get_header(responses, (api_key_auth + api_key_auth2) + api_key_auth3)
+    header = get_header(responses, (api_key_auth & api_key_auth2) & api_key_auth3)
     assert header.get("X-Api-Key") == "my_provided_api_key"
     assert header.get("X-Api-Key2") == "my_provided_api_key2"
     assert header.get("X-Api-Key3") == "my_provided_api_key3"
@@ -72,7 +62,7 @@ def test_multiple_auth_and_multiple_auth_can_be_combined(
         "my_provided_api_key4", header_name="X-Api-Key4"
     )
     header = get_header(
-        responses, (api_key_auth + api_key_auth2) + (api_key_auth3 + api_key_auth4)
+        responses, (api_key_auth & api_key_auth2) & (api_key_auth3 & api_key_auth4)
     )
     assert header.get("X-Api-Key") == "my_provided_api_key"
     assert header.get("X-Api-Key2") == "my_provided_api_key2"
@@ -90,7 +80,7 @@ def test_basic_and_multiple_authentication_can_be_combined(
     api_key_auth3 = requests_auth.HeaderApiKey(
         "my_provided_api_key3", header_name="X-Api-Key3"
     )
-    header = get_header(responses, basic_auth + (api_key_auth2 + api_key_auth3))
+    header = get_header(responses, basic_auth & (api_key_auth2 & api_key_auth3))
     assert header.get("Authorization") == "Basic dGVzdF91c2VyOnRlc3RfcHdk"
     assert header.get("X-Api-Key2") == "my_provided_api_key2"
     assert header.get("X-Api-Key3") == "my_provided_api_key3"
@@ -111,7 +101,7 @@ def test_query_api_key_and_multiple_authentication_can_be_combined(
     responses.add(responses.GET, "http://authorized_only")
     # Send a request to this dummy URL with authentication
     response = requests.get(
-        "http://authorized_only", auth=api_key_auth + (api_key_auth2 + api_key_auth3)
+        "http://authorized_only", auth=api_key_auth & (api_key_auth2 & api_key_auth3)
     )
     # Return headers received on this dummy URL
     assert (
@@ -139,7 +129,7 @@ def test_oauth2_resource_owner_password_and_api_key_authentication_can_be_combin
         },
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, resource_owner_password_auth + api_key_auth)
+    header = get_header(responses, resource_owner_password_auth & api_key_auth)
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
 
@@ -166,7 +156,7 @@ def test_oauth2_resource_owner_password_and_multiple_authentication_can_be_combi
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
     header = get_header(
-        responses, resource_owner_password_auth + (api_key_auth + api_key_auth2)
+        responses, resource_owner_password_auth & (api_key_auth & api_key_auth2)
     )
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
@@ -191,7 +181,7 @@ def test_oauth2_client_credential_and_api_key_authentication_can_be_combined(
         },
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, resource_owner_password_auth + api_key_auth)
+    header = get_header(responses, resource_owner_password_auth & api_key_auth)
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
 
@@ -218,7 +208,7 @@ def test_oauth2_client_credential_and_multiple_authentication_can_be_combined(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
     header = get_header(
-        responses, resource_owner_password_auth + (api_key_auth + api_key_auth2)
+        responses, resource_owner_password_auth & (api_key_auth & api_key_auth2)
     )
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
@@ -247,7 +237,7 @@ def test_oauth2_authorization_code_and_api_key_authentication_can_be_combined(
         },
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, authorization_code_auth + api_key_auth)
+    header = get_header(responses, authorization_code_auth & api_key_auth)
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
     tab.assert_success(
@@ -281,7 +271,7 @@ def test_oauth2_authorization_code_and_multiple_authentication_can_be_combined(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
     header = get_header(
-        responses, authorization_code_auth + (api_key_auth + api_key_auth2)
+        responses, authorization_code_auth & (api_key_auth & api_key_auth2)
     )
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
@@ -314,7 +304,7 @@ def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
         },
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, pkce_auth + api_key_auth)
+    header = get_header(responses, pkce_auth & api_key_auth)
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
     tab.assert_success(
@@ -348,7 +338,7 @@ def test_oauth2_pkce_and_multiple_authentication_can_be_combined(
     api_key_auth2 = requests_auth.HeaderApiKey(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
-    header = get_header(responses, pkce_auth + (api_key_auth + api_key_auth2))
+    header = get_header(responses, pkce_auth & (api_key_auth & api_key_auth2))
     assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     assert header.get("X-Api-Key") == "my_provided_api_key"
     assert header.get("X-Api-Key2") == "my_provided_api_key2"
@@ -369,7 +359,7 @@ def test_oauth2_implicit_and_api_key_authentication_can_be_combined(
         data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, implicit_auth + api_key_auth)
+    header = get_header(responses, implicit_auth & api_key_auth)
     assert header.get("Authorization") == f"Bearer {token}"
     assert header.get("X-Api-Key") == "my_provided_api_key"
     tab.assert_success(
@@ -392,7 +382,7 @@ def test_oauth2_implicit_and_multiple_authentication_can_be_combined(
     api_key_auth2 = requests_auth.HeaderApiKey(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
-    header = get_header(responses, implicit_auth + (api_key_auth + api_key_auth2))
+    header = get_header(responses, implicit_auth & (api_key_auth & api_key_auth2))
     assert header.get("Authorization") == f"Bearer {token}"
     assert header.get("X-Api-Key") == "my_provided_api_key"
     assert header.get("X-Api-Key2") == "my_provided_api_key2"

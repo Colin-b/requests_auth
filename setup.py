@@ -13,7 +13,7 @@ setup(
     author_email="colin.bounouar.dev@gmail.com",
     maintainer="Colin Bounouar",
     maintainer_email="colin.bounouar.dev@gmail.com",
-    url="https://github.com/Colin-b/requests_auth",
+    url="https://colin-b.github.io/requests_auth/",
     description="Authentication for Requests",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -41,7 +41,7 @@ setup(
         "apikey",
         "multiple",
     ],
-    packages=find_packages(exclude=["tests"]),
+    packages=find_packages(exclude=["tests*"]),
     install_requires=[
         # Used for Base Authentication and to communicate with OAuth2 servers
         "requests==2.*"
@@ -56,6 +56,7 @@ setup(
     },
     python_requires=">=3.6",
     project_urls={
+        "GitHub": "https://github.com/Colin-b/requests_auth",
         "Changelog": "https://github.com/Colin-b/requests_auth/blob/master/CHANGELOG.md",
         "Issues": "https://github.com/Colin-b/requests_auth/issues",
     },

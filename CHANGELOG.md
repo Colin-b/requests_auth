@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.1] - 2019-11-28
+### Added
+- Allow to use & between authentication classes.
+
+### Fixed
+- Avoid DeprecationWarning in case multi auth is used with +
+- Avoid packaging tests (introduced in 5.0.0)
+
 ## [5.0.0] - 2019-11-21
 ### Changed
 - OAuth2ClientCredentials username parameter is now client_id
@@ -106,7 +114,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.0.0...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.0.1...HEAD
+[5.0.1]: https://github.com/Colin-b/requests_auth/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/Colin-b/requests_auth/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/Colin-b/requests_auth/compare/v4.0.1...v4.1.0
 [4.0.1]: https://github.com/Colin-b/requests_auth/compare/v4.0.0...v4.0.1
