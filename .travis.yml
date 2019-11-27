@@ -3,8 +3,11 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
-  - "nightly"
 install:
   - pip install .[testing]
 script:
   - pytest
+deploy:
+  provider: pypi
+  username: __token__
+  edge: true
