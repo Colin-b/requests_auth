@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Avoid DeprecationWarning in case multi auth is used with +
+- Avoid packaging tests (introduced in 5.0.0)
 
 ## [5.0.0] - 2019-11-21
 ### Changed

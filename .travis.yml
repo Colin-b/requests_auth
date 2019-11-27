@@ -11,3 +11,4 @@ deploy:
   provider: pypi
   username: __token__
   edge: true
+  distributions: "sdist bdist_wheel"

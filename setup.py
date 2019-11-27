@@ -41,7 +41,7 @@ setup(
         "apikey",
         "multiple",
     ],
-    packages=find_packages(exclude=["tests"]),
+    packages=find_packages(exclude=["tests*"]),
     install_requires=[
         # Used for Base Authentication and to communicate with OAuth2 servers
         "requests==2.*"
