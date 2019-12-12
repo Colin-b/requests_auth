@@ -2,10 +2,10 @@
 
 <p align="center">
 <a href="https://pypi.org/project/requests-auth/"><img alt="pypi version" src="https://img.shields.io/pypi/v/requests_auth"></a>
-<img alt="Build status" src="https://img.shields.io/badge/build-passing-brightgreen">
-<img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen">
+<a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Build status" src="https://api.travis-ci.org/Colin-b/requests_auth.svg?branch=master"></a>
+<a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<img alt="Number of tests" src="https://img.shields.io/badge/tests-167 passed-blue">
+<a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-187 passed-blue"></a>
 <a href="https://pypi.org/project/requests-auth/"><img alt="Number of downloads" src="https://img.shields.io/pypi/dm/requests_auth"></a>
 </p>
 

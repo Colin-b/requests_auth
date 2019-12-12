@@ -6,9 +6,10 @@ python:
 install:
   - pip install .[testing]
 script:
-  - pytest
+  - pytest --cov=requests_auth --cov-fail-under=100
 deploy:
   provider: pypi
   username: __token__
   edge: true
   distributions: "sdist bdist_wheel"
+  skip_existing: true

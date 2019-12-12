@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.2] - 2019-12-12
+### Fixed
+- Handle expires_in sent as str instead of int.
+
 ## [5.0.1] - 2019-11-28
 ### Added
 - Allow to use & between authentication classes.
@@ -114,7 +118,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.0.1...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.0.2...HEAD
+[5.0.2]: https://github.com/Colin-b/requests_auth/compare/v5.0.1...v5.0.2
 [5.0.1]: https://github.com/Colin-b/requests_auth/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/Colin-b/requests_auth/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/Colin-b/requests_auth/compare/v4.0.1...v4.1.0

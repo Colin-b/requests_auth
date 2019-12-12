@@ -34,6 +34,31 @@ def test_oauth2_password_credentials_flow_token_is_sent_in_authorization_header_
     )
 
 
+def test_expires_in_sent_as_str(token_cache, responses: RequestsMock):
+    auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
+        "http://provide_access_token", username="test_user", password="test_pwd"
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": "3600",
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+    )
+    assert (
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
+    assert (
+        get_request(responses, "http://provide_access_token/").body
+        == "grant_type=password&username=test_user&password=test_pwd"
+    )
+
+
 def test_scope_is_sent_as_is_when_provided_as_str(token_cache, responses: RequestsMock):
     auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
         "http://provide_access_token",
