@@ -65,7 +65,7 @@ class TokenMemoryCache:
         """
         expiry = datetime.datetime.utcnow().replace(
             tzinfo=datetime.timezone.utc
-        ) + datetime.timedelta(seconds=expires_in)
+        ) + datetime.timedelta(seconds=int(expires_in))
         self._add_token(key, token, expiry.timestamp())
 
     def _add_token(self, key: str, token: str, expiry: float):
