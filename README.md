@@ -637,6 +637,43 @@ oauth2 = OAuth2Implicit('https://www.example.com')
 requests.get('http://www.example.com', auth=api_key + oauth2)
 ```
 
+## Available pytest fixtures
+
+[`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency to use those fixtures.
+
+### token_cache
+
+This fixture will return the token cache and ensure it is reset at the end of the test case.
+
+```python
+from requests_auth.testing import token_cache
+
+def test_something(token_cache):
+    # perform code using authentication
+    pass
+```
+
+### browser_mock
+
+This fixture will allow to mock the behavior of a web browser.
+
+```python
+import datetime
+
+from requests_auth.testing import browser_mock, BrowserMock, create_token
+
+def test_something(browser_mock: BrowserMock):
+    tab = browser_mock.add_response(
+        opened_url="url opened by browser",
+        # You will at least need the state in reply URL in addition to the token
+        reply_url="http://localhost:5000#access_token={create_token(datetime.datetime.utcnow() + datetime.timedelta(hours=1))}",
+    )
+    # perform code using authentication and requiring a browser authentication
+    tab.assert_success(
+        "You are now authenticated on ... You may close this tab."
+    )
+```
+
 [1]: https://pypi.python.org/pypi/requests "requests module"
 [2]: http://docs.python-requests.org/en/master/user/authentication/ "authentication parameter on requests module"
 [3]: http://openid.net/specs/openid-connect-core-1_0.html#IDToken "OpenID ID Token specifications"
