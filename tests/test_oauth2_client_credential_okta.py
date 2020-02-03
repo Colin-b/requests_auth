@@ -1,8 +1,8 @@
 from responses import RequestsMock
 
 import requests_auth
-from tests.oauth2_helper import token_cache
 from tests.auth_helper import get_header
+from requests_auth.testing import token_cache
 
 
 def test_okta_client_credentials_flow_token_is_sent_in_authorization_header_by_default(

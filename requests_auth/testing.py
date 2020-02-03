@@ -1,4 +1,3 @@
-import logging
 import urllib.request
 import threading
 from urllib.parse import urlsplit
@@ -10,10 +9,8 @@ import jwt
 
 import requests_auth
 
-logger = logging.getLogger(__name__)
 
-
-def create_token(expiry: Optional[datetime.datetime]):
+def create_token(expiry: Optional[datetime.datetime]) -> str:
     token = (
         jwt.encode({"exp": expiry}, "secret") if expiry else jwt.encode({}, "secret")
     )

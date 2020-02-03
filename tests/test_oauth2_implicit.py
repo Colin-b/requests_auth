@@ -5,7 +5,7 @@ import requests
 import pytest
 from responses import RequestsMock
 
-from tests.oauth2_helper import token_cache, browser_mock, BrowserMock, create_token
+from requests_auth.testing import BrowserMock, create_token, token_cache, browser_mock
 from tests.auth_helper import get_header
 import requests_auth
 
