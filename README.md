@@ -640,9 +640,23 @@ requests.get('http://www.example.com', auth=api_key + oauth2)
 
 ## Available pytest fixtures
 
+Testing the code using requests_auth authentication classes can be achieved using provided [`pytest`][6] fixtures.
+
 ### token_cache_mock
 
-This fixture should be use to mock OAuth2 related authentication success.
+Use this fixture if all you want is to mock authentication success for the following classes:
+ * OAuth2AuthorizationCodePKCE
+ * OktaAuthorizationCodePKCE
+ * OAuth2Implicit
+ * OktaImplicit
+ * OktaImplicitIdToken
+ * AzureActiveDirectoryImplicit
+ * AzureActiveDirectoryImplicitIdToken
+ * OAuth2AuthorizationCode
+ * OktaAuthorizationCode
+ * OAuth2ClientCredentials
+ * OktaClientCredentials
+ * OAuth2ResourceOwnerPasswordCredentials,
 
 ```python
 from requests_auth.testing import token_cache_mock, token_mock
@@ -654,7 +668,7 @@ def test_something(token_cache_mock):
 
 By default, [`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency as it is used to generate the token returned by the authentication.
 
-You can however return your custom token by providing your own token_mock fixture as in the following sample:
+You can however return your custom token by providing your own `token_mock` fixture as in the following sample:
 
 ```python
 import pytest
@@ -676,7 +690,7 @@ def test_something(token_cache_mock):
 
 #### token_cache
 
-This fixture will return the token cache and ensure it is reset at the end of the test case.
+This [`pytest`][6] fixture will return the token cache and ensure it is reset at the end of the test case.
 
 ```python
 from requests_auth.testing import token_cache
@@ -688,9 +702,9 @@ def test_something(token_cache):
 
 #### browser_mock
 
-This fixture will allow to mock the behavior of a web browser.
+This [`pytest`][6] fixture will allow to mock the behavior of a web browser.
 
-With this fixture you will be allowed to fine tune your authentication related failures handling.
+With this [`pytest`][6] fixture you will be allowed to fine tune your authentication related failures handling.
 
 [`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency if you use `create_token` helper function.
 
@@ -722,3 +736,4 @@ def test_something(browser_mock: BrowserMock):
 [3]: http://openid.net/specs/openid-connect-core-1_0.html#IDToken "OpenID ID Token specifications"
 [4]: https://pypi.python.org/pypi/requests-negotiate-sspi "requests-negotiate-sspi module"
 [5]: https://pypi.python.org/pypi/requests_ntlm "requests_ntlm module"
+[6]: https://docs.pytest.org/en/latest/ "pytest module"
