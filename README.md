@@ -5,7 +5,7 @@
 <a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Build status" src="https://api.travis-ci.org/Colin-b/requests_auth.svg?branch=master"></a>
 <a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-232 passed-blue"></a>
+<a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-242 passed-blue"></a>
 <a href="https://pypi.org/project/requests-auth/"><img alt="Number of downloads" src="https://img.shields.io/pypi/dm/requests_auth"></a>
 </p>
 
@@ -640,9 +640,41 @@ requests.get('http://www.example.com', auth=api_key + oauth2)
 
 ## Available pytest fixtures
 
-[`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency to use those fixtures.
+### token_cache_mock
 
-### token_cache
+This fixture should be use to mock OAuth2 related authentication success.
+
+```python
+from requests_auth.testing import token_cache_mock, token_mock
+
+def test_something(token_cache_mock):
+    # perform code using authentication
+    pass
+```
+
+By default, [`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency as it is used to generate the token returned by the authentication.
+
+You can however return your custom token by providing your own token_mock fixture as in the following sample:
+
+```python
+import pytest
+
+from requests_auth.testing import token_cache_mock
+
+
+@pytest.fixture
+def token_mock() -> str:
+    return "2YotnFZFEjr1zCsicMWpAA"
+
+
+def test_something(token_cache_mock):
+    # perform code using authentication
+    pass
+```
+
+### Advanced testing
+
+#### token_cache
 
 This fixture will return the token cache and ensure it is reset at the end of the test case.
 
@@ -654,9 +686,13 @@ def test_something(token_cache):
     pass
 ```
 
-### browser_mock
+#### browser_mock
 
 This fixture will allow to mock the behavior of a web browser.
+
+With this fixture you will be allowed to fine tune your authentication related failures handling.
+
+[`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency if you use `create_token` helper function.
 
 ```python
 import datetime

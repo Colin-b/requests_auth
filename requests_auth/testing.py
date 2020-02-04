@@ -5,12 +5,13 @@ from typing import Dict, Optional
 import datetime
 
 import pytest
-import jwt
 
 import requests_auth
 
 
 def create_token(expiry: Optional[datetime.datetime]) -> str:
+    import jwt  # Consider jwt an optional dependency for testing
+
     token = (
         jwt.encode({"exp": expiry}, "secret") if expiry else jwt.encode({}, "secret")
     )
@@ -119,3 +120,17 @@ def browser_mock(monkeypatch) -> BrowserMock:
     )
     yield mock
     mock.assert_checked()
+
+
+@pytest.fixture
+def token_mock() -> str:
+    return create_token(None)
+
+
+@pytest.fixture
+def token_cache_mock(monkeypatch, token_mock: str):
+    class TokenCacheMock:
+        def get_token(self, *args, **kwargs) -> str:
+            return token_mock
+
+    monkeypatch.setattr(requests_auth.OAuth2, "token_cache", TokenCacheMock())
