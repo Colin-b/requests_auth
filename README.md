@@ -40,6 +40,7 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
 - [Basic](#basic)
 - [NTLM (Windows)](#ntlm)
 - [Multiple authentication at once](#multiple-authentication-at-once)
+- [Endorsements](#endorsements)
 
 ## OAuth 2
 
@@ -673,6 +674,12 @@ def test_something(browser_mock: BrowserMock):
         "You are now authenticated on ... You may close this tab."
     )
 ```
+
+## Endorsements
+
+> I love requests_auth. As a ~15 year pythonista, this library makes working with OAuth services a breeze. <333
+
+**Randall Degges**, Head of Evangelism, [Okta](https://developer.okta.com)
 
 [1]: https://pypi.python.org/pypi/requests "requests module"
 [2]: http://docs.python-requests.org/en/master/user/authentication/ "authentication parameter on requests module"
