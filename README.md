@@ -644,7 +644,15 @@ Testing the code using requests_auth authentication classes can be achieved usin
 
 ### token_cache_mock
 
-Use this fixture if all you want is to mock authentication success for the following classes:
+```python
+from requests_auth.testing import token_cache_mock, token_mock
+
+def test_something(token_cache_mock):
+    # perform code using authentication
+    pass
+```
+
+Use this fixture to mock authentication success for any of the following classes:
  * OAuth2AuthorizationCodePKCE
  * OktaAuthorizationCodePKCE
  * OAuth2Implicit
@@ -657,14 +665,6 @@ Use this fixture if all you want is to mock authentication success for the follo
  * OAuth2ClientCredentials
  * OktaClientCredentials
  * OAuth2ResourceOwnerPasswordCredentials,
-
-```python
-from requests_auth.testing import token_cache_mock, token_mock
-
-def test_something(token_cache_mock):
-    # perform code using authentication
-    pass
-```
 
 By default, [`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency as it is used to generate the token returned by the authentication.
 
