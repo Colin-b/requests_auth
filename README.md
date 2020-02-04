@@ -714,14 +714,17 @@ import datetime
 from requests_auth.testing import browser_mock, BrowserMock, create_token
 
 def test_something(browser_mock: BrowserMock):
+    token_expiry = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    token = create_token(token_expiry)
     tab = browser_mock.add_response(
-        opened_url="url opened by browser",
-        # You will at least need the state in reply URL in addition to the token
-        reply_url="http://localhost:5000#access_token={create_token(datetime.datetime.utcnow() + datetime.timedelta(hours=1))}",
+        opened_url="http://url_opened_by_browser?state=1234",
+        reply_url=f"http://localhost:5000#access_token={token}&state=1234",
     )
-    # perform code using authentication and requiring a browser authentication
+
+    # perform code using authentication
+
     tab.assert_success(
-        "You are now authenticated on ... You may close this tab."
+        "You are now authenticated on 1234 You may close this tab."
     )
 ```
 
