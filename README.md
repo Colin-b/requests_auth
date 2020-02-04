@@ -642,7 +642,7 @@ requests.get('http://www.example.com', auth=api_key + oauth2)
 
 > I love requests_auth. As a ~15 year pythonista, this library makes working with OAuth services a breeze. <333
 
-- **Randall Degges**, Head of Evangelism, [Okta](https://developer.okta.com)
+**Randall Degges**, Head of Evangelism, [Okta](https://developer.okta.com)
 
 [1]: https://pypi.python.org/pypi/requests "requests module"
 [2]: http://docs.python-requests.org/en/master/user/authentication/ "authentication parameter on requests module"
