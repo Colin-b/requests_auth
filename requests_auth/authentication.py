@@ -23,10 +23,12 @@ def _add_parameters(initial_url: str, extra_parameters: dict) -> str:
     """
     scheme, netloc, path, query_string, fragment = urlsplit(initial_url)
     query_params = parse_qs(query_string)
-
-    for parameter_name in extra_parameters.keys():
-        # TODO Handle parameters with a list as a value and submit PR to requests or Python
-        query_params[parameter_name] = [extra_parameters[parameter_name]]
+    query_params.update(
+        {
+            parameter_name: [parameter_value]
+            for parameter_name, parameter_value in extra_parameters.items()
+        }
+    )
 
     new_query_string = urlencode(query_params, doseq=True)
 
