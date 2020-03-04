@@ -23,10 +23,12 @@ def _add_parameters(initial_url: str, extra_parameters: dict) -> str:
     """
     scheme, netloc, path, query_string, fragment = urlsplit(initial_url)
     query_params = parse_qs(query_string)
-
-    for parameter_name in extra_parameters.keys():
-        # TODO Handle parameters with a list as a value and submit PR to requests or Python
-        query_params[parameter_name] = [extra_parameters[parameter_name]]
+    query_params.update(
+        {
+            parameter_name: [parameter_value]
+            for parameter_name, parameter_value in extra_parameters.items()
+        }
+    )
 
     new_query_string = urlencode(query_params, doseq=True)
 
@@ -791,22 +793,22 @@ class AzureActiveDirectoryImplicitIdToken(OAuth2Implicit):
 
 class OktaImplicit(OAuth2Implicit):
     """
-    Describes an OKTA (OAuth 2) "Access Token" implicit flow requests authentication.
+    Describes an Okta (OAuth 2) "Access Token" implicit flow requests authentication.
 
     https://developer.okta.com/docs/guides/implement-implicit/overview/
     """
 
     def __init__(self, instance: str, client_id: str, **kwargs):
         """
-        :param instance: OKTA instance (like "testserver.okta-emea.com")
-        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
+        :param instance: Okta instance (like "testserver.okta-emea.com")
+        :param client_id: Okta Application Identifier (formatted as an Universal Unique Identifier)
         :param response_type: Value of the response_type query parameter.
         token by default.
         :param token_field_name: Name of the expected field containing the token.
         access_token by default.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
-        :param authorization_server: OKTA authorization server.
+        :param authorization_server: Okta authorization server.
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request ['openid', 'profile', 'email'] by default.
@@ -846,20 +848,20 @@ class OktaImplicit(OAuth2Implicit):
 
 class OktaImplicitIdToken(OAuth2Implicit):
     """
-    Describes an OKTA (OpenID Connect) "ID Token" implicit flow requests authentication.
+    Describes an Okta (OpenID Connect) "ID Token" implicit flow requests authentication.
     """
 
     def __init__(self, instance: str, client_id: str, **kwargs):
         """
-        :param instance: OKTA instance (like "testserver.okta-emea.com")
-        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
+        :param instance: Okta instance (like "testserver.okta-emea.com")
+        :param client_id: Okta Application Identifier (formatted as an Universal Unique Identifier)
         :param response_type: Value of the response_type query parameter.
         id_token by default.
         :param token_field_name: Name of the expected field containing the token.
         id_token by default.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
-        :param authorization_server: OKTA authorization server
+        :param authorization_server: Okta authorization server
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request ['openid', 'profile', 'email'] by default.
@@ -901,20 +903,20 @@ class OktaImplicitIdToken(OAuth2Implicit):
 
 class OktaAuthorizationCode(OAuth2AuthorizationCode):
     """
-    Describes an OKTA (OAuth 2) "Access Token" authorization code flow requests authentication.
+    Describes an Okta (OAuth 2) "Access Token" authorization code flow requests authentication.
     """
 
     def __init__(self, instance: str, client_id: str, **kwargs):
         """
-        :param instance: OKTA instance (like "testserver.okta-emea.com")
-        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
+        :param instance: Okta instance (like "testserver.okta-emea.com")
+        :param client_id: Okta Application Identifier (formatted as an Universal Unique Identifier)
         :param response_type: Value of the response_type query parameter.
         token by default.
         :param token_field_name: Name of the expected field containing the token.
         access_token by default.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
-        :param authorization_server: OKTA authorization server
+        :param authorization_server: Okta authorization server
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request 'openid' by default.
@@ -954,13 +956,13 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
 
 class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
     """
-    Describes an OKTA (OAuth 2) "Access Token" Proof Key for Code Exchange (PKCE) flow requests authentication.
+    Describes an Okta (OAuth 2) "Access Token" Proof Key for Code Exchange (PKCE) flow requests authentication.
     """
 
     def __init__(self, instance: str, client_id: str, **kwargs):
         """
-        :param instance: OKTA instance (like "testserver.okta-emea.com")
-        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
+        :param instance: Okta instance (like "testserver.okta-emea.com")
+        :param client_id: Okta Application Identifier (formatted as an Universal Unique Identifier)
         :param response_type: Value of the response_type query parameter.
         code by default.
         :param token_field_name: Name of the expected field containing the token.
@@ -968,7 +970,7 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
         :param code_field_name: Field name containing the code. code by default.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
-        :param authorization_server: OKTA authorization server
+        :param authorization_server: Okta authorization server
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request 'openid' by default.
@@ -1009,15 +1011,15 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
 
 class OktaClientCredentials(OAuth2ClientCredentials):
     """
-    Describes an OKTA (OAuth 2) client credentials (also called application) flow requests authentication.
+    Describes an Okta (OAuth 2) client credentials (also called application) flow requests authentication.
     """
 
     def __init__(self, instance: str, client_id: str, client_secret: str, **kwargs):
         """
-        :param instance: OKTA instance (like "testserver.okta-emea.com")
-        :param client_id: OKTA Application Identifier (formatted as an Universal Unique Identifier)
+        :param instance: Okta instance (like "testserver.okta-emea.com")
+        :param client_id: Okta Application Identifier (formatted as an Universal Unique Identifier)
         :param client_secret: Resource owner password.
-        :param authorization_server: OKTA authorization server
+        :param authorization_server: Okta authorization server
         default by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.

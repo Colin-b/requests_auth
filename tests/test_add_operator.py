@@ -4,7 +4,7 @@ from responses import RequestsMock
 import requests
 
 import requests_auth
-from tests.oauth2_helper import token_cache, browser_mock, BrowserMock, create_token
+from requests_auth.testing import BrowserMock, create_token, token_cache, browser_mock
 from tests.auth_helper import get_header
 
 

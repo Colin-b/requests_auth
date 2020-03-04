@@ -4,7 +4,7 @@ import requests
 
 import requests_auth
 from tests.auth_helper import get_header, get_request
-from tests.oauth2_helper import token_cache, browser_mock, BrowserMock
+from requests_auth.testing import BrowserMock, browser_mock, token_cache
 
 
 def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(

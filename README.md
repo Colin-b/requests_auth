@@ -2,10 +2,10 @@
 
 <p align="center">
 <a href="https://pypi.org/project/requests-auth/"><img alt="pypi version" src="https://img.shields.io/pypi/v/requests_auth"></a>
-<a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Build status" src="https://api.travis-ci.org/Colin-b/requests_auth.svg?branch=master"></a>
-<a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen"></a>
+<a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Build status" src="https://api.travis-ci.com/Colin-b/requests_auth.svg?branch=master"></a>
+<a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<a href="https://travis-ci.org/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-187 passed-blue"></a>
+<a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-242 passed-blue"></a>
 <a href="https://pypi.org/project/requests-auth/"><img alt="Number of downloads" src="https://img.shields.io/pypi/dm/requests_auth"></a>
 </p>
 
@@ -13,7 +13,7 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
 
 <p align="center">
     <a href="https://oauth.net/2/"><img alt="OAuth2" src="https://oauth.net/images/oauth-2-sm.png"></a>
-    <a href="https://www.okta.com"><img alt="OKTA" src="https://www.okta.com/sites/all/themes/Okta/images/logos/developer/Dev_Logo-03_Large.png" height="120"></a>
+    <a href="https://www.okta.com"><img alt="Okta" src="https://www.okta.com/sites/all/themes/Okta/images/logos/developer/Dev_Logo-03_Large.png" height="120"></a>
     <a href="https://azure.microsoft.com/en-us/services/active-directory/"><img alt="Azure Active Directory (AD)" src="https://azurecomcdn.azureedge.net/cvt-cda59ccd0aa5ced6ff5a2052417cf596b92980921e88e667127eaca2232a31ab/images/shared/services/pricing-glyph-lock.svg" height="120"></a>
 </p>
 <p align="center">Some of the supported authentication</p>
@@ -22,17 +22,17 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
 
 - [OAuth2](#oauth-2)
   - [Authorization Code Flow](#authorization-code-flow)
-    - [OKTA](#okta-oauth2-authorization-code)
+    - [Okta](#okta-oauth2-authorization-code)
   - [Authorization Code Flow with PKCE](#authorization-code-flow-with-proof-key-for-code-exchange)
-    - [OKTA](#okta-oauth2-proof-key-for-code-exchange)
+    - [Okta](#okta-oauth2-proof-key-for-code-exchange)
   - [Resource Owner Password Credentials flow](#resource-owner-password-credentials-flow)
   - [Client Credentials Flow](#client-credentials-flow)
-    - [OKTA](#okta-oauth2-client-credentials)
+    - [Okta](#okta-oauth2-client-credentials)
   - [Implicit Flow](#implicit-flow)
     - [Azure AD (Access Token)](#microsoft---azure-active-directory-oauth2-access-token)
     - [Azure AD (ID token)](#microsoft---azure-active-directory-openid-connect-id-token)
-    - [OKTA (Access Token)](#okta-oauth2-implicit-access-token)
-    - [OKTA (ID token)](#okta-openid-connect-implicit-id-token)
+    - [Okta (Access Token)](#okta-oauth2-implicit-access-token)
+    - [Okta (ID token)](#okta-openid-connect-implicit-id-token)
   - [Managing token cache](#managing-token-cache)
 - API key
   - [In header](#api-key-in-header)
@@ -40,6 +40,7 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
 - [Basic](#basic)
 - [NTLM (Windows)](#ntlm)
 - [Multiple authentication at once](#multiple-authentication-at-once)
+- [Endorsements](#endorsements)
 
 ## OAuth 2
 
@@ -95,9 +96,9 @@ Most of [OAuth2](https://oauth.net/2/) Authorization Code Grant providers are su
 
 If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
 
-##### OKTA (OAuth2 Authorization Code)
+##### Okta (OAuth2 Authorization Code)
 
-[OKTA Authorization Code Grant](https://developer.okta.com/docs/guides/implement-auth-code/overview/) providing access tokens is supported.
+[Okta Authorization Code Grant](https://developer.okta.com/docs/guides/implement-auth-code/overview/) providing access tokens is supported.
 
 Use `requests_auth.OktaAuthorizationCode` to configure this kind of authentication.
 
@@ -114,13 +115,13 @@ requests.get('http://www.example.com', auth=okta)
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
-| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
-| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `instance`              | Okta instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | Okta Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | token |
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | openid |
-| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
+| `authorization_server`  | Okta authorization server. | Optional | 'default' |
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
@@ -183,9 +184,9 @@ Most of [OAuth2](https://oauth.net/2/) Proof Key for Code Exchange providers are
 
 If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
 
-##### OKTA (OAuth2 Proof Key for Code Exchange)
+##### Okta (OAuth2 Proof Key for Code Exchange)
 
-[OKTA Proof Key for Code Exchange](https://developer.okta.com/docs/guides/implement-auth-code-pkce/overview/) providing access tokens is supported.
+[Okta Proof Key for Code Exchange](https://developer.okta.com/docs/guides/implement-auth-code-pkce/overview/) providing access tokens is supported.
 
 Use `requests_auth.OktaAuthorizationCodePKCE` to configure this kind of authentication.
 
@@ -202,14 +203,14 @@ requests.get('http://www.example.com', auth=okta)
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
-| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
-| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `instance`              | Okta instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | Okta Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | code |
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
 | `code_field_name`      | Field name containing the code. | Optional | code |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | openid |
-| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
+| `authorization_server`  | Okta authorization server. | Optional | 'default' |
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
@@ -289,9 +290,9 @@ Most of [OAuth2](https://oauth.net/2/) Client Credentials Grant providers are su
 
 If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
 
-##### OKTA (OAuth2 Client Credentials)
+##### Okta (OAuth2 Client Credentials)
 
-[OKTA Client Credentials Grant](https://developer.okta.com/docs/guides/implement-client-creds/overview/) providing access tokens is supported.
+[Okta Client Credentials Grant](https://developer.okta.com/docs/guides/implement-client-creds/overview/) providing access tokens is supported.
 
 Use `requests_auth.OktaClientCredentials` to configure this kind of authentication.
 
@@ -308,10 +309,10 @@ requests.get('http://www.example.com', auth=okta)
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
-| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
-| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `instance`              | Okta instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | Okta Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `client_secret`         | Resource owner password.                     | Mandatory |               |
-| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
+| `authorization_server`  | Okta authorization server. | Optional | 'default' |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
 | `header_name`           | Name of the header field used to send token. | Optional | Authorization |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
@@ -448,9 +449,9 @@ Usual extra parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-##### OKTA (OAuth2 Implicit Access Token)
+##### Okta (OAuth2 Implicit Access Token)
 
-[OKTA Implicit Grant](https://developer.okta.com/docs/guides/implement-implicit/overview/) providing access tokens is supported.
+[Okta Implicit Grant](https://developer.okta.com/docs/guides/implement-implicit/overview/) providing access tokens is supported.
 
 Use `requests_auth.OktaImplicit` to configure this kind of authentication.
 
@@ -467,13 +468,13 @@ requests.get('http://www.example.com', auth=okta)
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
-| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
-| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `instance`              | Okta instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | Okta Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | token |
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | ['openid', 'profile', 'email'] |
-| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
+| `authorization_server`  | Okta authorization server. | Optional | 'default' |
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
@@ -490,9 +491,9 @@ Usual extra parameters are:
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
 
-##### OKTA (OpenID Connect Implicit ID token)
+##### Okta (OpenID Connect Implicit ID token)
 
-[OKTA Implicit Grant](https://developer.okta.com/docs/guides/implement-implicit/overview/) providing ID tokens is supported.
+[Okta Implicit Grant](https://developer.okta.com/docs/guides/implement-implicit/overview/) providing ID tokens is supported.
 
 Use `requests_auth.OktaImplicitIdToken` to configure this kind of authentication.
 
@@ -509,13 +510,13 @@ requests.get('http://www.example.com', auth=okta)
 
 | Name                    | Description                | Mandatory | Default value |
 |:------------------------|:---------------------------|:----------|:--------------|
-| `instance`              | OKTA instance (like "testserver.okta-emea.com"). | Mandatory |               |
-| `client_id`             | OKTA Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `instance`              | Okta instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `client_id`             | Okta Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | id_token |
 | `token_field_name`      | Field name containing the token. | Optional | id_token |
 | `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional | Newly generated Universal Unique Identifier. |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | ['openid', 'profile', 'email'] |
-| `authorization_server`  | OKTA authorization server. | Optional | 'default' |
+| `authorization_server`  | Okta authorization server. | Optional | 'default' |
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. | Optional | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional | 5000 |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
@@ -637,8 +638,126 @@ oauth2 = OAuth2Implicit('https://www.example.com')
 requests.get('http://www.example.com', auth=api_key + oauth2)
 ```
 
+## Available pytest fixtures
+
+Testing the code using requests_auth authentication classes can be achieved using provided [`pytest`][6] fixtures.
+
+### token_cache_mock
+
+```python
+from requests_auth.testing import token_cache_mock, token_mock
+
+def test_something(token_cache_mock):
+    # perform code using authentication
+    pass
+```
+
+Use this fixture to mock authentication success for any of the following classes:
+ * OAuth2AuthorizationCodePKCE
+ * OktaAuthorizationCodePKCE
+ * OAuth2Implicit
+ * OktaImplicit
+ * OktaImplicitIdToken
+ * AzureActiveDirectoryImplicit
+ * AzureActiveDirectoryImplicitIdToken
+ * OAuth2AuthorizationCode
+ * OktaAuthorizationCode
+ * OAuth2ClientCredentials
+ * OktaClientCredentials
+ * OAuth2ResourceOwnerPasswordCredentials,
+
+By default, an access token with value `2YotnFZFEjr1zCsicMWpAA` is generated.
+
+You can however return your custom token by providing your own `token_mock` fixture as in the following sample:
+
+```python
+import pytest
+
+from requests_auth.testing import token_cache_mock
+
+
+@pytest.fixture
+def token_mock() -> str:
+    return "MyCustomTokenValue"
+
+
+def test_something(token_cache_mock):
+    # perform code using authentication
+    pass
+```
+
+You can even return a more complex token by using the `create_token` function.
+
+Note that [`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency in this case as it is used to generate the token returned by the authentication.
+
+```python
+import pytest
+
+from requests_auth.testing import token_cache_mock, create_token
+
+
+@pytest.fixture
+def token_mock() -> str:
+    expiry = None  # TODO Compute your expiry
+    return create_token(expiry)
+
+
+def test_something(token_cache_mock):
+    # perform code using authentication
+    pass
+```
+
+### Advanced testing
+
+#### token_cache
+
+This [`pytest`][6] fixture will return the token cache and ensure it is reset at the end of the test case.
+
+```python
+from requests_auth.testing import token_cache
+
+def test_something(token_cache):
+    # perform code using authentication
+    pass
+```
+
+#### browser_mock
+
+This [`pytest`][6] fixture will allow to mock the behavior of a web browser.
+
+With this [`pytest`][6] fixture you will be allowed to fine tune your authentication related failures handling.
+
+[`pyjwt`](https://pypi.org/project/PyJWT/) is a required dependency if you use `create_token` helper function.
+
+```python
+import datetime
+
+from requests_auth.testing import browser_mock, BrowserMock, create_token
+
+def test_something(browser_mock: BrowserMock):
+    token_expiry = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    token = create_token(token_expiry)
+    tab = browser_mock.add_response(
+        opened_url="http://url_opened_by_browser?state=1234",
+        reply_url=f"http://localhost:5000#access_token={token}&state=1234",
+    )
+
+    # perform code using authentication
+
+    tab.assert_success(
+        "You are now authenticated on 1234 You may close this tab."
+    )
+```
+
+## Endorsements
+
+> I love requests_auth. As a ~15 year pythonista, this library makes working with OAuth services a breeze. <333
+
+**Randall Degges**, Head of Evangelism, [Okta](https://developer.okta.com)
+
 [1]: https://pypi.python.org/pypi/requests "requests module"
 [2]: http://docs.python-requests.org/en/master/user/authentication/ "authentication parameter on requests module"
 [3]: http://openid.net/specs/openid-connect-core-1_0.html#IDToken "OpenID ID Token specifications"
 [4]: https://pypi.python.org/pypi/requests-negotiate-sspi "requests-negotiate-sspi module"
 [5]: https://pypi.python.org/pypi/requests_ntlm "requests_ntlm module"
+[6]: https://docs.pytest.org/en/latest/ "pytest module"

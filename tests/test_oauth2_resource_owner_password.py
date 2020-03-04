@@ -3,8 +3,8 @@ import pytest
 import requests
 
 import requests_auth
-from tests.oauth2_helper import token_cache
 from tests.auth_helper import get_header, get_request
+from requests_auth.testing import token_cache
 
 
 def test_oauth2_password_credentials_flow_token_is_sent_in_authorization_header_by_default(
