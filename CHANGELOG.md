@@ -5,8 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [5.1.0] - 2020-03-04
 ### Added
-- pytest fixtures in requests_auth.testing
+- [`pytest`](https://docs.pytest.org/en/latest/) fixtures in `requests_auth.testing`. Refer to documentation for more details.
 
 ## [5.0.2] - 2019-12-12
 ### Fixed
@@ -120,7 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.0.2...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.1.0...HEAD
+[5.1.0]: https://github.com/Colin-b/requests_auth/compare/v5.0.2...v5.1.0
 [5.0.2]: https://github.com/Colin-b/requests_auth/compare/v5.0.1...v5.0.2
 [5.0.1]: https://github.com/Colin-b/requests_auth/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/Colin-b/requests_auth/compare/v4.1.0...v5.0.0

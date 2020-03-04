@@ -124,7 +124,7 @@ def browser_mock(monkeypatch) -> BrowserMock:
 
 @pytest.fixture
 def token_mock() -> str:
-    return create_token(None)
+    return "2YotnFZFEjr1zCsicMWpAA"
 
 
 @pytest.fixture
