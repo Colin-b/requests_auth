@@ -25,6 +25,14 @@ def token_cache():
 
 
 class Tab(threading.Thread):
+    """
+    Simulate a Web Browser tab by sending HTTP requests the way it would.
+    This allows to:
+      * run tests without the need for a browser to be installed
+      * run tests faster as no browser needs to be started
+      * assert the content sent to the browser
+    """
+
     def __init__(self, reply_url: str, data: str):
         self.reply_url = reply_url
         self.data = data.encode() if data is not None else None
@@ -36,7 +44,9 @@ class Tab(threading.Thread):
             self.checked = True
             return
 
+        # Simulate a browser tab by first requesting a favicon
         self._request_favicon()
+        # Simulate a browser tab token redirect to the reply URL
         self.content = self._simulate_redirect().decode()
 
     def _request_favicon(self):
@@ -46,6 +56,7 @@ class Tab(threading.Thread):
 
     def _simulate_redirect(self) -> bytes:
         content = urllib.request.urlopen(self.reply_url, data=self.data).read()
+        # Simulate Javascript execution by the browser
         if (
             content
             == b'<html><body><script>\n        var new_url = window.location.href.replace("#","?");\n        if (new_url.indexOf("?") !== -1) {\n            new_url += "&requests_auth_redirect=1";\n        } else {\n            new_url += "?requests_auth_redirect=1";\n        }\n        window.location.replace(new_url)\n        </script></body></html>'
@@ -54,7 +65,9 @@ class Tab(threading.Thread):
         return content
 
     def _simulate_requests_auth_redirect(self) -> bytes:
+        # Replace fragment by query parameter as requested by Javascript
         reply_url = self.reply_url.replace("#", "?")
+        # Add requests_auth_redirect query parameter as requested by Javascript
         reply_url += (
             "&requests_auth_redirect=1"
             if "?" in reply_url
