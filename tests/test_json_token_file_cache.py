@@ -1,18 +1,9 @@
-import logging
 import datetime
-import sys
 
 import pytest
 import jwt
 
 import requests_auth
-import requests_auth.errors
-
-logging.basicConfig(
-    handlers=[logging.StreamHandler(sys.stdout)],
-    level=logging.DEBUG,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
 
 
 @pytest.fixture
