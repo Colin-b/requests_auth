@@ -1,9 +1,9 @@
 import requests
 import requests.auth
-from responses import RequestsMock, Response
+import responses
 
 
-def get_header(responses: RequestsMock, auth: requests.auth.AuthBase) -> dict:
+def get_header(responses: responses.RequestsMock, auth: requests.auth.AuthBase) -> dict:
     # Mock a dummy response
     responses.add(responses.GET, "http://authorized_only")
     # Send a request to this dummy URL with authentication
@@ -12,7 +12,9 @@ def get_header(responses: RequestsMock, auth: requests.auth.AuthBase) -> dict:
     return response.request.headers
 
 
-def get_query_args(responses: RequestsMock, auth: requests.auth.AuthBase) -> str:
+def get_query_args(
+    responses: responses.RequestsMock, auth: requests.auth.AuthBase
+) -> str:
     # Mock a dummy response
     responses.add(responses.GET, "http://authorized_only")
     # Send a request to this dummy URL with authentication
@@ -21,7 +23,7 @@ def get_query_args(responses: RequestsMock, auth: requests.auth.AuthBase) -> str
     return response.request.path_url
 
 
-def get_request(responses: RequestsMock, url: str) -> Response:
+def get_request(responses: responses.RequestsMock, url: str) -> responses.Response:
     for call in responses.calls:
         if call.request.url == url:
             # Pop out verified request (to be able to check multiple requests)
