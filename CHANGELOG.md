@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Allow to provide a `requests.Session` instance for `*AuthorizationCode` flows (even `PKCE`), `*ClientCredentials` and `*ResourceOwnerPasswordCredentials` flows.
+- Explicit support for Python 3.9
+
+### Changed
+- Code now follow `black==20.8b1` formatting instead of the git master version.
 
 ## [5.1.0] - 2020-03-04
 ### Added

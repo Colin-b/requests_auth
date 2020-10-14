@@ -62,14 +62,15 @@ def _get_query_parameter(url: str, param_name: str) -> Optional[str]:
 
 
 def request_new_grant_with_post(
-    url: str, data, grant_name: str, timeout: float, auth=None
+    url: str, data, grant_name: str, timeout: float, session: requests.Session
 ) -> (str, int):
-    response = requests.post(url, data=data, timeout=timeout, auth=auth)
-    if not response:
-        # As described in https://tools.ietf.org/html/rfc6749#section-5.2
-        raise InvalidGrantRequest(response)
+    with session:
+        response = session.post(url, data=data, timeout=timeout)
+        if not response:
+            # As described in https://tools.ietf.org/html/rfc6749#section-5.2
+            raise InvalidGrantRequest(response)
 
-    content = response.json()
+        content = response.json()
     token = content.get(grant_name)
     if not token:
         raise GrantNotProvided(grant_name, content)
@@ -148,6 +149,8 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
         Token will be sent as "Bearer {token}" by default.
         :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes. Not sent by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param session: requests.Session instance that will be used to request the token.
+        Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as body parameters in the token URL.
         """
         self.token_url = token_url
@@ -159,22 +162,18 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
         self.password = password
         if not self.password:
             raise Exception("Password is mandatory.")
-        self.kwargs = kwargs
 
-        extra_parameters = dict(kwargs)
-        self.header_name = extra_parameters.pop("header_name", None) or "Authorization"
-        self.header_value = (
-            extra_parameters.pop("header_value", None) or "Bearer {token}"
-        )
+        self.header_name = kwargs.pop("header_name", None) or "Authorization"
+        self.header_value = kwargs.pop("header_value", None) or "Bearer {token}"
         if "{token}" not in self.header_value:
             raise Exception("header_value parameter must contains {token}.")
 
-        self.token_field_name = (
-            extra_parameters.pop("token_field_name", None) or "access_token"
-        )
+        self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
 
         # Time is expressed in seconds
-        self.timeout = int(extra_parameters.pop("timeout", None) or 60)
+        self.timeout = int(kwargs.pop("timeout", None) or 60)
+        self.session = kwargs.pop("session", None) or requests.Session()
+        self.session.auth = (self.username, self.password)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.3.2
         self.data = {
@@ -182,10 +181,10 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
             "username": self.username,
             "password": self.password,
         }
-        scope = extra_parameters.pop("scope", None)
+        scope = kwargs.pop("scope", None)
         if scope:
             self.data["scope"] = " ".join(scope) if isinstance(scope, list) else scope
-        self.data.update(extra_parameters)
+        self.data.update(kwargs)
 
         all_parameters_in_url = _add_parameters(self.token_url, self.data)
         self.state = sha512(all_parameters_in_url.encode("unicode_escape")).hexdigest()
@@ -202,7 +201,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
             self.data,
             self.token_field_name,
             self.timeout,
-            auth=(self.username, self.password),
+            self.session,
         )
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
@@ -230,6 +229,8 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
         Token will be sent as "Bearer {token}" by default.
         :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes. Not sent by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param session: requests.Session instance that will be used to request the token.
+        Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
         """
         self.token_url = token_url
@@ -241,29 +242,26 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
         self.client_secret = client_secret
         if not self.client_secret:
             raise Exception("client_secret is mandatory.")
-        self.kwargs = kwargs
 
-        extra_parameters = dict(kwargs)
-        self.header_name = extra_parameters.pop("header_name", None) or "Authorization"
-        self.header_value = (
-            extra_parameters.pop("header_value", None) or "Bearer {token}"
-        )
+        self.header_name = kwargs.pop("header_name", None) or "Authorization"
+        self.header_value = kwargs.pop("header_value", None) or "Bearer {token}"
         if "{token}" not in self.header_value:
             raise Exception("header_value parameter must contains {token}.")
 
-        self.token_field_name = (
-            extra_parameters.pop("token_field_name", None) or "access_token"
-        )
+        self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
 
         # Time is expressed in seconds
-        self.timeout = int(extra_parameters.pop("timeout", None) or 60)
+        self.timeout = int(kwargs.pop("timeout", None) or 60)
+
+        self.session = kwargs.pop("session", None) or requests.Session()
+        self.session.auth = (self.client_id, self.client_secret)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.4.2
         self.data = {"grant_type": "client_credentials"}
-        scope = extra_parameters.pop("scope", None)
+        scope = kwargs.pop("scope", None)
         if scope:
             self.data["scope"] = " ".join(scope) if isinstance(scope, list) else scope
-        self.data.update(extra_parameters)
+        self.data.update(kwargs)
 
         all_parameters_in_url = _add_parameters(self.token_url, self.data)
         self.state = sha512(all_parameters_in_url.encode("unicode_escape")).hexdigest()
@@ -280,7 +278,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
             self.data,
             self.token_field_name,
             self.timeout,
-            auth=(self.client_id, self.client_secret),
+            self.session,
         )
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
@@ -325,6 +323,8 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         :param code_field_name: Field name containing the code. code by default.
         :param username: User name in case basic authentication should be used to retrieve token.
         :param password: User password in case basic authentication should be used to retrieve token.
+        :param session: requests.Session instance that will be used to request the token.
+        Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL and as body parameters in the token URL.
         Usual parameters are:
@@ -352,6 +352,8 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
         self.auth = (username, password) if username and password else None
+        self.session = kwargs.pop("session", None) or requests.Session()
+        self.session.auth = self.auth
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
         code_field_name = kwargs.pop("code_field_name", "code")
@@ -415,7 +417,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
             self.token_data,
             self.token_field_name,
             self.timeout,
-            auth=self.auth,
+            self.session,
         )
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
@@ -460,6 +462,8 @@ class OAuth2AuthorizationCodePKCE(
         code by default.
         :param token_field_name: Field name containing the token. access_token by default.
         :param code_field_name: Field name containing the code. code by default.
+        :param session: requests.Session instance that will be used to request the token.
+        Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL and as body parameters in the token URL.
         Usual parameters are:
@@ -476,6 +480,9 @@ class OAuth2AuthorizationCodePKCE(
             raise Exception("Token URL is mandatory.")
 
         BrowserAuth.__init__(self, kwargs)
+
+        self.session = kwargs.pop("session", None) or requests.Session()
+        self.session.timeout = self.timeout
 
         self.header_name = kwargs.pop("header_name", None) or "Authorization"
         self.header_value = kwargs.pop("header_value", None) or "Bearer {token}"
@@ -556,7 +563,11 @@ class OAuth2AuthorizationCodePKCE(
         self.token_data["code"] = code
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.4
         token, expires_in = request_new_grant_with_post(
-            self.token_url, self.token_data, self.token_field_name, self.timeout
+            self.token_url,
+            self.token_data,
+            self.token_field_name,
+            self.timeout,
+            self.session,
         )
         # Handle both Access and Bearer tokens
         return (self.state, token, expires_in) if expires_in else (self.state, token)
@@ -937,6 +948,8 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         :param header_value: Format used to send the token value.
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
+        :param session: requests.Session instance that will be used to request the token.
+        Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL.
         Usual parameters are:
@@ -991,6 +1004,8 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
         :param header_value: Format used to send the token value.
         "{token}" must be present as it will be replaced by the actual token.
         Token will be sent as "Bearer {token}" by default.
+        :param session: requests.Session instance that will be used to request the token.
+        Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter
         in the authorization URL and as body parameters in the token URL.
         Usual parameters are:
@@ -1031,6 +1046,8 @@ class OktaClientCredentials(OAuth2ClientCredentials):
         :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes.
         Request 'openid' by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param session: requests.Session instance that will be used to request the token.
+        Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
         """
         authorization_server = kwargs.pop("authorization_server", None) or "default"

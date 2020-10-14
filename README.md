@@ -5,7 +5,7 @@
 <a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Build status" src="https://api.travis-ci.com/Colin-b/requests_auth.svg?branch=master"></a>
 <a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-242 passed-blue"></a>
+<a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-249 passed-blue"></a>
 <a href="https://pypi.org/project/requests-auth/"><img alt="Number of downloads" src="https://img.shields.io/pypi/dm/requests_auth"></a>
 </p>
 
@@ -79,6 +79,7 @@ requests.get('https://www.example.com', auth=OAuth2AuthorizationCode('https://ww
 | `code_field_name`       | Field name containing the code. | Optional | code |
 | `username`              | User name in case basic authentication should be used to retrieve token. | Optional |  |
 | `password`              | User password in case basic authentication should be used to retrieve token. | Optional |  |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
 
@@ -129,6 +130,7 @@ requests.get('https://www.example.com', auth=okta)
 | `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
 | `header_name`           | Name of the header field used to send token. | Optional | Authorization |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the authorization URL.        
 
@@ -167,6 +169,7 @@ requests.get('https://www.example.com', auth=OAuth2AuthorizationCodePKCE('https:
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | code |
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
 | `code_field_name`       | Field name containing the code. | Optional | code |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
 
@@ -218,6 +221,7 @@ requests.get('https://www.example.com', auth=okta)
 | `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
 | `header_name`           | Name of the header field used to send token. | Optional | Authorization |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
 
@@ -253,6 +257,7 @@ requests.get('https://www.example.com', auth=OAuth2ResourceOwnerPasswordCredenti
 | `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
 | `scope`            | Scope parameter sent to token URL as body. Can also be a list of scopes. | Optional |  |
 | `token_field_name` | Field name containing the token.             | Optional  | access_token  |
+| `session`          | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as body parameter in the token URL.
 
@@ -274,13 +279,14 @@ requests.get('https://www.example.com', auth=OAuth2ClientCredentials('https://ww
 | Name               | Description                                  | Mandatory | Default value |
 |:-------------------|:---------------------------------------------|:----------|:--------------|
 | `token_url`        | OAuth 2 token URL.                           | Mandatory |               |
-| `client_id`         | Resource owner user name.                    | Mandatory |               |
-| `client_secret`         | Resource owner password.                     | Mandatory |               |
+| `client_id`        | Resource owner user name.                    | Mandatory |               |
+| `client_secret`    | Resource owner password.                     | Mandatory |               |
 | `timeout`          | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60            |
 | `header_name`      | Name of the header field used to send token. | Optional  | Authorization |
 | `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
 | `scope`            | Scope parameter sent to token URL as body. Can also be a list of scopes. | Optional |  |
 | `token_field_name` | Field name containing the token.             | Optional  | access_token  |
+| `session`          | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as body parameter in the token URL.
 
@@ -318,6 +324,7 @@ requests.get('https://www.example.com', auth=okta)
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | openid |
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the token URL.        
 
