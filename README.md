@@ -5,7 +5,7 @@
 <a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Build status" src="https://api.travis-ci.com/Colin-b/requests_auth.svg?branch=master"></a>
 <a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-242 passed-blue"></a>
+<a href="https://travis-ci.com/Colin-b/requests_auth"><img alt="Number of tests" src="https://img.shields.io/badge/tests-249 passed-blue"></a>
 <a href="https://pypi.org/project/requests-auth/"><img alt="Number of downloads" src="https://img.shields.io/pypi/dm/requests_auth"></a>
 </p>
 
@@ -58,7 +58,7 @@ Use `requests_auth.OAuth2AuthorizationCode` to configure this kind of authentica
 import requests
 from requests_auth import OAuth2AuthorizationCode
 
-requests.get('http://www.example.com', auth=OAuth2AuthorizationCode('https://www.authorization.url', 'https://www.token.url'))
+requests.get('https://www.example.com', auth=OAuth2AuthorizationCode('https://www.authorization.url', 'https://www.token.url'))
 ```
 
 #### Parameters
@@ -79,6 +79,7 @@ requests.get('http://www.example.com', auth=OAuth2AuthorizationCode('https://www
 | `code_field_name`       | Field name containing the code. | Optional | code |
 | `username`              | User name in case basic authentication should be used to retrieve token. | Optional |  |
 | `password`              | User password in case basic authentication should be used to retrieve token. | Optional |  |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
 
@@ -108,7 +109,7 @@ from requests_auth import OktaAuthorizationCode
 
 
 okta = OktaAuthorizationCode(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
-requests.get('http://www.example.com', auth=okta)
+requests.get('https://www.example.com', auth=okta)
 ```
 
 ###### Parameters
@@ -129,6 +130,7 @@ requests.get('http://www.example.com', auth=okta)
 | `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
 | `header_name`           | Name of the header field used to send token. | Optional | Authorization |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the authorization URL.        
 
@@ -148,7 +150,7 @@ Use `requests_auth.OAuth2AuthorizationCodePKCE` to configure this kind of authen
 import requests
 from requests_auth import OAuth2AuthorizationCodePKCE
 
-requests.get('http://www.example.com', auth=OAuth2AuthorizationCodePKCE('https://www.authorization.url', 'https://www.token.url'))
+requests.get('https://www.example.com', auth=OAuth2AuthorizationCodePKCE('https://www.authorization.url', 'https://www.token.url'))
 ```
 
 #### Parameters 
@@ -167,6 +169,7 @@ requests.get('http://www.example.com', auth=OAuth2AuthorizationCodePKCE('https:/
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional | code |
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
 | `code_field_name`       | Field name containing the code. | Optional | code |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
 
@@ -196,7 +199,7 @@ from requests_auth import OktaAuthorizationCodePKCE
 
 
 okta = OktaAuthorizationCodePKCE(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
-requests.get('http://www.example.com', auth=okta)
+requests.get('https://www.example.com', auth=okta)
 ```
 
 ###### Parameters
@@ -218,15 +221,16 @@ requests.get('http://www.example.com', auth=okta)
 | `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser. | Optional | 5000 |
 | `header_name`           | Name of the header field used to send token. | Optional | Authorization |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the authorization URL and as body parameters in the token URL.        
 
 Usual extra parameters are:
-        
+
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
 | `client_secret`        | If client is not authenticated with the authorization server     |
-| `nonce`        | Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details     |
+| `nonce`        | Refer to [OpenID ID Token specifications][3] for more details     |
 
 ### Resource Owner Password Credentials flow 
 
@@ -238,7 +242,7 @@ Use `requests_auth.OAuth2ResourceOwnerPasswordCredentials` to configure this kin
 import requests
 from requests_auth import OAuth2ResourceOwnerPasswordCredentials
 
-requests.get('http://www.example.com', auth=OAuth2ResourceOwnerPasswordCredentials('https://www.token.url', 'user name', 'user password'))
+requests.get('https://www.example.com', auth=OAuth2ResourceOwnerPasswordCredentials('https://www.token.url', 'user name', 'user password'))
 ```
 
 #### Parameters
@@ -253,6 +257,7 @@ requests.get('http://www.example.com', auth=OAuth2ResourceOwnerPasswordCredentia
 | `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
 | `scope`            | Scope parameter sent to token URL as body. Can also be a list of scopes. | Optional |  |
 | `token_field_name` | Field name containing the token.             | Optional  | access_token  |
+| `session`          | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as body parameter in the token URL.
 
@@ -266,7 +271,7 @@ Use `requests_auth.OAuth2ClientCredentials` to configure this kind of authentica
 import requests
 from requests_auth import OAuth2ClientCredentials
 
-requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', client_id='id', client_secret='secret'))
+requests.get('https://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', client_id='id', client_secret='secret'))
 ```
 
 #### Parameters
@@ -274,13 +279,14 @@ requests.get('http://www.example.com', auth=OAuth2ClientCredentials('https://www
 | Name               | Description                                  | Mandatory | Default value |
 |:-------------------|:---------------------------------------------|:----------|:--------------|
 | `token_url`        | OAuth 2 token URL.                           | Mandatory |               |
-| `client_id`         | Resource owner user name.                    | Mandatory |               |
-| `client_secret`         | Resource owner password.                     | Mandatory |               |
+| `client_id`        | Resource owner user name.                    | Mandatory |               |
+| `client_secret`    | Resource owner password.                     | Mandatory |               |
 | `timeout`          | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60            |
 | `header_name`      | Name of the header field used to send token. | Optional  | Authorization |
 | `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
 | `scope`            | Scope parameter sent to token URL as body. Can also be a list of scopes. | Optional |  |
 | `token_field_name` | Field name containing the token.             | Optional  | access_token  |
+| `session`          | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as body parameter in the token URL.
 
@@ -302,7 +308,7 @@ from requests_auth import OktaClientCredentials
 
 
 okta = OktaClientCredentials(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_secret="secret")
-requests.get('http://www.example.com', auth=okta)
+requests.get('https://www.example.com', auth=okta)
 ```
 
 ###### Parameters
@@ -318,6 +324,7 @@ requests.get('http://www.example.com', auth=okta)
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
 | `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | openid |
 | `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance. | Optional |  |
 
 Any other parameter will be put as query parameter in the token URL.        
 
@@ -331,7 +338,7 @@ Use `requests_auth.OAuth2Implicit` to configure this kind of authentication.
 import requests
 from requests_auth import OAuth2Implicit
 
-requests.get('http://www.example.com', auth=OAuth2Implicit('https://www.authorization.url'))
+requests.get('https://www.example.com', auth=OAuth2Implicit('https://www.authorization.url'))
 ```
 
 #### Parameters
@@ -377,7 +384,7 @@ from requests_auth import AzureActiveDirectoryImplicit
 
 
 aad = AzureActiveDirectoryImplicit(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
-requests.get('http://www.example.com', auth=aad)
+requests.get('https://www.example.com', auth=aad)
 ```
 
 You can retrieve Microsoft Azure Active Directory application information thanks to the [application list on Azure portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/AllApps/menuId/).
@@ -419,7 +426,7 @@ from requests_auth import AzureActiveDirectoryImplicitIdToken
 
 
 aad = AzureActiveDirectoryImplicitIdToken(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
-requests.get('http://www.example.com', auth=aad)
+requests.get('https://www.example.com', auth=aad)
 ```
 
 You can retrieve Microsoft Azure Active Directory application information thanks to the [application list on Azure portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/AllApps/menuId/).
@@ -461,7 +468,7 @@ from requests_auth import OktaImplicit
 
 
 okta = OktaImplicit(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
-requests.get('http://www.example.com', auth=okta)
+requests.get('https://www.example.com', auth=okta)
 ```
 
 ###### Parameters
@@ -503,7 +510,7 @@ from requests_auth import OktaImplicitIdToken
 
 
 okta = OktaImplicitIdToken(instance='testserver.okta-emea.com', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd')
-requests.get('http://www.example.com', auth=okta)
+requests.get('https://www.example.com', auth=okta)
 ```
 
 ###### Parameters
@@ -557,7 +564,7 @@ You can send an API key inside the header of your request using `requests_auth.H
 import requests
 from requests_auth import HeaderApiKey
 
-requests.get('http://www.example.com', auth=HeaderApiKey('my_api_key'))
+requests.get('https://www.example.com', auth=HeaderApiKey('my_api_key'))
 ```
 
 ### Parameters
@@ -575,7 +582,7 @@ You can send an API key inside the query parameters of your request using `reque
 import requests
 from requests_auth import QueryApiKey
 
-requests.get('http://www.example.com', auth=QueryApiKey('my_api_key'))
+requests.get('https://www.example.com', auth=QueryApiKey('my_api_key'))
 ```
 
 ### Parameters
@@ -595,7 +602,7 @@ The only advantage of using this class instead of `requests` native support of b
 import requests
 from requests_auth import Basic
 
-requests.get('http://www.example.com', auth=Basic('username', 'password'))
+requests.get('https://www.example.com', auth=Basic('username', 'password'))
 ```
 
 ### Parameters
@@ -607,7 +614,7 @@ requests.get('http://www.example.com', auth=Basic('username', 'password'))
 
 ## NTLM
 
-Requires [requests-negotiate-sspi module][4] or [requests_ntlm module][5] depending on provided parameters.
+Requires [`requests-negotiate-sspi` module][4] or [`requests_ntlm` module][5] depending on provided parameters.
 
 You can use Windows authentication using `requests_auth.NTLM`.
 
@@ -615,19 +622,19 @@ You can use Windows authentication using `requests_auth.NTLM`.
 import requests
 from requests_auth import NTLM
 
-requests.get('http://www.example.com', auth=NTLM())
+requests.get('https://www.example.com', auth=NTLM())
 ```
 
 ### Parameters
 
 | Name                    | Description                    | Mandatory | Default value |
 |:------------------------|:-------------------------------|:----------|:--------------|
-| `username`              | User name.                     | Mandatory if requests_negotiate_sspi module is not installed. In such a case requests_ntlm module is mandatory. |               |
-| `password`              | User password.                 | Mandatory if requests_negotiate_sspi module is not installed. In such a case requests_ntlm module is mandatory. |               |
+| `username`              | User name.                     | Mandatory if `requests_negotiate_sspi` module is not installed. In such a case `requests_ntlm` module is mandatory. |               |
+| `password`              | User password.                 | Mandatory if `requests_negotiate_sspi` module is not installed. In such a case `requests_ntlm` module is mandatory. |               |
 
 ## Multiple authentication at once
 
-You can also use a combination of authentication using `+` as in the following sample:
+You can also use a combination of authentication using `+` or `&` as in the following sample:
 
 ```python
 import requests
@@ -635,12 +642,12 @@ from requests_auth import HeaderApiKey, OAuth2Implicit
 
 api_key = HeaderApiKey('my_api_key')
 oauth2 = OAuth2Implicit('https://www.example.com')
-requests.get('http://www.example.com', auth=api_key + oauth2)
+requests.get('https://www.example.com', auth=api_key + oauth2)
 ```
 
 ## Available pytest fixtures
 
-Testing the code using requests_auth authentication classes can be achieved using provided [`pytest`][6] fixtures.
+Testing the code using `requests_auth` authentication classes can be achieved using provided [`pytest`][6] fixtures.
 
 ### token_cache_mock
 
@@ -756,8 +763,8 @@ def test_something(browser_mock: BrowserMock):
 **Randall Degges**, Head of Evangelism, [Okta](https://developer.okta.com)
 
 [1]: https://pypi.python.org/pypi/requests "requests module"
-[2]: http://docs.python-requests.org/en/master/user/authentication/ "authentication parameter on requests module"
-[3]: http://openid.net/specs/openid-connect-core-1_0.html#IDToken "OpenID ID Token specifications"
+[2]: https://2.python-requests.org/en/master/user/authentication/ "authentication parameter on requests module"
+[3]: https://openid.net/specs/openid-connect-core-1_0.html#IDToken "OpenID ID Token specifications"
 [4]: https://pypi.python.org/pypi/requests-negotiate-sspi "requests-negotiate-sspi module"
 [5]: https://pypi.python.org/pypi/requests_ntlm "requests_ntlm module"
 [6]: https://docs.pytest.org/en/latest/ "pytest module"
