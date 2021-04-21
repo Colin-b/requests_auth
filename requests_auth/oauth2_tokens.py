@@ -22,8 +22,8 @@ def decode_base64(base64_encoded_string: str) -> str:
     return base64.b64decode(base64_encoded_string).decode("unicode_escape")
 
 
-def is_expired(expiry: float) -> bool:
-    return datetime.datetime.utcfromtimestamp(expiry) < datetime.datetime.utcnow()
+def is_expired(expiry: float, early_expire: int = 0) -> bool:
+    return datetime.datetime.utcfromtimestamp(expiry) < datetime.datetime.utcnow() + datetime.timedelta(seconds=early_expire)
 
 
 class TokenMemoryCache:
@@ -55,34 +55,36 @@ class TokenMemoryCache:
 
         self._add_token(key, token, expiry)
 
-    def add_access_token(self, key: str, token: str, expires_in: int):
+    def add_access_token(self, key: str, token: str, expires_in: int, refresh_token: str = None):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
         :param token: value
         :param expires_in: Number of seconds before token expiry
+        :param refresh_token: refresh token value
         :raise InvalidToken: In case token is invalid.
         """
         expiry = datetime.datetime.utcnow().replace(
             tzinfo=datetime.timezone.utc
         ) + datetime.timedelta(seconds=int(expires_in))
-        self._add_token(key, token, expiry.timestamp())
+        self._add_token(key, token, expiry.timestamp(), refresh_token)
 
-    def _add_token(self, key: str, token: str, expiry: float):
+    def _add_token(self, key: str, token: str, expiry: float, refresh_token: str = None):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
         :param token: value
         :param expiry: UTC timestamp of expiry
+        :param refresh_token: refresh token value
         """
         with self.forbid_concurrent_cache_access:
-            self.tokens[key] = token, expiry
+            self.tokens[key] = token, expiry, refresh_token
             self._save_tokens()
             logger.debug(
                 f'Inserting token expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC) with "{key}" key: {token}'
             )
 
-    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args) -> str:
+    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args, on_refresh_token=None, early_expire: int = 0) -> str:
         """
         Return the bearer token.
         :param key: key identifier of the token
@@ -95,10 +97,22 @@ class TokenMemoryCache:
         with self.forbid_concurrent_cache_access:
             self._load_tokens()
             if key in self.tokens:
-                bearer, expiry = self.tokens[key]
-                if is_expired(expiry):
+                bearer, expiry, refresh_token = self.tokens[key]
+                if is_expired(expiry, early_expire):
                     logger.debug(f'Authentication token with "{key}" key is expired.')
-                    del self.tokens[key]
+                    if on_refresh_token is not None and refresh_token is not None:
+                        with self.forbid_concurrent_missing_token_function_call:
+                            try:
+                                # refresh token
+                                state, token, expires_in, refresh_token = on_refresh_token(refresh_token)
+                                self.add_access_token(state, token, expires_in, refresh_token)
+                                return token
+                            except (InvalidGrantRequest, GrantNotProvided):
+                                logger.debug(f"Failed to refresh token.")
+                                # delete the token and fall back to getting a new token
+                                del self.tokens[key]
+                    else:
+                        del self.tokens[key]
                 else:
                     logger.debug(
                         f"Using already received authentication, will expire on {datetime.datetime.utcfromtimestamp(expiry)} (UTC)."
@@ -113,15 +127,15 @@ class TokenMemoryCache:
                     state, token = new_token
                     self.add_bearer_token(state, token)
                 else:  # Access Token
-                    state, token, expires_in = new_token
-                    self.add_access_token(state, token, expires_in)
+                    state, token, expires_in, refresh_token = new_token
+                    self.add_access_token(state, token, expires_in, refresh_token)
                 if key != state:
                     logger.warning(
                         f"Using a token received on another key than expected. Expecting {key} but was {state}."
                     )
             with self.forbid_concurrent_cache_access:
                 if state in self.tokens:
-                    bearer, expiry = self.tokens[state]
+                    bearer, expiry, refresh_token = self.tokens[state]
                     logger.debug(
                         f"Using newly received authentication, expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC)."
                     )

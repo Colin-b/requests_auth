@@ -63,7 +63,7 @@ def _get_query_parameter(url: str, param_name: str) -> Optional[str]:
 
 def request_new_grant_with_post(
     url: str, data, grant_name: str, timeout: float, session: requests.Session
-) -> (str, int):
+) -> (str, int, str, int):
     with session:
         response = session.post(url, data=data, timeout=timeout)
         if not response:
@@ -74,7 +74,7 @@ def request_new_grant_with_post(
     token = content.get(grant_name)
     if not token:
         raise GrantNotProvided(grant_name, content)
-    return token, content.get("expires_in")
+    return token, content.get("expires_in"), content.get('refresh_token')
 
 
 class OAuth2:
@@ -142,6 +142,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
         :param password: Resource owner password.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
+        :param early_expire: Amount of seconds before the actual expiry to renew the token early. 5 seconds by default.
         :param header_name: Name of the header field used to send token.
         Token will be sent in Authorization header field by default.
         :param header_value: Format used to send the token value.
@@ -172,6 +173,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
 
         # Time is expressed in seconds
         self.timeout = int(kwargs.pop("timeout", None) or 60)
+        self.early_expire = int(kwargs.pop("early_expire", None) or 5)
         self.session = kwargs.pop("session", None) or requests.Session()
         self.session.auth = (self.username, self.password)
 
@@ -186,17 +188,31 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
             self.data["scope"] = " ".join(scope) if isinstance(scope, list) else scope
         self.data.update(kwargs)
 
+        # As described in https://tools.ietf.org/html/rfc6749#section-6
+        self.refresh_data = {
+            "grant_type": "refresh_token",
+            "refresh_token": None  # the refresh token is set when a refresh is imminent
+        }
+        if scope:
+            self.refresh_data["scope"] = " ".join(scope) if isinstance(scope, list) else scope
+        self.refresh_data.update(kwargs)
+
         all_parameters_in_url = _add_parameters(self.token_url, self.data)
         self.state = sha512(all_parameters_in_url.encode("unicode_escape")).hexdigest()
 
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
+        token = OAuth2.token_cache.get_token(
+            key=self.state,
+            on_missing_token=self.request_new_token,
+            on_refresh_token=self.refresh_token,
+            early_expire=self.early_expire
+        )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
     def request_new_token(self):
         # As described in https://tools.ietf.org/html/rfc6749#section-4.3.3
-        token, expires_in = request_new_grant_with_post(
+        token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.data,
             self.token_field_name,
@@ -204,7 +220,20 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in) if expires_in else (self.state, token)
+        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+
+    def refresh_token(self, refresh_token: str):
+        # As described in https://tools.ietf.org/html/rfc6749#section-6
+        self.refresh_data['refresh_token'] = refresh_token
+        token, expires_in, refresh_token = request_new_grant_with_post(
+            self.token_url,
+            self.refresh_data,
+            self.token_field_name,
+            self.timeout,
+            self.session
+        )
+        # Handle both Access and Bearer tokens
+        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
 
 
 class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
@@ -222,6 +251,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
         :param client_secret: Resource owner password.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
+        :param early_expire: Amount of seconds before the actual expiry to renew the token early. 5 seconds by default.
         :param header_name: Name of the header field used to send token.
         Token will be sent in Authorization header field by default.
         :param header_value: Format used to send the token value.
@@ -252,6 +282,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
 
         # Time is expressed in seconds
         self.timeout = int(kwargs.pop("timeout", None) or 60)
+        self.early_expire = int(kwargs.pop("early_expire", None) or 5)
 
         self.session = kwargs.pop("session", None) or requests.Session()
         self.session.auth = (self.client_id, self.client_secret)
@@ -262,18 +293,19 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
         if scope:
             self.data["scope"] = " ".join(scope) if isinstance(scope, list) else scope
         self.data.update(kwargs)
+        # Refresh tokens are not supported, as described in https://tools.ietf.org/html/rfc6749#section-4.4.3
 
         all_parameters_in_url = _add_parameters(self.token_url, self.data)
         self.state = sha512(all_parameters_in_url.encode("unicode_escape")).hexdigest()
 
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
+        token = OAuth2.token_cache.get_token(self.state, self.request_new_token, early_expire=self.early_expire)
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
     def request_new_token(self) -> tuple:
         # As described in https://tools.ietf.org/html/rfc6749#section-4.4.3
-        token, expires_in = request_new_grant_with_post(
+        token, expires_in, _refresh_token = request_new_grant_with_post(
             self.token_url,
             self.data,
             self.token_field_name,
@@ -281,7 +313,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in) if expires_in else (self.state, token)
+        return (self.state, token, expires_in, _refresh_token) if expires_in else (self.state, token)
 
 
 class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
@@ -306,6 +338,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
         Wait for 1 minute by default.
+        :param early_expire: Amount of seconds before the actual expiry to renew the token early. 5 seconds by default.
         :param success_display_time: In case a code is successfully received,
         this is the maximum amount of milliseconds the success page will be displayed in your browser.
         Display the page for 1 millisecond by default.
@@ -354,6 +387,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         self.auth = (username, password) if username and password else None
         self.session = kwargs.pop("session", None) or requests.Session()
         self.session.auth = self.auth
+        self.early_expire = int(kwargs.pop("early_expire", None) or 5)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
         code_field_name = kwargs.pop("code_field_name", "code")
@@ -398,8 +432,20 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         }
         self.token_data.update(kwargs)
 
+        # As described in https://tools.ietf.org/html/rfc6749#section-6
+        self.refresh_data = {
+            "grant_type": "refresh_token",
+            "refresh_token": None  # the refresh token is set when a refresh is imminent
+        }
+        self.refresh_data.update(kwargs)
+
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
+        token = OAuth2.token_cache.get_token(
+            key=self.state,
+            on_missing_token=self.request_new_token,
+            on_refresh_token=self.refresh_token,
+            early_expire=self.early_expire
+        )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
@@ -412,7 +458,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
         self.token_data["code"] = code
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.4
-        token, expires_in = request_new_grant_with_post(
+        token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.token_data,
             self.token_field_name,
@@ -420,7 +466,20 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in) if expires_in else (self.state, token)
+        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+
+    def refresh_token(self, refresh_token: str):
+        # As described in https://tools.ietf.org/html/rfc6749#section-6
+        self.refresh_data['refresh_token'] = refresh_token
+        token, expires_in, refresh_token = request_new_grant_with_post(
+            self.token_url,
+            self.refresh_data,
+            self.token_field_name,
+            self.timeout,
+            self.session
+        )
+        # Handle both Access and Bearer tokens
+        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
 
 
 class OAuth2AuthorizationCodePKCE(
@@ -447,6 +506,7 @@ class OAuth2AuthorizationCodePKCE(
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
         Wait for 1 minute by default.
+        :param early_expire: Amount of seconds before the actual expiry to renew the token early. 5 seconds by default.
         :param success_display_time: In case a code is successfully received,
         this is the maximum amount of milliseconds the success page will be displayed in your browser.
         Display the page for 1 millisecond by default.
@@ -483,6 +543,7 @@ class OAuth2AuthorizationCodePKCE(
 
         self.session = kwargs.pop("session", None) or requests.Session()
         self.session.timeout = self.timeout
+        self.early_expire = int(kwargs.pop("early_expire", None) or 5)
 
         self.header_name = kwargs.pop("header_name", None) or "Authorization"
         self.header_value = kwargs.pop("header_value", None) or "Bearer {token}"
@@ -548,8 +609,20 @@ class OAuth2AuthorizationCodePKCE(
         }
         self.token_data.update(kwargs)
 
+        # As described in https://tools.ietf.org/html/rfc6749#section-6
+        self.refresh_data = {
+            "grant_type": "refresh_token",
+            "refresh_token": None  # the refresh token is set when a refresh is imminent
+        }
+        self.refresh_data.update(kwargs)
+
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
+        token = OAuth2.token_cache.get_token(
+            key=self.state,
+            on_missing_token=self.request_new_token,
+            on_refresh_token=self.refresh_token,
+            early_expire=self.early_expire
+        )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
@@ -562,7 +635,7 @@ class OAuth2AuthorizationCodePKCE(
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.3
         self.token_data["code"] = code
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.4
-        token, expires_in = request_new_grant_with_post(
+        token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.token_data,
             self.token_field_name,
@@ -570,7 +643,21 @@ class OAuth2AuthorizationCodePKCE(
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in) if expires_in else (self.state, token)
+        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+
+    def refresh_token(self, refresh_token: str):
+        # As described in https://tools.ietf.org/html/rfc6749#section-6
+        self.refresh_data['refresh_token'] = refresh_token
+        token, expires_in, refresh_token = request_new_grant_with_post(
+            self.token_url,
+            self.refresh_data,
+            self.token_field_name,
+            self.timeout,
+            self.session
+        )
+        # Handle both Access and Bearer tokens
+        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+
 
     @staticmethod
     def generate_code_verifier() -> bytes:
@@ -630,6 +717,7 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
         Wait for 1 minute by default.
+        :param early_expire: Amount of seconds before the actual expiry to renew the token early. 5 seconds by default.
         :param success_display_time: In case a token is successfully received,
         this is the maximum amount of milliseconds the success page will be displayed in your browser.
         Display the page for 1 millisecond by default.
@@ -658,6 +746,7 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
         self.header_value = kwargs.pop("header_value", None) or "Bearer {token}"
         if "{token}" not in self.header_value:
             raise Exception("header_value parameter must contains {token}.")
+        self.early_expire = int(kwargs.pop("early_expire", None) or 5)
 
         response_type = _get_query_parameter(self.authorization_url, "response_type")
         if response_type:
@@ -701,6 +790,7 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
             self.state,
             oauth2_authentication_responses_server.request_new_grant,
             self.grant_details,
+            early_expire=self.early_expire
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
