@@ -94,30 +94,34 @@ class TokenMemoryCache:
         :raise AuthenticationFailed: in case token cannot be retrieved.
         """
         logger.debug(f'Retrieving token with "{key}" key.')
+        refresh_token = None
         with self.forbid_concurrent_cache_access:
             self._load_tokens()
             if key in self.tokens:
                 bearer, expiry, refresh_token = self.tokens[key]
                 if is_expired(expiry, early_expire):
                     logger.debug(f'Authentication token with "{key}" key is expired.')
-                    if on_refresh_token is not None and refresh_token is not None:
-                        with self.forbid_concurrent_missing_token_function_call:
-                            try:
-                                # refresh token
-                                state, token, expires_in, refresh_token = on_refresh_token(refresh_token)
-                                self.add_access_token(state, token, expires_in, refresh_token)
-                                return token
-                            except (InvalidGrantRequest, GrantNotProvided):
-                                logger.debug(f"Failed to refresh token.")
-                                # delete the token and fall back to getting a new token
-                                del self.tokens[key]
-                    else:
-                        del self.tokens[key]
+                    del self.tokens[key]
                 else:
                     logger.debug(
                         f"Using already received authentication, will expire on {datetime.datetime.utcfromtimestamp(expiry)} (UTC)."
                     )
                     return bearer
+
+        if refresh_token is not None and on_refresh_token is not None:
+            try:
+                with self.forbid_concurrent_missing_token_function_call:
+                    # refresh token
+                    state, token, expires_in, refresh_token = on_refresh_token(refresh_token)
+                    self.add_access_token(state, token, expires_in, refresh_token)
+                    logger.debug(f"Refreshed token with key {key}.")
+                with self.forbid_concurrent_cache_access:
+                    if state in self.tokens:
+                        bearer, expiry, refresh_token = self.tokens[state]
+                        logger.debug(f"Using newly refreshed token, expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC).")
+                        return bearer
+            except (InvalidGrantRequest, GrantNotProvided):
+                logger.debug(f"Failed to refresh token.")
 
         logger.debug("Token cannot be found in cache.")
         if on_missing_token is not None:
