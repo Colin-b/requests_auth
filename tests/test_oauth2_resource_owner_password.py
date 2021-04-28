@@ -101,7 +101,7 @@ def test_refresh_token(token_cache, responses: RequestsMock):
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
             "token_type": "example",
-            "expires_in": '0',  # let the token expire immediately after the first request
+            "expires_in": 1,  # let the token expire immediately after the first request
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
@@ -126,7 +126,7 @@ def test_refresh_token(token_cache, responses: RequestsMock):
         json={
             "access_token": "rVR7Syg5bjZtZYjbZIW",
             "token_type": "example",
-            "expires_in": '3600',
+            "expires_in": 3600,
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
@@ -135,8 +135,7 @@ def test_refresh_token(token_cache, responses: RequestsMock):
         ]
     )
 
-    responses.add(responses.GET, "http://authorized_only1")
-    response = requests.get("http://authorized_only1", auth=auth)
+    response = requests.get("http://authorized_only", auth=auth)
     assert (
         response.request.headers.get("Authorization")
         == "Bearer rVR7Syg5bjZtZYjbZIW"
@@ -144,6 +143,54 @@ def test_refresh_token(token_cache, responses: RequestsMock):
     assert (
         get_request(responses, "http://provide_access_token/").body
         == "grant_type=refresh_token&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA"
+    )
+
+
+def test_refresh_token_invalid(token_cache, responses: RequestsMock):
+    auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
+        "http://provide_access_token", username="test_user", password="test_pwd"
+    )
+    # response for password grant
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 1,  # let the token expire immediately after the first request
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+        match=[
+            urlencoded_params_matcher({"grant_type": "password", "username": "test_user", "password": "test_pwd"})
+        ]
+    )
+
+    assert (
+            get_header(responses, auth).get("Authorization")
+            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
+    assert (
+            get_request(responses, "http://provide_access_token/").body
+            == "grant_type=password&username=test_user&password=test_pwd"
+    )
+
+    # response for refresh token grant
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={"error": "invalid_request"},
+        status=400,
+        match=[
+            urlencoded_params_matcher({"grant_type": "refresh_token", "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA"})
+        ]
+    )
+
+    # if refreshing the token fails, fallback to requesting a new token
+    response = requests.get("http://authorized_only", auth=auth)
+    assert (
+            response.request.headers.get("Authorization")
+            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     )
 
 
