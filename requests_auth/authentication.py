@@ -229,8 +229,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
             self.timeout,
             self.session
         )
-        # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return self.state, token, expires_in, refresh_token
 
 
 class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
@@ -470,8 +469,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
             self.timeout,
             self.session
         )
-        # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return self.state, token, expires_in, refresh_token
 
 
 class OAuth2AuthorizationCodePKCE(
@@ -644,8 +642,7 @@ class OAuth2AuthorizationCodePKCE(
             self.timeout,
             self.session
         )
-        # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return self.state, token, expires_in, refresh_token
 
 
     @staticmethod
