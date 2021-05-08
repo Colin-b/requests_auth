@@ -101,7 +101,7 @@ def test_refresh_token(token_cache, responses: RequestsMock):
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
             "token_type": "example",
-            "expires_in": 1,  # let the token expire immediately after the first request
+            "expires_in": "0",  # let the token expire immediately after the first request
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
@@ -157,7 +157,7 @@ def test_refresh_token_invalid(token_cache, responses: RequestsMock):
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
             "token_type": "example",
-            "expires_in": 1,  # let the token expire immediately after the first request
+            "expires_in": "0",  # let the token expire immediately after the first request
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },

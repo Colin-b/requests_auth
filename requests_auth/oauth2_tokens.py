@@ -22,8 +22,8 @@ def decode_base64(base64_encoded_string: str) -> str:
     return base64.b64decode(base64_encoded_string).decode("unicode_escape")
 
 
-def is_expired(expiry: float, early_expire: int = 0) -> bool:
-    return datetime.datetime.utcfromtimestamp(expiry) < datetime.datetime.utcnow() + datetime.timedelta(seconds=early_expire)
+def is_expired(expiry: float) -> bool:
+    return datetime.datetime.utcfromtimestamp(expiry) < datetime.datetime.utcnow()
 
 
 class TokenMemoryCache:
@@ -84,7 +84,7 @@ class TokenMemoryCache:
                 f'Inserting token expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC) with "{key}" key: {token}'
             )
 
-    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args, on_refresh_token=None, early_expire: int = 0) -> str:
+    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args, on_refresh_token=None) -> str:
         """
         Return the bearer token.
         :param key: key identifier of the token
@@ -98,8 +98,12 @@ class TokenMemoryCache:
         with self.forbid_concurrent_cache_access:
             self._load_tokens()
             if key in self.tokens:
-                bearer, expiry, refresh_token = self.tokens[key]
-                if is_expired(expiry, early_expire):
+                token = self.tokens[key]
+                if len(token) == 2:  # No refresh token
+                    bearer, expiry = token
+                else:
+                    bearer, expiry, refresh_token = token
+                if is_expired(expiry):
                     logger.debug(f'Authentication token with "{key}" key is expired.')
                     del self.tokens[key]
                 else:
