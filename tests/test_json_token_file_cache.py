@@ -82,3 +82,15 @@ def test_missing_token_function(token_cache):
     token = jwt.encode({"exp": expiry_in_1_hour}, "secret").decode("unicode_escape")
     retrieved_token = token_cache.get_token("key1", lambda: ("key1", token))
     assert retrieved_token == token
+
+
+def test_token_without_refresh_token(token_cache):
+    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    # add token without refresh token
+    token = jwt.encode({"exp": expiry_in_1_hour}, "secret").decode("unicode_escape")
+    token_cache.tokens['key1'] = token, expiry_in_1_hour.replace(tzinfo=datetime.timezone.utc).timestamp()
+    token_cache._save_tokens()
+
+    # try to retrieve it
+    retrieved_token = token_cache.get_token("key1")
+    assert token == retrieved_token
