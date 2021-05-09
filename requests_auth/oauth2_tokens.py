@@ -84,12 +84,13 @@ class TokenMemoryCache:
                 f'Inserting token expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC) with "{key}" key: {token}'
             )
 
-    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args, on_refresh_token=None) -> str:
+    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args, on_expired_token=None) -> str:
         """
         Return the bearer token.
         :param key: key identifier of the token
         :param on_missing_token: function to call when token is expired or missing (returning token and expiry tuple)
         :param on_missing_token_args: arguments of the function
+        :param on_expired_token: function to call to refresh the token when it is expired
         :return: the token
         :raise AuthenticationFailed: in case token cannot be retrieved.
         """
@@ -112,11 +113,10 @@ class TokenMemoryCache:
                     )
                     return bearer
 
-        if refresh_token is not None and on_refresh_token is not None:
+        if refresh_token is not None and on_expired_token is not None:
             try:
                 with self.forbid_concurrent_missing_token_function_call:
-                    # refresh token
-                    state, token, expires_in, refresh_token = on_refresh_token(refresh_token)
+                    state, token, expires_in, refresh_token = on_expired_token(refresh_token)
                     self.add_access_token(state, token, expires_in, refresh_token)
                     logger.debug(f"Refreshed token with key {key}.")
                 with self.forbid_concurrent_cache_access:
@@ -134,7 +134,10 @@ class TokenMemoryCache:
                 if len(new_token) == 2:  # Bearer token
                     state, token = new_token
                     self.add_bearer_token(state, token)
-                else:  # Access Token
+                elif len(new_token) == 3:  # Access token
+                    state, token, expires_in = new_token
+                    self.add_access_token(state, token, expires_in)
+                else:  # Access token and Refresh token
                     state, token, expires_in, refresh_token = new_token
                     self.add_access_token(state, token, expires_in, refresh_token)
                 if key != state:

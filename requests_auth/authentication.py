@@ -188,11 +188,10 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
         self.refresh_data = {
-            "grant_type": "refresh_token",
-            "refresh_token": None  # the refresh token is set when a refresh is imminent
+            "grant_type": "refresh_token"
         }
         if scope:
-            self.refresh_data["scope"] = " ".join(scope) if isinstance(scope, list) else scope
+            self.refresh_data["scope"] = self.data["scope"]
         self.refresh_data.update(kwargs)
 
         all_parameters_in_url = _add_parameters(self.token_url, self.data)
@@ -202,7 +201,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
         token = OAuth2.token_cache.get_token(
             key=self.state,
             on_missing_token=self.request_new_token,
-            on_refresh_token=self.refresh_token,
+            on_expired_token=self.refresh_token,
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
@@ -299,7 +298,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
 
     def request_new_token(self) -> tuple:
         # As described in https://tools.ietf.org/html/rfc6749#section-4.4.3
-        token, expires_in, _refresh_token = request_new_grant_with_post(
+        token, expires_in, _ = request_new_grant_with_post(
             self.token_url,
             self.data,
             self.token_field_name,
@@ -307,7 +306,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, _refresh_token) if expires_in else (self.state, token)
+        return (self.state, token, expires_in) if expires_in else (self.state, token)
 
 
 class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
@@ -426,8 +425,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
         self.refresh_data = {
-            "grant_type": "refresh_token",
-            "refresh_token": None  # the refresh token is set when a refresh is imminent
+            "grant_type": "refresh_token"
         }
         self.refresh_data.update(kwargs)
 
@@ -435,7 +433,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         token = OAuth2.token_cache.get_token(
             key=self.state,
             on_missing_token=self.request_new_token,
-            on_refresh_token=self.refresh_token
+            on_expired_token=self.refresh_token
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
@@ -599,8 +597,7 @@ class OAuth2AuthorizationCodePKCE(
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
         self.refresh_data = {
-            "grant_type": "refresh_token",
-            "refresh_token": None  # the refresh token is set when a refresh is imminent
+            "grant_type": "refresh_token"
         }
         self.refresh_data.update(kwargs)
 
@@ -608,7 +605,7 @@ class OAuth2AuthorizationCodePKCE(
         token = OAuth2.token_cache.get_token(
             key=self.state,
             on_missing_token=self.request_new_token,
-            on_refresh_token=self.refresh_token
+            on_expired_token=self.refresh_token
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r

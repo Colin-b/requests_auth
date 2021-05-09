@@ -179,7 +179,7 @@ def test_refresh_token(token_cache, responses: RequestsMock, monkeypatch, browse
     )
     assert (
             get_request(responses, "http://provide_access_token/").body
-            == "grant_type=refresh_token&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA&response_type=code"
+            == "grant_type=refresh_token&response_type=code&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA"
     )
 
 
