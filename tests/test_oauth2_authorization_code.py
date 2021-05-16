@@ -251,30 +251,10 @@ def test_refresh_token_access_token_not_expired(token_cache, responses: Requests
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
-    # response for refresh token grant
-    responses.add(
-        responses.POST,
-        "http://provide_access_token",
-        json={
-            "access_token": "rVR7Syg5bjZtZYjbZIW",
-            "token_type": "example",
-            "expires_in": 3600,
-            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
-            "example_parameter": "example_value",
-        },
-        match=[
-            urlencoded_params_matcher(
-                {"grant_type": "refresh_token", "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA", "response_type": "code"})
-        ]
-    )
 
     # expect Bearer token to remain the same
-    assert (
-            get_header(responses, auth).get("Authorization")
-            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    )
-    # refresh request is not used
-    responses.assert_all_requests_are_fired = False
+    response = requests.get("http://authorized_only", auth=auth)
+    assert (response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA")
 
 def test_empty_token_is_invalid(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
