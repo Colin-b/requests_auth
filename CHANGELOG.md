@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.3.0] - 2021-06-06
+### Added
+- Support for refresh tokens in the Resource Owner Password Credentials flow and Authorization Code (with and without PKCE) flows (Thanks to [Stijn Caerts](https://github.com/StijnCaerts)).
+
 ## [5.2.0] - 2020-10-14
 ### Added
 - Allow to provide a `requests.Session` instance for `*AuthorizationCode` flows (even `PKCE`), `*ClientCredentials` and `*ResourceOwnerPasswordCredentials` flows.
@@ -130,7 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.2.0...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.3.0...HEAD
+[5.3.0]: https://github.com/Colin-b/requests_auth/compare/v5.2.0...v5.3.0
 [5.2.0]: https://github.com/Colin-b/requests_auth/compare/v5.1.0...v5.2.0
 [5.1.0]: https://github.com/Colin-b/requests_auth/compare/v5.0.2...v5.1.0
 [5.0.2]: https://github.com/Colin-b/requests_auth/compare/v5.0.1...v5.0.2

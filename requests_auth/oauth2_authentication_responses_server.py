@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 class OAuth2ResponseHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         # Do not consider a favicon request as an error
+        # TODO Skip this with verify request ?
         if self.path == "/favicon.ico":
             logger.debug(
                 "Favicon request received on OAuth2 authentication response server."
