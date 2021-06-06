@@ -3,8 +3,38 @@ import pytest
 import requests
 
 import requests_auth
-from tests.auth_helper import get_header
+from tests.auth_helper import get_header, get_request
 from requests_auth.testing import token_cache
+
+
+def test_oauth2_client_credentials_flow_uses_provided_session(
+    token_cache, responses: RequestsMock
+):
+    session = requests.Session()
+    session.headers.update({"x-test": "Test value"})
+    auth = requests_auth.OAuth2ClientCredentials(
+        "http://provide_access_token",
+        client_id="test_user",
+        client_secret="test_pwd",
+        session=session,
+    )
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+    )
+    assert (
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
+    request = get_request(responses, "http://provide_access_token/")
+    assert request.headers["x-test"] == "Test value"
 
 
 def test_oauth2_client_credentials_flow_token_is_sent_in_authorization_header_by_default(
