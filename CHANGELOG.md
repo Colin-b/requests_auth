@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.3.0] - 2021-06-06
 ### Added
-- Support for refresh tokens in the Resource Owner Password Credentials flow and Authorization Code (with and without PKCE) flows.
+- Support for refresh tokens in the Resource Owner Password Credentials flow and Authorization Code (with and without PKCE) flows (Thanks to [Stijn Caerts](https://github.com/StijnCaerts)).
 
 ## [5.2.0] - 2020-10-14
 ### Added
