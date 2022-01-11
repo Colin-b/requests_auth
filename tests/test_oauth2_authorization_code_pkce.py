@@ -1,4 +1,5 @@
-from responses import RequestsMock, urlencoded_params_matcher
+from responses import RequestsMock
+from responses.matchers import urlencoded_params_matcher
 import pytest
 import requests
 
@@ -81,6 +82,69 @@ def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
     )
 
 
+def test_oauth2_pkce_flow_token_is_expired_after_30_seconds_by_default(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code", "http://provide_access_token"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    # Add a token that expires in 29 seconds, so should be considered as expired when issuing the request
+    token_cache._add_token(
+        key="163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+        token="2YotnFZFEjr1zCsicMWpAA",
+        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+    )
+    # Meaning a new one will be requested
+    responses.add(
+        responses.POST,
+        "http://provide_access_token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+    )
+    assert (
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
+    assert (
+        get_request(responses, "http://provide_access_token/").body
+        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
+    )
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
+    )
+
+
+def test_oauth2_client_credentials_flow_token_custom_expiry(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OAuth2AuthorizationCodePKCE(
+        "http://provide_code",
+        "http://provide_access_token",
+        early_expiry=28,
+    )
+    # Add a token that expires in 29 seconds, so should be considered as not expired when issuing the request
+    token_cache._add_token(
+        key="163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+        token="2YotnFZFEjr1zCsicMWpAA",
+        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+    )
+    assert (
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
+
+
 def test_expires_in_sent_as_str(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
@@ -116,7 +180,9 @@ def test_expires_in_sent_as_str(
     )
 
 
-def test_refresh_token(token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock):
+def test_refresh_token(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
@@ -136,14 +202,16 @@ def test_refresh_token(token_cache, responses: RequestsMock, monkeypatch, browse
             "example_parameter": "example_value",
         },
         match=[
-            urlencoded_params_matcher({
-                "grant_type": "authorization_code",
-                "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
-                "redirect_uri": "http://localhost:5000/",
-                "response_type": "code",
-                "code": "SplxlOBeZQQYbYS6WxSbIA"
-            })
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
+                    "redirect_uri": "http://localhost:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            )
+        ],
     )
     assert (
         get_header(responses, auth).get("Authorization")
@@ -168,22 +236,27 @@ def test_refresh_token(token_cache, responses: RequestsMock, monkeypatch, browse
             "example_parameter": "example_value",
         },
         match=[
-            urlencoded_params_matcher({"grant_type": "refresh_token", "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA", "response_type": "code"})
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "refresh_token",
+                    "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+                    "response_type": "code",
+                }
+            )
+        ],
     )
 
     response = requests.get("http://authorized_only", auth=auth)
+    assert response.request.headers.get("Authorization") == "Bearer rVR7Syg5bjZtZYjbZIW"
     assert (
-            response.request.headers.get("Authorization")
-            == "Bearer rVR7Syg5bjZtZYjbZIW"
-    )
-    assert (
-            get_request(responses, "http://provide_access_token/").body
-            == "grant_type=refresh_token&response_type=code&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA"
+        get_request(responses, "http://provide_access_token/").body
+        == "grant_type=refresh_token&response_type=code&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA"
     )
 
 
-def test_refresh_token_invalid(token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock):
+def test_refresh_token_invalid(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
@@ -203,22 +276,24 @@ def test_refresh_token_invalid(token_cache, responses: RequestsMock, monkeypatch
             "example_parameter": "example_value",
         },
         match=[
-            urlencoded_params_matcher({
-                "grant_type": "authorization_code",
-                "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
-                "redirect_uri": "http://localhost:5000/",
-                "response_type": "code",
-                "code": "SplxlOBeZQQYbYS6WxSbIA"
-            })
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
+                    "redirect_uri": "http://localhost:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            )
+        ],
     )
     assert (
-            get_header(responses, auth).get("Authorization")
-            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     )
     assert (
-            get_request(responses, "http://provide_access_token/").body
-            == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
+        get_request(responses, "http://provide_access_token/").body
+        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
     )
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
@@ -230,8 +305,14 @@ def test_refresh_token_invalid(token_cache, responses: RequestsMock, monkeypatch
         json={"error": "invalid_request"},
         status=400,
         match=[
-            urlencoded_params_matcher({"grant_type": "refresh_token", "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA", "response_type": "code"})
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "refresh_token",
+                    "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+                    "response_type": "code",
+                }
+            )
+        ],
     )
 
     # initialize tab again because a thread can only be started once
@@ -243,8 +324,7 @@ def test_refresh_token_invalid(token_cache, responses: RequestsMock, monkeypatch
     # if refreshing the token fails, fallback to requesting a new token
     response = requests.get("http://authorized_only", auth=auth)
     assert (
-            response.request.headers.get("Authorization")
-            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+        response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     )
 
     tab.assert_success(
@@ -252,7 +332,9 @@ def test_refresh_token_invalid(token_cache, responses: RequestsMock, monkeypatch
     )
 
 
-def test_refresh_token_access_token_not_expired(token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock):
+def test_refresh_token_access_token_not_expired(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
     monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
@@ -272,22 +354,24 @@ def test_refresh_token_access_token_not_expired(token_cache, responses: Requests
             "example_parameter": "example_value",
         },
         match=[
-            urlencoded_params_matcher({
-                "grant_type": "authorization_code",
-                "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
-                "redirect_uri": "http://localhost:5000/",
-                "response_type": "code",
-                "code": "SplxlOBeZQQYbYS6WxSbIA"
-            })
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
+                    "redirect_uri": "http://localhost:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            )
+        ],
     )
     assert (
-            get_header(responses, auth).get("Authorization")
-            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     )
     assert (
-            get_request(responses, "http://provide_access_token/").body
-            == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
+        get_request(responses, "http://provide_access_token/").body
+        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
     )
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
@@ -295,7 +379,9 @@ def test_refresh_token_access_token_not_expired(token_cache, responses: Requests
 
     # expect Bearer token to remain the same
     response = requests.get("http://authorized_only", auth=auth)
-    assert (response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA")
+    assert (
+        response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
 
 
 def test_nonce_is_sent_if_provided_in_authorization_url(

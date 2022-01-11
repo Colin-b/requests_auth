@@ -74,7 +74,7 @@ def request_new_grant_with_post(
     token = content.get(grant_name)
     if not token:
         raise GrantNotProvided(grant_name, content)
-    return token, content.get("expires_in"), content.get('refresh_token')
+    return token, content.get("expires_in"), content.get("refresh_token")
 
 
 class OAuth2:
@@ -149,6 +149,9 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
         Token will be sent as "Bearer {token}" by default.
         :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes. Not sent by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param session: requests.Session instance that will be used to request the token.
         Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as body parameters in the token URL.
@@ -169,6 +172,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
             raise Exception("header_value parameter must contains {token}.")
 
         self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
+        self.early_expiry = float(kwargs.pop("early_expiry", None) or 30.0)
 
         # Time is expressed in seconds
         self.timeout = int(kwargs.pop("timeout", None) or 60)
@@ -187,9 +191,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
         self.data.update(kwargs)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data = {
-            "grant_type": "refresh_token"
-        }
+        self.refresh_data = {"grant_type": "refresh_token"}
         if scope:
             self.refresh_data["scope"] = self.data["scope"]
         self.refresh_data.update(kwargs)
@@ -200,6 +202,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
             key=self.state,
+            early_expiry=self.early_expiry,
             on_missing_token=self.request_new_token,
             on_expired_token=self.refresh_token,
         )
@@ -216,17 +219,21 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return (
+            (self.state, token, expires_in, refresh_token)
+            if expires_in
+            else (self.state, token)
+        )
 
     def refresh_token(self, refresh_token: str):
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data['refresh_token'] = refresh_token
+        self.refresh_data["refresh_token"] = refresh_token
         token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.refresh_data,
             self.token_field_name,
             self.timeout,
-            self.session
+            self.session,
         )
         return self.state, token, expires_in, refresh_token
 
@@ -253,6 +260,9 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
         Token will be sent as "Bearer {token}" by default.
         :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes. Not sent by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param session: requests.Session instance that will be used to request the token.
         Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
@@ -273,6 +283,7 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
             raise Exception("header_value parameter must contains {token}.")
 
         self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
+        self.early_expiry = float(kwargs.pop("early_expiry", None) or 30.0)
 
         # Time is expressed in seconds
         self.timeout = int(kwargs.pop("timeout", None) or 60)
@@ -292,7 +303,11 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
         self.state = sha512(all_parameters_in_url.encode("unicode_escape")).hexdigest()
 
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
+        token = OAuth2.token_cache.get_token(
+            key=self.state,
+            early_expiry=self.early_expiry,
+            on_missing_token=self.request_new_token,
+        )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
@@ -345,6 +360,9 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         :param response_type: Value of the response_type query parameter if not already provided in authorization URL.
         code by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param code_field_name: Field name containing the code. code by default.
         :param username: User name in case basic authentication should be used to retrieve token.
         :param password: User password in case basic authentication should be used to retrieve token.
@@ -373,6 +391,7 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
             raise Exception("header_value parameter must contains {token}.")
 
         self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
+        self.early_expiry = float(kwargs.pop("early_expiry", None) or 30.0)
 
         username = kwargs.pop("username", None)
         password = kwargs.pop("password", None)
@@ -424,16 +443,15 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         self.token_data.update(kwargs)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data = {
-            "grant_type": "refresh_token"
-        }
+        self.refresh_data = {"grant_type": "refresh_token"}
         self.refresh_data.update(kwargs)
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
             key=self.state,
+            early_expiry=self.early_expiry,
             on_missing_token=self.request_new_token,
-            on_expired_token=self.refresh_token
+            on_expired_token=self.refresh_token,
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
@@ -455,17 +473,21 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return (
+            (self.state, token, expires_in, refresh_token)
+            if expires_in
+            else (self.state, token)
+        )
 
     def refresh_token(self, refresh_token: str):
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data['refresh_token'] = refresh_token
+        self.refresh_data["refresh_token"] = refresh_token
         token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.refresh_data,
             self.token_field_name,
             self.timeout,
-            self.session
+            self.session,
         )
         return self.state, token, expires_in, refresh_token
 
@@ -508,6 +530,9 @@ class OAuth2AuthorizationCodePKCE(
         :param response_type: Value of the response_type query parameter if not already provided in authorization URL.
         code by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param code_field_name: Field name containing the code. code by default.
         :param session: requests.Session instance that will be used to request the token.
         Use it to provide a custom proxying rule for instance.
@@ -537,6 +562,7 @@ class OAuth2AuthorizationCodePKCE(
             raise Exception("header_value parameter must contains {token}.")
 
         self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
+        self.early_expiry = float(kwargs.pop("early_expiry", None) or 30.0)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
         code_field_name = kwargs.pop("code_field_name", "code")
@@ -596,16 +622,15 @@ class OAuth2AuthorizationCodePKCE(
         self.token_data.update(kwargs)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data = {
-            "grant_type": "refresh_token"
-        }
+        self.refresh_data = {"grant_type": "refresh_token"}
         self.refresh_data.update(kwargs)
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
             key=self.state,
+            early_expiry=self.early_expiry,
             on_missing_token=self.request_new_token,
-            on_expired_token=self.refresh_token
+            on_expired_token=self.refresh_token,
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
@@ -627,20 +652,23 @@ class OAuth2AuthorizationCodePKCE(
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return (
+            (self.state, token, expires_in, refresh_token)
+            if expires_in
+            else (self.state, token)
+        )
 
     def refresh_token(self, refresh_token: str):
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data['refresh_token'] = refresh_token
+        self.refresh_data["refresh_token"] = refresh_token
         token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.refresh_data,
             self.token_field_name,
             self.timeout,
-            self.session
+            self.session,
         )
         return self.state, token, expires_in, refresh_token
-
 
     @staticmethod
     def generate_code_verifier() -> bytes:
@@ -694,6 +722,9 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
         token by default.
         :param token_field_name: Name of the expected field containing the token.
         id_token by default if response_type is id_token, else access_token.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
@@ -744,6 +775,8 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
                 "id_token" if "id_token" == response_type else "access_token"
             )
 
+        self.early_expiry = float(kwargs.pop("early_expiry", None) or 30.0)
+
         authorization_url_without_nonce = _add_parameters(
             self.authorization_url, kwargs
         )
@@ -768,9 +801,10 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
-            self.state,
-            oauth2_authentication_responses_server.request_new_grant,
-            self.grant_details,
+            key=self.state,
+            early_expiry=self.early_expiry,
+            on_missing_token=oauth2_authentication_responses_server.request_new_grant,
+            grant_details=self.grant_details,
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
@@ -790,6 +824,9 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
         token by default.
         :param token_field_name: Name of the expected field containing the token.
         access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
@@ -837,6 +874,9 @@ class AzureActiveDirectoryImplicitIdToken(OAuth2Implicit):
         id_token by default.
         :param token_field_name: Name of the expected field containing the token.
         id_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
@@ -887,6 +927,9 @@ class OktaImplicit(OAuth2Implicit):
         token by default.
         :param token_field_name: Name of the expected field containing the token.
         access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param authorization_server: Okta authorization server.
@@ -940,6 +983,9 @@ class OktaImplicitIdToken(OAuth2Implicit):
         id_token by default.
         :param token_field_name: Name of the expected field containing the token.
         id_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param authorization_server: Okta authorization server
@@ -995,6 +1041,9 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         token by default.
         :param token_field_name: Name of the expected field containing the token.
         access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
         :param authorization_server: Okta authorization server
@@ -1050,6 +1099,9 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
         code by default.
         :param token_field_name: Name of the expected field containing the token.
         access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param code_field_name: Field name containing the code. code by default.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
@@ -1116,6 +1168,9 @@ class OktaClientCredentials(OAuth2ClientCredentials):
         :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes.
         Request 'openid' by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param session: requests.Session instance that will be used to request the token.
         Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.

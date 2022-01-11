@@ -30,6 +30,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Software Development :: Build Tools",
     ],
     keywords=[
@@ -50,11 +51,11 @@ setup(
     extras_require={
         "testing": [
             # Used to generate test tokens
-            "pyjwt==1.*",
+            "pyjwt==2.*",
             # Used to mock responses to requests
-            "pytest-responses==0.4.*",
+            "pytest-responses==0.5.*",
             # Used to check coverage
-            "pytest-cov==2.*",
+            "pytest-cov==3.*",
         ]
     },
     python_requires=">=3.6",
