@@ -29,6 +29,13 @@ def _is_expired(expiry: float, early_expiry: float) -> bool:
     )
 
 
+def _to_expiry(expires_in: Union[int, str]) -> float:
+    expiry = datetime.datetime.utcnow().replace(
+        tzinfo=datetime.timezone.utc
+    ) + datetime.timedelta(seconds=int(expires_in))
+    return expiry.timestamp()
+
+
 class TokenMemoryCache:
     """
     Class to manage tokens using memory storage.
@@ -59,7 +66,11 @@ class TokenMemoryCache:
         self._add_token(key, token, expiry)
 
     def _add_access_token(
-        self, key: str, token: str, expires_in: int, refresh_token: str = None
+        self,
+        key: str,
+        token: str,
+        expires_in: Union[int, str],
+        refresh_token: str = None,
     ):
         """
         Set the bearer token and save it
@@ -69,10 +80,7 @@ class TokenMemoryCache:
         :param refresh_token: refresh token value
         :raise InvalidToken: In case token is invalid.
         """
-        expiry = datetime.datetime.utcnow().replace(
-            tzinfo=datetime.timezone.utc
-        ) + datetime.timedelta(seconds=int(expires_in))
-        self._add_token(key, token, expiry.timestamp(), refresh_token)
+        self._add_token(key, token, _to_expiry(expires_in), refresh_token)
 
     def _add_token(
         self, key: str, token: str, expiry: float, refresh_token: str = None

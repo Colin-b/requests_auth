@@ -15,12 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `requests_auth.oauth2_tokens.TokenMemoryCache.get_token` now allows to specify a custom `early_expiry` in seconds (default to 30).
 - `requests_auth.JsonTokenFileCache.get_token` now allows to specify a custom `early_expiry` in seconds (default to 30).
+- `httpx_auth.OAuth2ResourceOwnerPasswordCredentials` contains a new `early_expiry` parameter allowing to tweak the number of seconds before actual token expiry where the token will be considered as already expired. Default to 30s.
 
 ### Removed
 - `requests_auth.oauth2_tokens.is_expired` is not available anymore.
 - `requests_auth.oauth2_tokens.decode_base64` is not available anymore.
 - `requests_auth.oauth2_tokens.TokenMemoryCache.add_bearer_token` is not available anymore.
 - `requests_auth.oauth2_tokens.TokenMemoryCache.add_access_token` is not available anymore.
+
+### Fixed
+- OAuth2 token will now be considered as expired 30 seconds before actual expiry. To ensure it is still valid when received by the actual server.
 
 ## [5.3.0] - 2021-06-06
 ### Added
