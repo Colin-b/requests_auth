@@ -1,4 +1,5 @@
-from responses import RequestsMock, urlencoded_params_matcher
+from responses import RequestsMock
+from responses.matchers import urlencoded_params_matcher
 import pytest
 import requests
 
@@ -106,8 +107,14 @@ def test_refresh_token(token_cache, responses: RequestsMock):
             "example_parameter": "example_value",
         },
         match=[
-            urlencoded_params_matcher({"grant_type": "password", "username": "test_user", "password": "test_pwd"})
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "password",
+                    "username": "test_user",
+                    "password": "test_pwd",
+                }
+            )
+        ],
     )
 
     assert (
@@ -131,15 +138,17 @@ def test_refresh_token(token_cache, responses: RequestsMock):
             "example_parameter": "example_value",
         },
         match=[
-            urlencoded_params_matcher({"grant_type": "refresh_token", "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA"})
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "refresh_token",
+                    "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+                }
+            )
+        ],
     )
 
     response = requests.get("http://authorized_only", auth=auth)
-    assert (
-        response.request.headers.get("Authorization")
-        == "Bearer rVR7Syg5bjZtZYjbZIW"
-    )
+    assert response.request.headers.get("Authorization") == "Bearer rVR7Syg5bjZtZYjbZIW"
     assert (
         get_request(responses, "http://provide_access_token/").body
         == "grant_type=refresh_token&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA"
@@ -162,17 +171,23 @@ def test_refresh_token_invalid(token_cache, responses: RequestsMock):
             "example_parameter": "example_value",
         },
         match=[
-            urlencoded_params_matcher({"grant_type": "password", "username": "test_user", "password": "test_pwd"})
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "password",
+                    "username": "test_user",
+                    "password": "test_pwd",
+                }
+            )
+        ],
     )
 
     assert (
-            get_header(responses, auth).get("Authorization")
-            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     )
     assert (
-            get_request(responses, "http://provide_access_token/").body
-            == "grant_type=password&username=test_user&password=test_pwd"
+        get_request(responses, "http://provide_access_token/").body
+        == "grant_type=password&username=test_user&password=test_pwd"
     )
 
     # response for refresh token grant
@@ -182,15 +197,19 @@ def test_refresh_token_invalid(token_cache, responses: RequestsMock):
         json={"error": "invalid_request"},
         status=400,
         match=[
-            urlencoded_params_matcher({"grant_type": "refresh_token", "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA"})
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "refresh_token",
+                    "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+                }
+            )
+        ],
     )
 
     # if refreshing the token fails, fallback to requesting a new token
     response = requests.get("http://authorized_only", auth=auth)
     assert (
-            response.request.headers.get("Authorization")
-            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+        response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     )
 
 
@@ -210,22 +229,30 @@ def test_refresh_token_access_token_not_expired(token_cache, responses: Requests
             "example_parameter": "example_value",
         },
         match=[
-            urlencoded_params_matcher({"grant_type": "password", "username": "test_user", "password": "test_pwd"})
-        ]
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "password",
+                    "username": "test_user",
+                    "password": "test_pwd",
+                }
+            )
+        ],
     )
 
     assert (
-            get_header(responses, auth).get("Authorization")
-            == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
     )
     assert (
-            get_request(responses, "http://provide_access_token/").body
-            == "grant_type=password&username=test_user&password=test_pwd"
+        get_request(responses, "http://provide_access_token/").body
+        == "grant_type=password&username=test_user&password=test_pwd"
     )
 
     # expect Bearer token to remain the same
     response = requests.get("http://authorized_only", auth=auth)
-    assert (response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA")
+    assert (
+        response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
 
 
 def test_scope_is_sent_as_is_when_provided_as_str(token_cache, responses: RequestsMock):
