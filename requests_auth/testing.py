@@ -15,7 +15,7 @@ def create_token(expiry: Optional[datetime.datetime]) -> str:
     token = (
         jwt.encode({"exp": expiry}, "secret") if expiry else jwt.encode({}, "secret")
     )
-    return token.decode("unicode_escape")
+    return token
 
 
 @pytest.fixture

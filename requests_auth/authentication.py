@@ -74,7 +74,7 @@ def request_new_grant_with_post(
     token = content.get(grant_name)
     if not token:
         raise GrantNotProvided(grant_name, content)
-    return token, content.get("expires_in"), content.get('refresh_token')
+    return token, content.get("expires_in"), content.get("refresh_token")
 
 
 class OAuth2:
@@ -187,9 +187,7 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
         self.data.update(kwargs)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data = {
-            "grant_type": "refresh_token"
-        }
+        self.refresh_data = {"grant_type": "refresh_token"}
         if scope:
             self.refresh_data["scope"] = self.data["scope"]
         self.refresh_data.update(kwargs)
@@ -216,17 +214,21 @@ class OAuth2ResourceOwnerPasswordCredentials(requests.auth.AuthBase, SupportMult
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return (
+            (self.state, token, expires_in, refresh_token)
+            if expires_in
+            else (self.state, token)
+        )
 
     def refresh_token(self, refresh_token: str):
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data['refresh_token'] = refresh_token
+        self.refresh_data["refresh_token"] = refresh_token
         token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.refresh_data,
             self.token_field_name,
             self.timeout,
-            self.session
+            self.session,
         )
         return self.state, token, expires_in, refresh_token
 
@@ -292,7 +294,9 @@ class OAuth2ClientCredentials(requests.auth.AuthBase, SupportMultiAuth):
         self.state = sha512(all_parameters_in_url.encode("unicode_escape")).hexdigest()
 
     def __call__(self, r):
-        token = OAuth2.token_cache.get_token(self.state, self.request_new_token)
+        token = OAuth2.token_cache.get_token(
+            key=self.state, on_missing_token=self.request_new_token
+        )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
 
@@ -424,16 +428,14 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         self.token_data.update(kwargs)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data = {
-            "grant_type": "refresh_token"
-        }
+        self.refresh_data = {"grant_type": "refresh_token"}
         self.refresh_data.update(kwargs)
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
             key=self.state,
             on_missing_token=self.request_new_token,
-            on_expired_token=self.refresh_token
+            on_expired_token=self.refresh_token,
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
@@ -455,17 +457,21 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return (
+            (self.state, token, expires_in, refresh_token)
+            if expires_in
+            else (self.state, token)
+        )
 
     def refresh_token(self, refresh_token: str):
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data['refresh_token'] = refresh_token
+        self.refresh_data["refresh_token"] = refresh_token
         token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.refresh_data,
             self.token_field_name,
             self.timeout,
-            self.session
+            self.session,
         )
         return self.state, token, expires_in, refresh_token
 
@@ -596,16 +602,14 @@ class OAuth2AuthorizationCodePKCE(
         self.token_data.update(kwargs)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data = {
-            "grant_type": "refresh_token"
-        }
+        self.refresh_data = {"grant_type": "refresh_token"}
         self.refresh_data.update(kwargs)
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
             key=self.state,
             on_missing_token=self.request_new_token,
-            on_expired_token=self.refresh_token
+            on_expired_token=self.refresh_token,
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
@@ -627,20 +631,23 @@ class OAuth2AuthorizationCodePKCE(
             self.session,
         )
         # Handle both Access and Bearer tokens
-        return (self.state, token, expires_in, refresh_token) if expires_in else (self.state, token)
+        return (
+            (self.state, token, expires_in, refresh_token)
+            if expires_in
+            else (self.state, token)
+        )
 
     def refresh_token(self, refresh_token: str):
         # As described in https://tools.ietf.org/html/rfc6749#section-6
-        self.refresh_data['refresh_token'] = refresh_token
+        self.refresh_data["refresh_token"] = refresh_token
         token, expires_in, refresh_token = request_new_grant_with_post(
             self.token_url,
             self.refresh_data,
             self.token_field_name,
             self.timeout,
-            self.session
+            self.session,
         )
         return self.state, token, expires_in, refresh_token
-
 
     @staticmethod
     def generate_code_verifier() -> bytes:
@@ -768,9 +775,9 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
 
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
-            self.state,
-            oauth2_authentication_responses_server.request_new_grant,
-            self.grant_details,
+            key=self.state,
+            on_missing_token=oauth2_authentication_responses_server.request_new_grant,
+            grant_details=self.grant_details,
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r

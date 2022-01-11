@@ -55,7 +55,9 @@ class TokenMemoryCache:
 
         self._add_token(key, token, expiry)
 
-    def add_access_token(self, key: str, token: str, expires_in: int, refresh_token: str = None):
+    def add_access_token(
+        self, key: str, token: str, expires_in: int, refresh_token: str = None
+    ):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -69,7 +71,9 @@ class TokenMemoryCache:
         ) + datetime.timedelta(seconds=int(expires_in))
         self._add_token(key, token, expiry.timestamp(), refresh_token)
 
-    def _add_token(self, key: str, token: str, expiry: float, refresh_token: str = None):
+    def _add_token(
+        self, key: str, token: str, expiry: float, refresh_token: str = None
+    ):
         """
         Set the bearer token and save it
         :param key: key identifier of the token
@@ -84,13 +88,20 @@ class TokenMemoryCache:
                 f'Inserting token expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC) with "{key}" key: {token}'
             )
 
-    def get_token(self, key: str, on_missing_token=None, *on_missing_token_args, on_expired_token=None) -> str:
+    def get_token(
+        self,
+        key: str,
+        *,
+        on_missing_token=None,
+        on_expired_token=None,
+        **on_missing_token_kwargs,
+    ) -> str:
         """
         Return the bearer token.
         :param key: key identifier of the token
         :param on_missing_token: function to call when token is expired or missing (returning token and expiry tuple)
-        :param on_missing_token_args: arguments of the function
         :param on_expired_token: function to call to refresh the token when it is expired
+        :param on_missing_token_kwargs: arguments of the on_missing_token function (key-value arguments)
         :return: the token
         :raise AuthenticationFailed: in case token cannot be retrieved.
         """
@@ -116,13 +127,17 @@ class TokenMemoryCache:
         if refresh_token is not None and on_expired_token is not None:
             try:
                 with self.forbid_concurrent_missing_token_function_call:
-                    state, token, expires_in, refresh_token = on_expired_token(refresh_token)
+                    state, token, expires_in, refresh_token = on_expired_token(
+                        refresh_token
+                    )
                     self.add_access_token(state, token, expires_in, refresh_token)
                     logger.debug(f"Refreshed token with key {key}.")
                 with self.forbid_concurrent_cache_access:
                     if state in self.tokens:
                         bearer, expiry, refresh_token = self.tokens[state]
-                        logger.debug(f"Using newly refreshed token, expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC).")
+                        logger.debug(
+                            f"Using newly refreshed token, expiring on {datetime.datetime.utcfromtimestamp(expiry)} (UTC)."
+                        )
                         return bearer
             except (InvalidGrantRequest, GrantNotProvided):
                 logger.debug(f"Failed to refresh token.")
@@ -130,7 +145,7 @@ class TokenMemoryCache:
         logger.debug("Token cannot be found in cache.")
         if on_missing_token is not None:
             with self.forbid_concurrent_missing_token_function_call:
-                new_token = on_missing_token(*on_missing_token_args)
+                new_token = on_missing_token(**on_missing_token_kwargs)
                 if len(new_token) == 2:  # Bearer token
                     state, token = new_token
                     self.add_bearer_token(state, token)
