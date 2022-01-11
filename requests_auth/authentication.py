@@ -722,6 +722,9 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
         token by default.
         :param token_field_name: Name of the expected field containing the token.
         id_token by default if response_type is id_token, else access_token.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
@@ -772,6 +775,8 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
                 "id_token" if "id_token" == response_type else "access_token"
             )
 
+        self.early_expiry = float(kwargs.pop("early_expiry", None) or 30.0)
+
         authorization_url_without_nonce = _add_parameters(
             self.authorization_url, kwargs
         )
@@ -797,6 +802,7 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
             key=self.state,
+            early_expiry=self.early_expiry,
             on_missing_token=oauth2_authentication_responses_server.request_new_grant,
             grant_details=self.grant_details,
         )
