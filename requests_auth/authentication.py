@@ -1134,6 +1134,9 @@ class OktaClientCredentials(OAuth2ClientCredentials):
         :param scope: Scope parameter sent to token URL as body. Can also be a list of scopes.
         Request 'openid' by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param session: requests.Session instance that will be used to request the token.
         Use it to provide a custom proxying rule for instance.
         :param kwargs: all additional authorization parameters that should be put as query parameter in the token URL.
