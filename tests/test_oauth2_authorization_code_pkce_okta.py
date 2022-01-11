@@ -87,6 +87,71 @@ def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
     )
 
 
+def test_okta_pkce_flow_token_is_expired_after_30_seconds_by_default(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OktaAuthorizationCodePKCE(
+        "testserver.okta-emea.com", "54239d18-c68c-4c47-8bdd-ce71ea1d50cd"
+    )
+    tab = browser_mock.add_response(
+        opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
+    )
+    # Add a token that expires in 29 seconds, so should be considered as expired when issuing the request
+    token_cache._add_token(
+        key="5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
+        token="2YotnFZFEjr1zCsicMWpAA",
+        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+    )
+    # Meaning a new one will be requested
+    responses.add(
+        responses.POST,
+        "https://testserver.okta-emea.com/oauth2/default/v1/token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+    )
+    assert (
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
+    assert (
+        get_request(
+            responses, "https://testserver.okta-emea.com/oauth2/default/v1/token"
+        ).body
+        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
+    )
+    tab.assert_success(
+        "You are now authenticated on 5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b. You may close this tab."
+    )
+
+
+def test_okta_pkce_flow_token_custom_expiry(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    auth = requests_auth.OktaAuthorizationCodePKCE(
+        "testserver.okta-emea.com",
+        "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+        early_expiry=28,
+    )
+    # Add a token that expires in 29 seconds, so should be considered as not expired when issuing the request
+    token_cache._add_token(
+        key="5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
+        token="2YotnFZFEjr1zCsicMWpAA",
+        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+    )
+    assert (
+        get_header(responses, auth).get("Authorization")
+        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    )
+
+
 def test_expires_in_sent_as_str(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
