@@ -530,6 +530,9 @@ class OAuth2AuthorizationCodePKCE(
         :param response_type: Value of the response_type query parameter if not already provided in authorization URL.
         code by default.
         :param token_field_name: Field name containing the token. access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param code_field_name: Field name containing the code. code by default.
         :param session: requests.Session instance that will be used to request the token.
         Use it to provide a custom proxying rule for instance.
@@ -559,6 +562,7 @@ class OAuth2AuthorizationCodePKCE(
             raise Exception("header_value parameter must contains {token}.")
 
         self.token_field_name = kwargs.pop("token_field_name", None) or "access_token"
+        self.early_expiry = float(kwargs.pop("early_expiry", None) or 30.0)
 
         # As described in https://tools.ietf.org/html/rfc6749#section-4.1.2
         code_field_name = kwargs.pop("code_field_name", "code")
@@ -624,6 +628,7 @@ class OAuth2AuthorizationCodePKCE(
     def __call__(self, r):
         token = OAuth2.token_cache.get_token(
             key=self.state,
+            early_expiry=self.early_expiry,
             on_missing_token=self.request_new_token,
             on_expired_token=self.refresh_token,
         )
