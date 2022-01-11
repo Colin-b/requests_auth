@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [6.0.0] - 2022-01-11
 ### Changed
 - `requests_auth.oauth2_tokens.TokenMemoryCache.get_token` method now requires arguments to be named.
 - `requests_auth.oauth2_tokens.TokenMemoryCache.get_token` method `on_missing_token` arguments must now be named (switched from args to kwargs).
@@ -165,7 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v5.3.0...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v6.0.0...HEAD
+[6.0.0]: https://github.com/Colin-b/requests_auth/compare/v5.3.0...v6.0.0
 [5.3.0]: https://github.com/Colin-b/requests_auth/compare/v5.2.0...v5.3.0
 [5.2.0]: https://github.com/Colin-b/requests_auth/compare/v5.1.0...v5.2.0
 [5.1.0]: https://github.com/Colin-b/requests_auth/compare/v5.0.2...v5.1.0
