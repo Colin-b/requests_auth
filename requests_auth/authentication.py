@@ -98,9 +98,7 @@ class SupportMultiAuth:
 class BrowserAuth:
     def __init__(self, kwargs):
         """
-        :param redirect_uri_domain: Custom domain name that will be used in the following way:
-        <redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
-        When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
+        :param redirect_uri_domain: FQDN for localhost. localhost by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
         <redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 code will be started.
