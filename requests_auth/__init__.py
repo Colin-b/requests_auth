@@ -17,6 +17,7 @@ from requests_auth.authentication import (
     OAuth2ClientCredentials,
     OktaClientCredentials,
     OAuth2ResourceOwnerPasswordCredentials,
+    OktaResourceOwnerPasswordCredentials,
 )
 from requests_auth.oauth2_tokens import JsonTokenFileCache
 from requests_auth.errors import (
