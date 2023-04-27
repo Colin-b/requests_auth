@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "requests_auth"
 description = "Authentication for Requests"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 license = {file = "LICENSE"}
 authors = [
     {name = "Colin Bounouar", email = "colin.bounouar.dev@gmail.com" }
@@ -31,7 +31,6 @@ classifiers=[
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",

@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `requests_auth.OktaResourceOwnerPasswordCredentials` providing Okta resource owner password credentials flow easy setup.
 - Explicit support for Python 3.11
 
+### Removed
+- Explicit support for Python 3.6
+
 ## [6.0.0] - 2022-01-11
 ### Changed
 - `requests_auth.oauth2_tokens.TokenMemoryCache.get_token` method now requires arguments to be named.
