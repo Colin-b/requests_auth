@@ -5,7 +5,7 @@
 <a href="https://github.com/Colin-b/requests_auth/actions"><img alt="Build status" src="https://github.com/Colin-b/requests_auth/workflows/Release/badge.svg"></a>
 <a href="https://github.com/Colin-b/requests_auth/actions"><img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<a href="https://github.com/Colin-b/requests_auth/actions"><img alt="Number of tests" src="https://img.shields.io/badge/tests-275 passed-blue"></a>
+<a href="https://github.com/Colin-b/requests_auth/actions"><img alt="Number of tests" src="https://img.shields.io/badge/tests-305 passed-blue"></a>
 <a href="https://pypi.org/project/requests-auth/"><img alt="Number of downloads" src="https://img.shields.io/pypi/dm/requests_auth"></a>
 </p>
 
@@ -236,7 +236,7 @@ Usual extra parameters are:
 | `client_secret`        | If client is not authenticated with the authorization server     |
 | `nonce`        | Refer to [OpenID ID Token specifications][3] for more details     |
 
-### Resource Owner Password Credentials flow 
+### Resource Owner Password Credentials flow
 
 Resource Owner Password Credentials Grant is implemented following [rfc6749](https://tools.ietf.org/html/rfc6749#section-4.3).
 
@@ -256,6 +256,7 @@ requests.get('https://www.example.com', auth=OAuth2ResourceOwnerPasswordCredenti
 | `token_url`        | OAuth 2 token URL.                                                                                                                                                                                                                                                                                | Mandatory  |                |
 | `username`         | Resource owner user name.                                                                                                                                                                                                                                                                         | Mandatory  |                |
 | `password`         | Resource owner password.                                                                                                                                                                                                                                                                          | Mandatory  |                |
+| `session_auth`     | Client authentication if the client type is confidential or the client was issued client credentials (or assigned other authentication requirements). Can be a tuple or any requests authentication class instance.                                                                               | Optional  |               |
 | `timeout`          | Maximum amount of seconds to wait for a token to be received once requested.                                                                                                                                                                                                                      | Optional   | 60             |
 | `header_name`      | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional   | Authorization  |
 | `header_value`     | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional   | Bearer {token} |
@@ -265,6 +266,46 @@ requests.get('https://www.example.com', auth=OAuth2ResourceOwnerPasswordCredenti
 | `session`          | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance.                                                                                                                                                                        | Optional   |                |
 
 Any other parameter will be put as body parameter in the token URL.
+
+#### Common providers
+
+Most of [OAuth2](https://oauth.net/2/) Resource Owner Password Credentials providers are supported.
+
+If the one you are looking for is not yet supported, feel free to [ask for its implementation](https://github.com/Colin-b/requests_auth/issues/new).
+
+##### Okta (OAuth2 Resource Owner Password Credentials)
+
+[Okta Resource Owner Password Credentials](https://developer.okta.com/docs/guides/implement-grant-type/ropassword/main/) providing access tokens is supported.
+
+Use `requests_auth.OktaResourceOwnerPasswordCredentials` to configure this kind of authentication.
+
+```python
+import requests
+from requests_auth import OktaResourceOwnerPasswordCredentials
+
+
+okta = OktaResourceOwnerPasswordCredentials(instance='testserver.okta-emea.com', username='user name', password='user password', client_id='54239d18-c68c-4c47-8bdd-ce71ea1d50cd', client_secret="0c5MB")
+requests.get('https://www.example.com', auth=okta)
+```
+
+###### Parameters
+
+| Name                    | Description                | Mandatory | Default value |
+|:------------------------|:---------------------------|:----------|:--------------|
+| `instance`              | Okta instance (like "testserver.okta-emea.com"). | Mandatory |               |
+| `username`           | Resource owner user name.                                                                                                                                                                                                                                                                         | Mandatory |               |
+| `password`           | Resource owner password.                                                                                                                                                                                                                                                                          | Mandatory |               |
+| `client_id`             | Okta Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |               |
+| `client_secret`        | Resource owner password.     | Mandatory |               |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional | 60 |
+| `header_name`           | Name of the header field used to send token. | Optional | Authorization |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional | Bearer {token} |
+| `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Optional | openid |
+| `token_field_name`      | Field name containing the token. | Optional | access_token |
+| `early_expiry`          | Number of seconds before actual token expiry where token will be considered as expired. Used to ensure token will not expire between the time of retrieval and the time the request reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry. | Optional  | 30.0  |
+| `session`          | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance.                                                                                                                                                                        | Optional   |                |
+
+Any other parameter will be put as body parameters in the token URL.
 
 ### Client Credentials flow
 
