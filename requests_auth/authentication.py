@@ -98,8 +98,9 @@ class SupportMultiAuth:
 class BrowserAuth:
     def __init__(self, kwargs):
         """
+        :param redirect_uri_domain: FQDN for localhost. localhost by default.
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        <redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 code will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
@@ -113,8 +114,9 @@ class BrowserAuth:
         """
         redirect_uri_endpoint = kwargs.pop("redirect_uri_endpoint", None) or ""
         self.redirect_uri_port = int(kwargs.pop("redirect_uri_port", None) or 5000)
+        self.redirect_uri_domain = kwargs.pop("redirect_uri_domain", None) or "localhost"
         self.redirect_uri = (
-            f"http://localhost:{self.redirect_uri_port}/{redirect_uri_endpoint}"
+            f"http://{self.redirect_uri_domain}:{self.redirect_uri_port}/{redirect_uri_endpoint}"
         )
 
         # Time is expressed in seconds
@@ -345,8 +347,11 @@ class OAuth2AuthorizationCode(requests.auth.AuthBase, SupportMultiAuth, BrowserA
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param token_url: OAuth 2 token URL.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 code will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
@@ -515,8 +520,11 @@ class OAuth2AuthorizationCodePKCE(
         """
         :param authorization_url: OAuth 2 authorization URL.
         :param token_url: OAuth 2 token URL.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 code will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a code or a token to be received once requested.
@@ -730,8 +738,11 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
         :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
         Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
         reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
@@ -834,8 +845,11 @@ class AzureActiveDirectoryImplicit(OAuth2Implicit):
         reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
@@ -884,8 +898,11 @@ class AzureActiveDirectoryImplicitIdToken(OAuth2Implicit):
         reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
         :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
         (formatted as an Universal Unique Identifier - UUID). Use a newly generated UUID by default.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
@@ -941,8 +958,11 @@ class OktaImplicit(OAuth2Implicit):
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request ['openid', 'profile', 'email'] by default.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
@@ -997,8 +1017,11 @@ class OktaImplicitIdToken(OAuth2Implicit):
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request ['openid', 'profile', 'email'] by default.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
@@ -1055,8 +1078,11 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request 'openid' by default.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
@@ -1114,8 +1140,11 @@ class OktaAuthorizationCodePKCE(OAuth2AuthorizationCodePKCE):
         default by default.
         :param scope: Scope parameter sent in query. Can also be a list of scopes.
         Request 'openid' by default.
+        :param redirect_uri_domain: Custom domain name that will be used in the following way:
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. 
+         When not provided will default to http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>
         :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
-        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
         :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
         Listen on port 5000 by default.
         :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
