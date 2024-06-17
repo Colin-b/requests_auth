@@ -2,7 +2,6 @@ from urllib.parse import parse_qs, urlsplit, urlunsplit, urlencode
 
 import requests
 import requests.auth
-import warnings
 
 
 class SupportMultiAuth:
@@ -122,15 +121,6 @@ class _MultiAuth(requests.auth.AuthBase):
         if isinstance(other, _MultiAuth):
             return _MultiAuth(*self.authentication_modes, *other.authentication_modes)
         return _MultiAuth(*self.authentication_modes, other)
-
-
-class Auths(_MultiAuth):
-    def __init__(self, *authentication_modes):
-        warnings.warn(
-            "Auths class will be removed in the future. Use + instead.",
-            DeprecationWarning,
-        )
-        super().__init__(*authentication_modes)
 
 
 def _add_parameters(initial_url: str, extra_parameters: dict) -> str:

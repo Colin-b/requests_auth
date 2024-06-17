@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removing support for Python `3.7`.
+- Deprecated `requests_auth.Auths` class has been removed.
 
 ## [7.0.0] - 2023-04-27
 ### Changed

@@ -3,7 +3,6 @@ from requests_auth._authentication import (
     HeaderApiKey,
     QueryApiKey,
     NTLM,
-    Auths,
 )
 from requests_auth._oauth2.common import OAuth2
 from requests_auth._oauth2.authorization_code import (
@@ -60,7 +59,6 @@ __all__ = [
     "OAuth2ResourceOwnerPasswordCredentials",
     "OktaResourceOwnerPasswordCredentials",
     "NTLM",
-    "Auths",
     "JsonTokenFileCache",
     "GrantNotProvided",
     "TimeoutOccurred",
