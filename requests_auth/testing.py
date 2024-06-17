@@ -124,10 +124,10 @@ class BrowserMock:
 @pytest.fixture
 def browser_mock(monkeypatch) -> BrowserMock:
     mock = BrowserMock()
-    import requests_auth.oauth2_authentication_responses_server
+    import requests_auth._oauth2.authentication_responses_server
 
     monkeypatch.setattr(
-        requests_auth.oauth2_authentication_responses_server.webbrowser,
+        requests_auth._oauth2.oauth2_authentication_responses_server.webbrowser,
         "get",
         lambda *args: mock,
     )

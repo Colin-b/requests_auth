@@ -5,7 +5,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 from socket import socket
 
-from requests_auth.errors import *
+from requests_auth._errors import *
 
 logger = logging.getLogger(__name__)
 

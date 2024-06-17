@@ -4,7 +4,7 @@ import os
 import datetime
 import threading
 import logging
-from requests_auth.errors import *
+from requests_auth._errors import *
 
 logger = logging.getLogger(__name__)
 

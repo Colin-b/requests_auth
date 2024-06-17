@@ -1,4 +1,4 @@
-from requests_auth.authentication import (
+from requests_auth._authentication import (
     Basic,
     HeaderApiKey,
     QueryApiKey,
@@ -19,8 +19,8 @@ from requests_auth.authentication import (
     NTLM,
     Auths,
 )
-from requests_auth.oauth2_tokens import JsonTokenFileCache
-from requests_auth.errors import (
+from requests_auth._oauth2.tokens import JsonTokenFileCache
+from requests_auth._errors import (
     GrantNotProvided,
     TimeoutOccurred,
     AuthenticationFailed,

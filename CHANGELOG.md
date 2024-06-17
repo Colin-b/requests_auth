@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Adding explicit support for Python `3.12`.
 
+### Changed
+- Except for `requests_auth.testing`, only direct access via `requests_auth.` was considered publicly exposed. This is now explicit, as inner packages are now using private prefix (`_`).
+  If you were relying on some classes or functions that are now internal, feel free to open an issue.
+
+### Fixed
+- Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/)
+
 ### Removed
 - Removing support for Python `3.7`.
 

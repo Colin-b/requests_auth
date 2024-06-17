@@ -5,7 +5,7 @@ import requests
 import pytest
 from responses import RequestsMock
 
-from requests_auth.testing import BrowserMock, create_token, token_cache, browser_mock
+from requests_auth.testing import BrowserMock, create_token
 from tests.auth_helper import get_header
 import requests_auth
 
@@ -140,7 +140,7 @@ def test_oauth2_implicit_flow_token_is_expired_after_30_seconds_by_default(
     token_cache._add_token(
         key="42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
         token=create_token(expiry_in_29_seconds),
-        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.oauth2_tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
@@ -165,14 +165,14 @@ def test_oauth2_implicit_flow_token_custom_expiry(
     token_cache._add_token(
         key="42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
         token=create_token(expiry_in_29_seconds),
-        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.oauth2_tokens._to_expiry(expires_in=29),
     )
     token = create_token(expiry_in_29_seconds)
     assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
 
 
 def test_browser_opening_failure(token_cache, responses: RequestsMock, monkeypatch):
-    import requests_auth.oauth2_authentication_responses_server
+    import requests_auth._oauth2.authentication_responses_server
 
     auth = requests_auth.OAuth2Implicit("http://provide_token", timeout=0.1)
 
@@ -181,7 +181,7 @@ def test_browser_opening_failure(token_cache, responses: RequestsMock, monkeypat
             return False
 
     monkeypatch.setattr(
-        requests_auth.oauth2_authentication_responses_server.webbrowser,
+        requests_auth._oauth2.oauth2_authentication_responses_server.webbrowser,
         "get",
         lambda *args: FakeBrowser(),
     )
@@ -199,7 +199,7 @@ def test_browser_opening_failure(token_cache, responses: RequestsMock, monkeypat
 
 
 def test_browser_error(token_cache, responses: RequestsMock, monkeypatch):
-    import requests_auth.oauth2_authentication_responses_server
+    import requests_auth._oauth2.authentication_responses_server
 
     auth = requests_auth.OAuth2Implicit("http://provide_token", timeout=0.1)
 
@@ -210,7 +210,7 @@ def test_browser_error(token_cache, responses: RequestsMock, monkeypatch):
             raise webbrowser.Error("Failure")
 
     monkeypatch.setattr(
-        requests_auth.oauth2_authentication_responses_server.webbrowser,
+        requests_auth._oauth2.oauth2_authentication_responses_server.webbrowser,
         "get",
         lambda *args: FakeBrowser(),
     )

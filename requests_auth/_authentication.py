@@ -9,8 +9,8 @@ import requests
 import requests.auth
 import warnings
 
-from requests_auth import oauth2_authentication_responses_server, oauth2_tokens
-from requests_auth.errors import InvalidGrantRequest, GrantNotProvided
+from requests_auth._oauth2 import authentication_responses_server, tokens
+from requests_auth._errors import InvalidGrantRequest, GrantNotProvided
 
 
 def _add_parameters(initial_url: str, extra_parameters: dict) -> str:
