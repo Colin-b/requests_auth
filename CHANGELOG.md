@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Adding explicit support for Python `3.12`.
+- Publicly expose `requests_auth.SupportMultiAuth`, allowing multiple authentication support for every `requests` authentication class that exists.
+- Publicly expose `requests_auth.TokenMemoryCache`, allowing to create custom Oauth2 token cache based on this default implementation.
 
 ### Changed
 - Except for `requests_auth.testing`, only direct access via `requests_auth.` was considered publicly exposed. This is now explicit, as inner packages are now using private prefix (`_`).

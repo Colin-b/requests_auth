@@ -8,7 +8,7 @@ import requests_auth._oauth2.tokens
 
 
 @pytest.fixture
-def token_cache(request):
+def token_cache(request) -> requests_auth.JsonTokenFileCache:
     _token_cache = requests_auth.JsonTokenFileCache(request.node.name + ".cache")
     yield _token_cache
     _token_cache.clear()
