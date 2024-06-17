@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "requests_auth"
 description = "Authentication for Requests"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {file = "LICENSE"}
 authors = [
     {name = "Colin Bounouar", email = "colin.bounouar.dev@gmail.com" }
@@ -31,11 +31,11 @@ classifiers=[
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Build Tools",
 ]
 dependencies = [
@@ -56,7 +56,7 @@ testing = [
     # Used to mock requests
     "pytest-responses==0.5.*",
     # Used to check coverage
-    "pytest-cov==4.*",
+    "pytest-cov==5.*",
 ]
 
 [tool.setuptools.packages.find]

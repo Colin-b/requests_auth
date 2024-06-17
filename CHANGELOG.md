@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Adding explicit support for Python `3.12`.
+
+### Removed
+- Removing support for Python `3.7`.
 
 ## [7.0.0] - 2023-04-27
 ### Changed
@@ -13,10 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `session_auth` as a parameter of `requests_auth.OAuth2ResourceOwnerPasswordCredentials`. Allowing to provide any kind of optional authentication.
 - `requests_auth.OktaResourceOwnerPasswordCredentials` providing Okta resource owner password credentials flow easy setup.
-- Explicit support for Python 3.11
+- Explicit support for Python `3.11`.
 
 ### Removed
-- Explicit support for Python 3.6
+- Explicit support for Python `3.6`.
 
 ## [6.0.0] - 2022-01-11
 ### Changed
@@ -58,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.2.0] - 2020-10-14
 ### Added
 - Allow to provide a `requests.Session` instance for `*AuthorizationCode` flows (even `PKCE`), `*ClientCredentials` and `*ResourceOwnerPasswordCredentials` flows.
-- Explicit support for Python 3.9
+- Explicit support for Python `3.9`.
 
 ### Changed
 - Code now follow `black==20.8b1` formatting instead of the git master version.
