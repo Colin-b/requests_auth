@@ -5,6 +5,7 @@ import requests
 
 import requests_auth
 from requests_auth.testing import BrowserMock, create_token, token_cache, browser_mock
+import requests_auth._oauth2.authorization_code_pkce
 from tests.auth_helper import get_header
 
 
@@ -284,7 +285,9 @@ def test_oauth2_authorization_code_and_multiple_authentication_can_be_combined(
 def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock, monkeypatch
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     pkce_auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -315,7 +318,9 @@ def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
 def test_oauth2_pkce_and_multiple_authentication_can_be_combined(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock, monkeypatch
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     pkce_auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )

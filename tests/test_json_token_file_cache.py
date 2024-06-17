@@ -4,6 +4,7 @@ import pytest
 import jwt
 
 import requests_auth
+import requests_auth._oauth2.tokens
 
 
 @pytest.fixture
@@ -49,7 +50,7 @@ def test_save_bearer_token_exception_handling(token_cache, request, monkeypatch)
     def failing_dump(*args):
         raise Exception("Failure")
 
-    monkeypatch.setattr(requests_auth.oauth2_tokens.json, "dump", failing_dump)
+    monkeypatch.setattr(requests_auth._oauth2.tokens.json, "dump", failing_dump)
 
     expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     token1 = jwt.encode({"exp": expiry_in_1_hour}, "secret")

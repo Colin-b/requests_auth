@@ -3,8 +3,8 @@ import pytest
 import requests
 
 import requests_auth
+from requests_auth.testing import token_cache  # noqa: F401
 from tests.auth_helper import get_header, get_request
-from requests_auth.testing import token_cache
 
 
 def test_oauth2_client_credentials_flow_uses_provided_session(
@@ -70,7 +70,7 @@ def test_oauth2_client_credentials_flow_token_is_expired_after_30_seconds_by_def
     token_cache._add_token(
         key="a8a1c17ded24b3710524306819084310b08f97e151c79f4f1979202c541f3e8506c93176f7ee816bfcd2b2f6de9c5c3e16aaff220f1ad8f08d31ee086e8618da",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
     responses.add(
@@ -103,7 +103,7 @@ def test_oauth2_client_credentials_flow_token_custom_expiry(
     token_cache._add_token(
         key="a8a1c17ded24b3710524306819084310b08f97e151c79f4f1979202c541f3e8506c93176f7ee816bfcd2b2f6de9c5c3e16aaff220f1ad8f08d31ee086e8618da",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     assert (
         get_header(responses, auth).get("Authorization")

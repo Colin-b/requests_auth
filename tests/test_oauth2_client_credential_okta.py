@@ -2,8 +2,8 @@ import requests
 from responses import RequestsMock
 
 import requests_auth
+from requests_auth.testing import token_cache  # noqa: F401
 from tests.auth_helper import get_header, get_request
-from requests_auth.testing import token_cache
 
 
 def test_okta_client_credentials_flow_uses_provided_session(
@@ -66,7 +66,7 @@ def test_okta_client_credentials_flow_token_is_expired_after_30_seconds_by_defau
     token_cache._add_token(
         key="f0d25aa4e496c6615328e776bb981dabe53fa77768a0a58eaf6d54215c598d80e57ffc7926fd96ec6a6a872942cb684a473e36233b593fb760d3eb6dc22ae550",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
     responses.add(
@@ -99,7 +99,7 @@ def test_okta_client_credentials_flow_token_custom_expiry(
     token_cache._add_token(
         key="f0d25aa4e496c6615328e776bb981dabe53fa77768a0a58eaf6d54215c598d80e57ffc7926fd96ec6a6a872942cb684a473e36233b593fb760d3eb6dc22ae550",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     assert (
         get_header(responses, auth).get("Authorization")

@@ -4,8 +4,9 @@ import pytest
 import requests
 
 import requests_auth
+import requests_auth._oauth2.authorization_code_pkce
 from tests.auth_helper import get_header, get_request
-from requests_auth.testing import BrowserMock, browser_mock, token_cache
+from requests_auth.testing import BrowserMock, browser_mock, token_cache  # noqa: F401
 
 
 def test_oauth2_pkce_flow_uses_provided_session(
@@ -13,7 +14,9 @@ def test_oauth2_pkce_flow_uses_provided_session(
 ):
     session = requests.Session()
     session.headers.update({"x-test": "Test value"})
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token", session=session
     )
@@ -50,7 +53,9 @@ def test_oauth2_pkce_flow_uses_provided_session(
 def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -85,7 +90,9 @@ def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
 def test_oauth2_pkce_flow_token_is_expired_after_30_seconds_by_default(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -97,7 +104,7 @@ def test_oauth2_pkce_flow_token_is_expired_after_30_seconds_by_default(
     token_cache._add_token(
         key="163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
     responses.add(
@@ -127,7 +134,9 @@ def test_oauth2_pkce_flow_token_is_expired_after_30_seconds_by_default(
 def test_oauth2_client_credentials_flow_token_custom_expiry(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code",
         "http://provide_access_token",
@@ -137,7 +146,7 @@ def test_oauth2_client_credentials_flow_token_custom_expiry(
     token_cache._add_token(
         key="163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=requests_auth.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     assert (
         get_header(responses, auth).get("Authorization")
@@ -148,7 +157,9 @@ def test_oauth2_client_credentials_flow_token_custom_expiry(
 def test_expires_in_sent_as_str(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -183,7 +194,9 @@ def test_expires_in_sent_as_str(
 def test_refresh_token(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -257,7 +270,9 @@ def test_refresh_token(
 def test_refresh_token_invalid(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -335,7 +350,9 @@ def test_refresh_token_invalid(
 def test_refresh_token_access_token_not_expired(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -387,7 +404,9 @@ def test_refresh_token_access_token_not_expired(
 def test_nonce_is_sent_if_provided_in_authorization_url(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -422,7 +441,9 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
 def test_with_invalid_grant_request_no_json(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -444,7 +465,9 @@ def test_with_invalid_grant_request_no_json(
 def test_with_invalid_grant_request_invalid_request_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -475,7 +498,9 @@ def test_with_invalid_grant_request_invalid_request_error(
 def test_with_invalid_grant_request_invalid_request_error_and_error_description(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -500,7 +525,9 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description(
 def test_with_invalid_grant_request_invalid_request_error_and_error_description_and_uri(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -532,7 +559,9 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
 def test_with_invalid_grant_request_invalid_request_error_and_error_description_and_uri_and_other_fields(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -565,7 +594,9 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
 def test_with_invalid_grant_request_without_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -590,7 +621,9 @@ def test_with_invalid_grant_request_without_error(
 def test_with_invalid_grant_request_invalid_client_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -625,7 +658,9 @@ def test_with_invalid_grant_request_invalid_client_error(
 def test_with_invalid_grant_request_invalid_grant_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -656,7 +691,9 @@ def test_with_invalid_grant_request_invalid_grant_error(
 def test_with_invalid_grant_request_unauthorized_client_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -685,7 +722,9 @@ def test_with_invalid_grant_request_unauthorized_client_error(
 def test_with_invalid_grant_request_unsupported_grant_type_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -714,7 +753,9 @@ def test_with_invalid_grant_request_unsupported_grant_type_error(
 def test_with_invalid_grant_request_invalid_scope_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?nonce=123456", "http://provide_access_token"
     )
@@ -743,7 +784,9 @@ def test_with_invalid_grant_request_invalid_scope_error(
 def test_with_invalid_token_request_invalid_request_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -765,7 +808,9 @@ def test_with_invalid_token_request_invalid_request_error(
 def test_with_invalid_token_request_invalid_request_error_and_error_description(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -784,7 +829,9 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description(
 def test_with_invalid_token_request_invalid_request_error_and_error_description_and_uri(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -806,7 +853,9 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description_
 def test_with_invalid_token_request_invalid_request_error_and_error_description_and_uri_and_other_fields(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -828,7 +877,9 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description_
 def test_with_invalid_token_request_unauthorized_client_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -850,7 +901,9 @@ def test_with_invalid_token_request_unauthorized_client_error(
 def test_with_invalid_token_request_access_denied_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -872,7 +925,9 @@ def test_with_invalid_token_request_access_denied_error(
 def test_with_invalid_token_request_unsupported_response_type_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -894,7 +949,9 @@ def test_with_invalid_token_request_unsupported_response_type_error(
 def test_with_invalid_token_request_invalid_scope_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -916,7 +973,9 @@ def test_with_invalid_token_request_invalid_scope_error(
 def test_with_invalid_token_request_server_error_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -938,7 +997,9 @@ def test_with_invalid_token_request_server_error_error(
 def test_with_invalid_token_request_temporarily_unavailable_error(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code", "http://provide_access_token"
     )
@@ -960,7 +1021,9 @@ def test_with_invalid_token_request_temporarily_unavailable_error(
 def test_response_type_can_be_provided_in_url(
     token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
 ):
-    monkeypatch.setattr(requests_auth.authentication.os, "urandom", lambda x: b"1" * 63)
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
+    )
     auth = requests_auth.OAuth2AuthorizationCodePKCE(
         "http://provide_code?response_type=my_code",
         "http://provide_access_token",
