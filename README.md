@@ -698,6 +698,17 @@ oauth2 = OAuth2Implicit('https://www.example.com')
 requests.get('https://www.example.com', auth=api_key + oauth2)
 ```
 
+This is supported on every authentication class exposed by `requests_auth`, but you can also enable it on your own authentication classes by using `requests_auth.SupportMultiAuth` as in the following sample:
+
+```python
+from requests_auth import SupportMultiAuth
+# TODO Import your own auth here
+from my_package import MyAuth
+
+class MyMultiAuth(MyAuth, SupportMultiAuth):
+    pass
+```
+
 ## Available pytest fixtures
 
 Testing the code using `requests_auth` authentication classes can be achieved using provided [`pytest`][6] fixtures.

@@ -3,7 +3,7 @@ from requests_auth._authentication import (
     HeaderApiKey,
     QueryApiKey,
     NTLM,
-    Auths,
+    SupportMultiAuth,
 )
 from requests_auth._oauth2.common import OAuth2
 from requests_auth._oauth2.authorization_code import (
@@ -29,7 +29,7 @@ from requests_auth._oauth2.resource_owner_password import (
     OAuth2ResourceOwnerPasswordCredentials,
     OktaResourceOwnerPasswordCredentials,
 )
-from requests_auth._oauth2.tokens import JsonTokenFileCache
+from requests_auth._oauth2.tokens import JsonTokenFileCache, TokenMemoryCache
 from requests_auth._errors import (
     GrantNotProvided,
     TimeoutOccurred,
@@ -60,8 +60,9 @@ __all__ = [
     "OAuth2ResourceOwnerPasswordCredentials",
     "OktaResourceOwnerPasswordCredentials",
     "NTLM",
-    "Auths",
+    "SupportMultiAuth",
     "JsonTokenFileCache",
+    "TokenMemoryCache",
     "GrantNotProvided",
     "TimeoutOccurred",
     "AuthenticationFailed",
