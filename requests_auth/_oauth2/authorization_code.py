@@ -1,4 +1,6 @@
 from hashlib import sha512
+from typing import Union, Iterable
+
 import requests
 import requests.auth
 
@@ -237,5 +239,60 @@ class OktaAuthorizationCode(OAuth2AuthorizationCode):
             f"https://{instance}/oauth2/{authorization_server}/v1/authorize",
             f"https://{instance}/oauth2/{authorization_server}/v1/token",
             client_id=client_id,
+            **kwargs,
+        )
+
+
+class WakaTimeAuthorizationCode(OAuth2AuthorizationCode):
+    """
+    Describes a WakaTime (OAuth 2) "Access Token" authorization code flow requests authentication.
+    """
+
+    def __init__(
+        self,
+        client_id: str,
+        client_secret: str,
+        scope: Union[str, Iterable[str]],
+        **kwargs,
+    ):
+        """
+        :param client_id: WakaTime Application Identifier (formatted as a Universal Unique Identifier)
+        :param client_secret: WakaTime Application Secret (formatted as waka_sec_ followed by a Universal Unique Identifier)
+        :param scope: Scope parameter sent in query. Can also be a list of scopes.
+        :param response_type: Value of the response_type query parameter.
+        token by default.
+        :param token_field_name: Name of the expected field containing the token.
+        access_token by default.
+        :param early_expiry: Number of seconds before actual token expiry where token will be considered as expired.
+        Default to 30 seconds to ensure token will not expire between the time of retrieval and the time the request
+        reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry.
+        :param nonce: Refer to http://openid.net/specs/openid-connect-core-1_0.html#IDToken for more details
+        (formatted as a Universal Unique Identifier - UUID). Use a newly generated UUID by default.
+        :param redirect_uri_domain: FQDN to use in the redirect_uri when localhost (default) is not allowed.
+        :param redirect_uri_endpoint: Custom endpoint that will be used as redirect_uri the following way:
+        http://localhost:<redirect_uri_port>/<redirect_uri_endpoint>. Default value is to redirect on / (root).
+        :param redirect_uri_port: The port on which the server listening for the OAuth 2 token will be started.
+        Listen on port 5000 by default.
+        :param timeout: Maximum amount of seconds to wait for a token to be received once requested.
+        Wait for 1 minute by default.
+        :param header_name: Name of the header field used to send token.
+        Token will be sent in Authorization header field by default.
+        :param header_value: Format used to send the token value.
+        "{token}" must be present as it will be replaced by the actual token.
+        Token will be sent as "Bearer {token}" by default.
+        :param session: requests.Session instance that will be used to request the token.
+        Use it to provide a custom proxying rule for instance.
+        :param kwargs: all additional authorization parameters that should be put as query parameter
+        in the authorization URL.
+        """
+        if not scope:
+            raise Exception("Scope is mandatory.")
+        OAuth2AuthorizationCode.__init__(
+            self,
+            "https://wakatime.com/oauth/authorize",
+            "https://wakatime.com/oauth/token",
+            client_id=client_id,
+            client_secret=client_secret,
+            scope=",".join(scope) if isinstance(scope, list) else scope,
             **kwargs,
         )
