@@ -1,10 +1,10 @@
 from responses import RequestsMock
+from responses.matchers import urlencoded_params_matcher, header_matcher
 import pytest
 import requests
 
 import requests_auth
 import requests_auth._oauth2.authorization_code_pkce
-from tests.auth_helper import get_header, get_request
 from requests_auth.testing import BrowserMock, browser_mock, token_cache  # noqa: F401
 
 
@@ -25,8 +25,7 @@ def test_oauth2_pkce_flow_uses_provided_session(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -35,19 +34,78 @@ def test_oauth2_pkce_flow_uses_provided_session(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "client_id": "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+                    "scope": "openid",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+            header_matcher({"x-test": "Test value"}),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    request = get_request(
-        responses, "https://testserver.okta-emea.com/oauth2/default/v1/token"
+
+    requests.get("http://authorized_only", auth=auth)
+
+    tab.assert_success(
+        "You are now authenticated on 5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b. You may close this tab."
     )
-    assert (
-        request.body
-        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
+
+
+def test_oauth2_pkce_flow_uses_redirect_uri_domain(
+    token_cache, responses: RequestsMock, monkeypatch, browser_mock: BrowserMock
+):
+    monkeypatch.setattr(
+        requests_auth._oauth2.authorization_code_pkce.os, "urandom", lambda x: b"1" * 63
     )
-    assert request.headers["x-test"] == "Test value"
+    auth = requests_auth.OktaAuthorizationCodePKCE(
+        "testserver.okta-emea.com",
+        "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+        redirect_uri_domain="localhost.mycompany.com",
+    )
+    tab = browser_mock.add_response(
+        opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost.mycompany.com%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
+    )
+    responses.post(
+        "https://testserver.okta-emea.com/oauth2/default/v1/token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost.mycompany.com:5000/",
+                    "client_id": "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+                    "scope": "openid",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
+    )
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b. You may close this tab."
     )
@@ -66,8 +124,7 @@ def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -76,17 +133,27 @@ def test_oauth2_pkce_flow_get_code_is_sent_in_authorization_header_by_default(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "client_id": "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+                    "scope": "openid",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(
-            responses, "https://testserver.okta-emea.com/oauth2/default/v1/token"
-        ).body
-        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b. You may close this tab."
     )
@@ -112,8 +179,7 @@ def test_okta_pkce_flow_token_is_expired_after_30_seconds_by_default(
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -122,17 +188,27 @@ def test_okta_pkce_flow_token_is_expired_after_30_seconds_by_default(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "client_id": "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+                    "scope": "openid",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(
-            responses, "https://testserver.okta-emea.com/oauth2/default/v1/token"
-        ).body
-        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b. You may close this tab."
     )
@@ -155,10 +231,12 @@ def test_okta_pkce_flow_token_custom_expiry(
         token="2YotnFZFEjr1zCsicMWpAA",
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_expires_in_sent_as_str(
@@ -174,8 +252,7 @@ def test_expires_in_sent_as_str(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -184,17 +261,27 @@ def test_expires_in_sent_as_str(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "code_verifier": "MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx",
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "client_id": "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+                    "scope": "openid",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(
-            responses, "https://testserver.okta-emea.com/oauth2/default/v1/token"
-        ).body
-        == "code_verifier=MTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTEx&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b. You may close this tab."
     )
@@ -213,8 +300,7 @@ def test_with_invalid_grant_request_no_json(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         body="failure",
         status=400,
@@ -240,8 +326,7 @@ def test_with_invalid_grant_request_invalid_request_error(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={"error": "invalid_request"},
         status=400,
@@ -273,8 +358,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={"error": "invalid_request", "error_description": "desc of the error"},
         status=400,
@@ -300,8 +384,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={
             "error": "invalid_request",
@@ -334,8 +417,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={
             "error": "invalid_request",
@@ -369,8 +451,7 @@ def test_with_invalid_grant_request_without_error(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={"other": "other info"},
         status=400,
@@ -396,8 +477,7 @@ def test_with_invalid_grant_request_invalid_client_error(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={"error": "invalid_client"},
         status=400,
@@ -433,8 +513,7 @@ def test_with_invalid_grant_request_invalid_grant_error(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={"error": "invalid_grant"},
         status=400,
@@ -466,8 +545,7 @@ def test_with_invalid_grant_request_unauthorized_client_error(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={"error": "unauthorized_client"},
         status=400,
@@ -497,8 +575,7 @@ def test_with_invalid_grant_request_unsupported_grant_type_error(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={"error": "unsupported_grant_type"},
         status=400,
@@ -528,8 +605,7 @@ def test_with_invalid_grant_request_invalid_scope_error(
         opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://testserver.okta-emea.com/oauth2/default/v1/token",
         json={"error": "invalid_scope"},
         status=400,

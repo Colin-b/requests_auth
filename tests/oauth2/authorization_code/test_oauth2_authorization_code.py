@@ -42,7 +42,7 @@ def test_oauth2_authorization_code_flow_uses_provided_session(
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -86,7 +86,7 @@ def test_oauth2_authorization_code_flow_uses_redirect_uri_domain(
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -128,7 +128,7 @@ def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -177,7 +177,7 @@ def test_oauth2_authorization_code_flow_token_is_expired_after_30_seconds_by_def
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -203,7 +203,7 @@ def test_oauth2_client_credentials_flow_token_custom_expiry(
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -239,7 +239,7 @@ def test_refresh_token(token_cache, responses: RequestsMock, browser_mock: Brows
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -270,7 +270,7 @@ def test_refresh_token(token_cache, responses: RequestsMock, browser_mock: Brows
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer rVR7Syg5bjZtZYjbZIW"}),),
+        match=[header_matcher({"Authorization": "Bearer rVR7Syg5bjZtZYjbZIW"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -308,7 +308,7 @@ def test_refresh_token_invalid(
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -341,7 +341,7 @@ def test_refresh_token_invalid(
     # if refreshing the token fails, fallback to requesting a new token
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -383,7 +383,7 @@ def test_refresh_token_access_token_not_expired(
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -395,7 +395,7 @@ def test_refresh_token_access_token_not_expired(
     # expect Bearer token to remain the same
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -969,7 +969,7 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
@@ -1012,7 +1012,7 @@ def test_response_type_can_be_provided_in_url(
     )
     responses.get(
         "http://authorized_only",
-        match=(header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"}),),
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
 
     requests.get("http://authorized_only", auth=auth)
