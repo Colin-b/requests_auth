@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/).
 - Remove deprecation warnings due to usage of `utcnow` and `utcfromtimestamp`.
+- `requests_auth.OktaClientCredentials` `scope` parameter is now mandatory and does not default to `openid` anymore.
+- `requests_auth.OktaClientCredentials` will now display a more user-friendly error message in case Okta instance is not provided.
 - Tokens cache `DEBUG` logs will not display tokens anymore.
 
 ### Removed
