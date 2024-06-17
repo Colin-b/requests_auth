@@ -4,7 +4,7 @@ import pytest
 import requests
 
 import requests_auth
-from requests_auth.testing import BrowserMock
+from requests_auth.testing import BrowserMock, browser_mock, token_cache
 from tests.auth_helper import get_header, get_request
 
 
@@ -94,7 +94,7 @@ def test_oauth2_authorization_code_flow_token_is_expired_after_30_seconds_by_def
     token_cache._add_token(
         key="163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=requests_auth._oauth2.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
     responses.add(
@@ -133,7 +133,7 @@ def test_oauth2_client_credentials_flow_token_custom_expiry(
     token_cache._add_token(
         key="163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=requests_auth._oauth2.oauth2_tokens._to_expiry(expires_in=29),
+        expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     assert (
         get_header(responses, auth).get("Authorization")

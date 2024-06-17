@@ -7,6 +7,7 @@ import datetime
 import pytest
 
 import requests_auth
+import requests_auth._oauth2.authentication_responses_server
 
 
 def create_token(expiry: Optional[datetime.datetime]) -> str:
@@ -124,10 +125,9 @@ class BrowserMock:
 @pytest.fixture
 def browser_mock(monkeypatch) -> BrowserMock:
     mock = BrowserMock()
-    import requests_auth._oauth2.authentication_responses_server
 
     monkeypatch.setattr(
-        requests_auth._oauth2.oauth2_authentication_responses_server.webbrowser,
+        requests_auth._oauth2.authentication_responses_server.webbrowser,
         "get",
         lambda *args: mock,
     )
