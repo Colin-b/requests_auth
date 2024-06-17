@@ -1,9 +1,9 @@
 import requests
 from responses import RequestsMock
+from responses.matchers import header_matcher
 
 import requests_auth
 from requests_auth.testing import token_cache  # noqa: F401
-from tests.auth_helper import get_header, get_request
 
 
 def test_okta_client_credentials_flow_uses_provided_session(
@@ -14,8 +14,7 @@ def test_okta_client_credentials_flow_uses_provided_session(
     auth = requests_auth.OktaClientCredentials(
         "test_okta", client_id="test_user", client_secret="test_pwd", session=session
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://test_okta/oauth2/default/v1/token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -24,13 +23,16 @@ def test_okta_client_credentials_flow_uses_provided_session(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            header_matcher({"x-test": "Test value"}),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    request = get_request(responses, "https://test_okta/oauth2/default/v1/token")
-    assert request.headers["x-test"] == "Test value"
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_okta_client_credentials_flow_token_is_sent_in_authorization_header_by_default(
@@ -39,8 +41,7 @@ def test_okta_client_credentials_flow_token_is_sent_in_authorization_header_by_d
     auth = requests_auth.OktaClientCredentials(
         "test_okta", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://test_okta/oauth2/default/v1/token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -50,10 +51,12 @@ def test_okta_client_credentials_flow_token_is_sent_in_authorization_header_by_d
             "example_parameter": "example_value",
         },
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_okta_client_credentials_flow_token_is_expired_after_30_seconds_by_default(
@@ -69,8 +72,7 @@ def test_okta_client_credentials_flow_token_is_expired_after_30_seconds_by_defau
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://test_okta/oauth2/default/v1/token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -80,10 +82,12 @@ def test_okta_client_credentials_flow_token_is_expired_after_30_seconds_by_defau
             "example_parameter": "example_value",
         },
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_okta_client_credentials_flow_token_custom_expiry(
@@ -101,18 +105,19 @@ def test_okta_client_credentials_flow_token_custom_expiry(
         token="2YotnFZFEjr1zCsicMWpAA",
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_expires_in_sent_as_str(token_cache, responses: RequestsMock):
     auth = requests_auth.OktaClientCredentials(
         "test_okta", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "https://test_okta/oauth2/default/v1/token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -122,7 +127,9 @@ def test_expires_in_sent_as_str(token_cache, responses: RequestsMock):
             "example_parameter": "example_value",
         },
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adding explicit support for Python `3.12`.
 - Publicly expose `requests_auth.SupportMultiAuth`, allowing multiple authentication support for every `requests` authentication class that exists.
 - Publicly expose `requests_auth.TokenMemoryCache`, allowing to create custom Oauth2 token cache based on this default implementation.
+- Thanks to the new `redirect_uri_domain` parameter on Authorization code (with and without PKCE) and Implicit flows, you can now provide the [FQDN](https://en.wikipedia.org/wiki/Fully_qualified_domain_name) to use in the `redirect_uri` when `localhost` (the default) is not allowed.
 
 ### Changed
 - Except for `requests_auth.testing`, only direct access via `requests_auth.` was considered publicly exposed. This is now explicit, as inner packages are now using private prefix (`_`).

@@ -4,14 +4,14 @@ import datetime
 import requests
 import pytest
 from responses import RequestsMock
+from responses.matchers import header_matcher
 
 from requests_auth.testing import (
     BrowserMock,
     create_token,
-    browser_mock,
-    token_cache,
-)  # noqa: F401
-from tests.auth_helper import get_header
+    browser_mock,  # noqa: F401
+    token_cache,  # noqa: F401
+)
 import requests_auth
 
 
@@ -43,8 +43,12 @@ def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing
         reply_url="http://localhost:5000",
         data=f"custom_token={first_token}&state=5652a8138e3a99dab7b94532c73ed5b10f19405316035d1efdc8bf7e0713690485254c2eaff912040eac44031889ef0a5ed5730c8a111541120d64a898c31afe",
     )
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {first_token}"})],
+    )
 
-    assert get_header(responses, auth1).get("Authorization") == f"Bearer {first_token}"
+    requests.get("http://authorized_only", auth=auth1)
 
     # Ensure that the new token is different than previous one
     expiry_in_1_hour = datetime.datetime.now(
@@ -61,9 +65,13 @@ def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing
         reply_url="http://localhost:5000",
         data=f"custom_token={second_token}&state=5c3940ccf78ac6e7d6d8d06782d9fd95a533aa5425b616eaa38dc3ec9508fbd55152c58a0d8dd8a087e76b77902559285819a41cb78ce8713e5a3b974bf07ce9",
     )
-    response = requests.get("http://authorized_only", auth=auth2)
-    # Return headers received on this dummy URL
-    assert response.request.headers.get("Authorization") == f"Bearer {second_token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {second_token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth2)
+
     tab1.assert_success(
         "You are now authenticated on 5652a8138e3a99dab7b94532c73ed5b10f19405316035d1efdc8bf7e0713690485254c2eaff912040eac44031889ef0a5ed5730c8a111541120d64a898c31afe. You may close this tab."
     )
@@ -88,15 +96,23 @@ def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(
         reply_url="http://localhost:5000",
         data=f"custom_token={token}&state=67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2",
     )
-    assert get_header(responses, auth1).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth1)
 
     auth2 = requests_auth.OAuth2Implicit(
         "http://provide_token?response_type=custom_token&nonce=2",
         token_field_name="custom_token",
     )
-    response = requests.get("http://authorized_only", auth=auth2)
-    # Return headers received on this dummy URL
-    assert response.request.headers.get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth2)
     tab.assert_success(
         "You are now authenticated on 67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2. You may close this tab."
     )
@@ -119,7 +135,38 @@ def test_oauth2_implicit_flow_token_can_be_requested_on_a_custom_server_port(
         reply_url="http://localhost:5002",
         data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+    tab.assert_success(
+        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
+    )
+
+
+def test_oauth2_implicit_flow_uses_redirect_uri_domain(
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
+):
+    auth = requests_auth.OAuth2Implicit(
+        "http://provide_token", redirect_uri_domain="localhost.mycompany.com"
+    )
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
+    token = create_token(expiry_in_1_hour)
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost.mycompany.com%3A5000%2F",
+        reply_url="http://localhost:5000",
+        data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
+    )
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
@@ -138,7 +185,12 @@ def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_defa
         reply_url="http://localhost:5000",
         data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
@@ -167,7 +219,12 @@ def test_oauth2_implicit_flow_token_is_expired_after_30_seconds_by_default(
         reply_url="http://localhost:5000",
         data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
@@ -187,7 +244,12 @@ def test_oauth2_implicit_flow_token_custom_expiry(
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     token = create_token(expiry_in_29_seconds)
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_browser_opening_failure(token_cache, responses: RequestsMock, monkeypatch):
@@ -257,7 +319,12 @@ def test_state_change(token_cache, responses: RequestsMock, browser_mock: Browse
         reply_url="http://localhost:5000",
         data=f"access_token={token}&state=123456",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success("You are now authenticated on 123456. You may close this tab.")
 
 
@@ -307,7 +374,12 @@ def test_oauth2_implicit_flow_get_token_is_sent_in_authorization_header_by_defau
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url=f"http://localhost:5000#access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
@@ -328,7 +400,12 @@ def test_oauth2_implicit_flow_token_is_sent_in_requested_field(
         reply_url="http://localhost:5000",
         data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    assert get_header(responses, auth).get("Bearer") == token
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Bearer": token})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
@@ -351,7 +428,12 @@ def test_oauth2_implicit_flow_can_send_a_custom_response_type_and_expects_token_
         reply_url="http://localhost:5000",
         data=f"custom_token={token}&state=67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2. You may close this tab."
     )
@@ -372,7 +454,12 @@ def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_is_id_t
         reply_url="http://localhost:5000",
         data=f"id_token={token}&state=87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a. You may close this tab."
     )
@@ -391,7 +478,12 @@ def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_in_url_
         reply_url="http://localhost:5000",
         data=f"id_token={token}&state=87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a. You may close this tab."
     )
@@ -410,7 +502,12 @@ def test_oauth2_implicit_flow_expects_token_to_be_stored_in_access_token_by_defa
         reply_url="http://localhost:5000",
         data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
@@ -429,12 +526,20 @@ def test_oauth2_implicit_flow_token_is_reused_if_not_expired(
         reply_url="http://localhost:5000",
         data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    assert get_header(responses, auth1).get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth1)
 
     oauth2 = requests_auth.OAuth2Implicit("http://provide_token")
-    response = requests.get("http://authorized_only", auth=oauth2)
-    # Return headers received on this dummy URL
-    assert response.request.headers.get("Authorization") == f"Bearer {token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=oauth2)
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
@@ -768,7 +873,12 @@ def test_oauth2_implicit_flow_token_is_requested_again_if_expired(
         reply_url="http://localhost:5000",
         data=f"access_token={first_token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    assert get_header(responses, auth).get("Authorization") == f"Bearer {first_token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {first_token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
 
     # Wait to ensure that the token will be considered as expired
     time.sleep(0.2)
@@ -783,9 +893,12 @@ def test_oauth2_implicit_flow_token_is_requested_again_if_expired(
         reply_url="http://localhost:5000",
         data=f"access_token={second_token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
-    response = requests.get("http://authorized_only", auth=auth)
-    # Return headers received on this dummy URL
-    assert response.request.headers.get("Authorization") == f"Bearer {second_token}"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {second_token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
     tab1.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )

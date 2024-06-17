@@ -1,11 +1,10 @@
 from responses import RequestsMock
-from responses.matchers import urlencoded_params_matcher
+from responses.matchers import urlencoded_params_matcher, header_matcher
 import pytest
 import requests
 
 import requests_auth
-from requests_auth.testing import BrowserMock, browser_mock, token_cache
-from tests.auth_helper import get_header, get_request
+from requests_auth.testing import BrowserMock, browser_mock, token_cache  # noqa: F401
 
 
 def test_oauth2_authorization_code_flow_uses_provided_session(
@@ -20,8 +19,7 @@ def test_oauth2_authorization_code_flow_uses_provided_session(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -30,17 +28,69 @@ def test_oauth2_authorization_code_flow_uses_provided_session(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+            header_matcher({"x-test": "Test value"}),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    request = get_request(responses, "http://provide_access_token/")
-    assert (
-        request.body
-        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
+
+    requests.get("http://authorized_only", auth=auth)
+
+    tab.assert_success(
+        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
-    assert request.headers["x-test"] == "Test value"
+
+
+def test_oauth2_authorization_code_flow_uses_redirect_uri_domain(
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
+):
+    auth = requests_auth.OAuth2AuthorizationCode(
+        "http://provide_code",
+        "http://provide_access_token",
+        redirect_uri_domain="localhost.mycompany.com",
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost.mycompany.com%3A5000%2F",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+    )
+    responses.post(
+        "http://provide_access_token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost.mycompany.com:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
+    )
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
@@ -56,8 +106,7 @@ def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -66,15 +115,24 @@ def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(responses, "http://provide_access_token/").body
-        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
@@ -97,8 +155,7 @@ def test_oauth2_authorization_code_flow_token_is_expired_after_30_seconds_by_def
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -107,15 +164,24 @@ def test_oauth2_authorization_code_flow_token_is_expired_after_30_seconds_by_def
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(responses, "http://provide_access_token/").body
-        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
@@ -135,10 +201,12 @@ def test_oauth2_client_credentials_flow_token_custom_expiry(
         token="2YotnFZFEjr1zCsicMWpAA",
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_refresh_token(token_cache, responses: RequestsMock, browser_mock: BrowserMock):
@@ -149,8 +217,7 @@ def test_refresh_token(token_cache, responses: RequestsMock, browser_mock: Brows
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -170,20 +237,19 @@ def test_refresh_token(token_cache, responses: RequestsMock, browser_mock: Brows
             )
         ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(responses, "http://provide_access_token/").body
-        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
+
     # response for refresh token grant
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "rVR7Syg5bjZtZYjbZIW",
@@ -202,13 +268,12 @@ def test_refresh_token(token_cache, responses: RequestsMock, browser_mock: Brows
             )
         ],
     )
-
-    response = requests.get("http://authorized_only", auth=auth)
-    assert response.request.headers.get("Authorization") == "Bearer rVR7Syg5bjZtZYjbZIW"
-    assert (
-        get_request(responses, "http://provide_access_token/").body
-        == "grant_type=refresh_token&response_type=code&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer rVR7Syg5bjZtZYjbZIW"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_refresh_token_invalid(
@@ -221,8 +286,7 @@ def test_refresh_token_invalid(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -242,20 +306,18 @@ def test_refresh_token_invalid(
             )
         ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(responses, "http://provide_access_token/").body
-        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
     # response for refresh token grant
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_request"},
         status=400,
@@ -277,10 +339,12 @@ def test_refresh_token_invalid(
     )
 
     # if refreshing the token fails, fallback to requesting a new token
-    response = requests.get("http://authorized_only", auth=auth)
-    assert (
-        response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
@@ -297,8 +361,7 @@ def test_refresh_token_access_token_not_expired(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -318,23 +381,24 @@ def test_refresh_token_access_token_not_expired(
             )
         ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(responses, "http://provide_access_token/").body
-        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
 
     # expect Bearer token to remain the same
-    response = requests.get("http://authorized_only", auth=auth)
-    assert (
-        response.request.headers.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_empty_token_is_invalid(
@@ -347,8 +411,7 @@ def test_empty_token_is_invalid(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "",
@@ -379,9 +442,7 @@ def test_with_invalid_grant_request_no_json(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST, "http://provide_access_token", body="failure", status=400
-    )
+    responses.post("http://provide_access_token", body="failure", status=400)
     with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
         requests.get("http://authorized_only", auth=auth)
     assert str(exception_info.value) == "failure"
@@ -400,8 +461,7 @@ def test_with_invalid_grant_request_invalid_request_error(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_request"},
         status=400,
@@ -430,8 +490,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_request", "error_description": "desc of the error"},
         status=400,
@@ -454,8 +513,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "error": "invalid_request",
@@ -485,8 +543,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "error": "invalid_request",
@@ -517,8 +574,7 @@ def test_with_invalid_grant_request_without_error(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"other": "other info"},
         status=400,
@@ -541,8 +597,7 @@ def test_with_invalid_grant_request_invalid_client_error(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_client"},
         status=400,
@@ -575,8 +630,7 @@ def test_with_invalid_grant_request_invalid_grant_error(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_grant"},
         status=400,
@@ -605,8 +659,7 @@ def test_with_invalid_grant_request_unauthorized_client_error(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "unauthorized_client"},
         status=400,
@@ -633,8 +686,7 @@ def test_with_invalid_grant_request_unsupported_grant_type_error(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "unsupported_grant_type"},
         status=400,
@@ -661,8 +713,7 @@ def test_with_invalid_grant_request_invalid_scope_error(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_scope"},
         status=400,
@@ -896,8 +947,7 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%27123456%27%5D",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -906,15 +956,24 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(responses, "http://provide_access_token/").body
-        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&response_type=code&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
@@ -932,8 +991,7 @@ def test_response_type_can_be_provided_in_url(
         opened_url="http://provide_code?response_type=my_code&state=49b67a19e70f692c3fc09dd124e5782b41a86f4f4931e1cc938ccbb466eecf1b730edb9eb01e42005de77ce3dd5a016418f8e780f30c4477d71102fe03e39e62&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=49b67a19e70f692c3fc09dd124e5782b41a86f4f4931e1cc938ccbb466eecf1b730edb9eb01e42005de77ce3dd5a016418f8e780f30c4477d71102fe03e39e62",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -942,15 +1000,23 @@ def test_response_type_can_be_provided_in_url(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    assert (
-        get_request(responses, "http://provide_access_token/").body
-        == "grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code=SplxlOBeZQQYbYS6WxSbIA"
-    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 49b67a19e70f692c3fc09dd124e5782b41a86f4f4931e1cc938ccbb466eecf1b730edb9eb01e42005de77ce3dd5a016418f8e780f30c4477d71102fe03e39e62. You may close this tab."
     )

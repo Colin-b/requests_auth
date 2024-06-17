@@ -1,10 +1,10 @@
 from responses import RequestsMock
+from responses.matchers import header_matcher
 import pytest
 import requests
 
 import requests_auth
 from requests_auth.testing import token_cache  # noqa: F401
-from tests.auth_helper import get_header, get_request
 
 
 def test_oauth2_client_credentials_flow_uses_provided_session(
@@ -18,8 +18,7 @@ def test_oauth2_client_credentials_flow_uses_provided_session(
         client_secret="test_pwd",
         session=session,
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -28,13 +27,16 @@ def test_oauth2_client_credentials_flow_uses_provided_session(
             "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
             "example_parameter": "example_value",
         },
+        match=[
+            header_matcher({"x-test": "Test value"}),
+        ],
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
-    request = get_request(responses, "http://provide_access_token/")
-    assert request.headers["x-test"] == "Test value"
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_oauth2_client_credentials_flow_token_is_sent_in_authorization_header_by_default(
@@ -43,8 +45,7 @@ def test_oauth2_client_credentials_flow_token_is_sent_in_authorization_header_by
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -54,10 +55,12 @@ def test_oauth2_client_credentials_flow_token_is_sent_in_authorization_header_by
             "example_parameter": "example_value",
         },
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_oauth2_client_credentials_flow_token_is_expired_after_30_seconds_by_default(
@@ -73,8 +76,7 @@ def test_oauth2_client_credentials_flow_token_is_expired_after_30_seconds_by_def
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -84,10 +86,12 @@ def test_oauth2_client_credentials_flow_token_is_expired_after_30_seconds_by_def
             "example_parameter": "example_value",
         },
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_oauth2_client_credentials_flow_token_custom_expiry(
@@ -105,18 +109,19 @@ def test_oauth2_client_credentials_flow_token_custom_expiry(
         token="2YotnFZFEjr1zCsicMWpAA",
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_expires_in_sent_as_str(token_cache, responses: RequestsMock):
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -126,19 +131,19 @@ def test_expires_in_sent_as_str(token_cache, responses: RequestsMock):
             "example_parameter": "example_value",
         },
     )
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Bearer 2YotnFZFEjr1zCsicMWpAA"
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_with_invalid_grant_request_no_json(token_cache, responses: RequestsMock):
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST, "http://provide_access_token", body="failure", status=400
-    )
+    responses.post("http://provide_access_token", body="failure", status=400)
     with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
         requests.get("http://authorized_only", auth=auth)
     assert str(exception_info.value) == "failure"
@@ -150,8 +155,7 @@ def test_with_invalid_grant_request_invalid_request_error(
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_request"},
         status=400,
@@ -173,8 +177,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description(
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_request", "error_description": "desc of the error"},
         status=400,
@@ -190,8 +193,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "error": "invalid_request",
@@ -214,8 +216,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "error": "invalid_request",
@@ -237,8 +238,7 @@ def test_with_invalid_grant_request_without_error(token_cache, responses: Reques
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"other": "other info"},
         status=400,
@@ -254,8 +254,7 @@ def test_with_invalid_grant_request_invalid_client_error(
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_client"},
         status=400,
@@ -281,8 +280,7 @@ def test_with_invalid_grant_request_invalid_grant_error(
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_grant"},
         status=400,
@@ -304,8 +302,7 @@ def test_with_invalid_grant_request_unauthorized_client_error(
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "unauthorized_client"},
         status=400,
@@ -325,8 +322,7 @@ def test_with_invalid_grant_request_unsupported_grant_type_error(
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "unsupported_grant_type"},
         status=400,
@@ -346,8 +342,7 @@ def test_with_invalid_grant_request_invalid_scope_error(
     auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={"error": "invalid_scope"},
         status=400,
