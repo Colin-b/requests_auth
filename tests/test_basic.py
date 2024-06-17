@@ -1,12 +1,16 @@
+import requests
 from responses import RequestsMock
+from responses.matchers import header_matcher
 
 import requests_auth
-from tests.auth_helper import get_header
 
 
 def test_basic_authentication_send_authorization_header(responses: RequestsMock):
     auth = requests_auth.Basic("test_user", "test_pwd")
-    assert (
-        get_header(responses, auth).get("Authorization")
-        == "Basic dGVzdF91c2VyOnRlc3RfcHdk"
+
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Basic dGVzdF91c2VyOnRlc3RfcHdk"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)

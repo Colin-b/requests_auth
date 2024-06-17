@@ -1,9 +1,10 @@
 import os
 
 import pytest
+import requests
+from responses.matchers import header_matcher
 
 import requests_auth
-from tests.auth_helper import get_header
 
 
 def test_requests_negotiate_sspi_is_used_when_nothing_is_provided_but_without_installed(
@@ -28,10 +29,14 @@ def test_requests_negotiate_sspi_is_used_when_nothing_is_provided(
     monkeypatch.syspath_prepend(
         os.path.join(os.path.abspath(os.path.dirname(__file__)), "success_ntlm")
     )
-    assert (
-        get_header(responses, requests_auth.NTLM()).get("Authorization")
-        == "HttpNegotiateAuth fake"
+    auth = requests_auth.NTLM()
+
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "HttpNegotiateAuth fake"})],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_requests_ntlm_is_used_when_user_and_pass_provided_but_without_installed(
@@ -54,12 +59,16 @@ def test_requests_ntlm_is_used_when_user_and_pass_provided(monkeypatch, response
     monkeypatch.syspath_prepend(
         os.path.join(os.path.abspath(os.path.dirname(__file__)), "success_ntlm")
     )
-    assert (
-        get_header(responses, requests_auth.NTLM("fake_user", "fake_pwd")).get(
-            "Authorization"
-        )
-        == "HttpNtlmAuth fake fake_user / fake_pwd"
+    auth = requests_auth.NTLM("fake_user", "fake_pwd")
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher({"Authorization": "HttpNtlmAuth fake fake_user / fake_pwd"})
+        ],
     )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_user_without_password_is_invalid():

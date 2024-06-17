@@ -2,19 +2,36 @@ import datetime
 
 from responses import RequestsMock
 import requests
+from responses.matchers import header_matcher, query_string_matcher
 
 import requests_auth
-from requests_auth.testing import BrowserMock, create_token, token_cache, browser_mock
+from requests_auth.testing import (
+    BrowserMock,
+    create_token,
+    token_cache,
+    browser_mock,
+)  # noqa: F401
 import requests_auth._oauth2.authorization_code_pkce
-from tests.auth_helper import get_header
 
 
 def test_basic_and_api_key_authentication_can_be_combined(responses: RequestsMock):
     basic_auth = requests_auth.Basic("test_user", "test_pwd")
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, basic_auth + api_key_auth)
-    assert header.get("Authorization") == "Basic dGVzdF91c2VyOnRlc3RfcHdk"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
+    auth = basic_auth + api_key_auth
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Basic dGVzdF91c2VyOnRlc3RfcHdk",
+                    "X-API-Key": "my_provided_api_key",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_header_api_key_and_multiple_authentication_can_be_combined(
@@ -27,10 +44,22 @@ def test_header_api_key_and_multiple_authentication_can_be_combined(
     api_key_auth3 = requests_auth.HeaderApiKey(
         "my_provided_api_key3", header_name="X-Api-Key3"
     )
-    header = get_header(responses, api_key_auth + (api_key_auth2 + api_key_auth3))
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
-    assert header.get("X-Api-Key3") == "my_provided_api_key3"
+    auth = api_key_auth + (api_key_auth2 + api_key_auth3)
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "X-API-Key": "my_provided_api_key",
+                    "X-Api-Key2": "my_provided_api_key2",
+                    "X-Api-Key3": "my_provided_api_key3",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_multiple_auth_and_header_api_key_can_be_combined(
@@ -43,10 +72,22 @@ def test_multiple_auth_and_header_api_key_can_be_combined(
     api_key_auth3 = requests_auth.HeaderApiKey(
         "my_provided_api_key3", header_name="X-Api-Key3"
     )
-    header = get_header(responses, (api_key_auth + api_key_auth2) + api_key_auth3)
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
-    assert header.get("X-Api-Key3") == "my_provided_api_key3"
+    auth = (api_key_auth + api_key_auth2) + api_key_auth3
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "X-API-Key": "my_provided_api_key",
+                    "X-Api-Key2": "my_provided_api_key2",
+                    "X-Api-Key3": "my_provided_api_key3",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_multiple_auth_and_multiple_auth_can_be_combined(
@@ -62,13 +103,23 @@ def test_multiple_auth_and_multiple_auth_can_be_combined(
     api_key_auth4 = requests_auth.HeaderApiKey(
         "my_provided_api_key4", header_name="X-Api-Key4"
     )
-    header = get_header(
-        responses, (api_key_auth + api_key_auth2) + (api_key_auth3 + api_key_auth4)
+    auth = (api_key_auth + api_key_auth2) + (api_key_auth3 + api_key_auth4)
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "X-API-Key": "my_provided_api_key",
+                    "X-Api-Key2": "my_provided_api_key2",
+                    "X-Api-Key3": "my_provided_api_key3",
+                    "X-Api-Key4": "my_provided_api_key4",
+                }
+            )
+        ],
     )
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
-    assert header.get("X-Api-Key3") == "my_provided_api_key3"
-    assert header.get("X-Api-Key4") == "my_provided_api_key4"
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_basic_and_multiple_authentication_can_be_combined(
@@ -81,10 +132,22 @@ def test_basic_and_multiple_authentication_can_be_combined(
     api_key_auth3 = requests_auth.HeaderApiKey(
         "my_provided_api_key3", header_name="X-Api-Key3"
     )
-    header = get_header(responses, basic_auth + (api_key_auth2 + api_key_auth3))
-    assert header.get("Authorization") == "Basic dGVzdF91c2VyOnRlc3RfcHdk"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
-    assert header.get("X-Api-Key3") == "my_provided_api_key3"
+    auth = basic_auth + (api_key_auth2 + api_key_auth3)
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Basic dGVzdF91c2VyOnRlc3RfcHdk",
+                    "X-Api-Key2": "my_provided_api_key2",
+                    "X-Api-Key3": "my_provided_api_key3",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_query_api_key_and_multiple_authentication_can_be_combined(
@@ -97,19 +160,23 @@ def test_query_api_key_and_multiple_authentication_can_be_combined(
     api_key_auth3 = requests_auth.HeaderApiKey(
         "my_provided_api_key3", header_name="X-Api-Key3"
     )
+    auth = api_key_auth + (api_key_auth2 + api_key_auth3)
 
-    # Mock a dummy response
-    responses.add(responses.GET, "http://authorized_only")
-    # Send a request to this dummy URL with authentication
-    response = requests.get(
-        "http://authorized_only", auth=api_key_auth + (api_key_auth2 + api_key_auth3)
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "X-Api-Key3": "my_provided_api_key3",
+                }
+            ),
+            query_string_matcher(
+                "api_key=my_provided_api_key&api_key2=my_provided_api_key2"
+            ),
+        ],
     )
-    # Return headers received on this dummy URL
-    assert (
-        response.request.path_url
-        == "/?api_key=my_provided_api_key&api_key2=my_provided_api_key2"
-    )
-    assert response.request.headers.get("X-Api-Key3") == "my_provided_api_key3"
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_oauth2_resource_owner_password_and_api_key_authentication_can_be_combined(
@@ -118,8 +185,7 @@ def test_oauth2_resource_owner_password_and_api_key_authentication_can_be_combin
     resource_owner_password_auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
         "http://provide_access_token", username="test_user", password="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -130,9 +196,21 @@ def test_oauth2_resource_owner_password_and_api_key_authentication_can_be_combin
         },
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, resource_owner_password_auth + api_key_auth)
-    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
+    auth = resource_owner_password_auth + api_key_auth
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA",
+                    "X-API-Key": "my_provided_api_key",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_oauth2_resource_owner_password_and_multiple_authentication_can_be_combined(
@@ -141,8 +219,7 @@ def test_oauth2_resource_owner_password_and_multiple_authentication_can_be_combi
     resource_owner_password_auth = requests_auth.OAuth2ResourceOwnerPasswordCredentials(
         "http://provide_access_token", username="test_user", password="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -156,12 +233,22 @@ def test_oauth2_resource_owner_password_and_multiple_authentication_can_be_combi
     api_key_auth2 = requests_auth.HeaderApiKey(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
-    header = get_header(
-        responses, resource_owner_password_auth + (api_key_auth + api_key_auth2)
+    auth = resource_owner_password_auth + (api_key_auth + api_key_auth2)
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA",
+                    "X-API-Key": "my_provided_api_key",
+                    "X-Api-Key2": "my_provided_api_key2",
+                }
+            )
+        ],
     )
-    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_oauth2_client_credential_and_api_key_authentication_can_be_combined(
@@ -170,8 +257,7 @@ def test_oauth2_client_credential_and_api_key_authentication_can_be_combined(
     resource_owner_password_auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -182,9 +268,21 @@ def test_oauth2_client_credential_and_api_key_authentication_can_be_combined(
         },
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, resource_owner_password_auth + api_key_auth)
-    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
+    auth = resource_owner_password_auth + api_key_auth
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA",
+                    "X-API-Key": "my_provided_api_key",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_oauth2_client_credential_and_multiple_authentication_can_be_combined(
@@ -193,8 +291,7 @@ def test_oauth2_client_credential_and_multiple_authentication_can_be_combined(
     resource_owner_password_auth = requests_auth.OAuth2ClientCredentials(
         "http://provide_access_token", client_id="test_user", client_secret="test_pwd"
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -208,12 +305,22 @@ def test_oauth2_client_credential_and_multiple_authentication_can_be_combined(
     api_key_auth2 = requests_auth.HeaderApiKey(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
-    header = get_header(
-        responses, resource_owner_password_auth + (api_key_auth + api_key_auth2)
+    auth = resource_owner_password_auth + (api_key_auth + api_key_auth2)
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA",
+                    "X-API-Key": "my_provided_api_key",
+                    "X-Api-Key2": "my_provided_api_key2",
+                }
+            )
+        ],
     )
-    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
+
+    requests.get("http://authorized_only", auth=auth)
 
 
 def test_oauth2_authorization_code_and_api_key_authentication_can_be_combined(
@@ -226,8 +333,7 @@ def test_oauth2_authorization_code_and_api_key_authentication_can_be_combined(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -238,9 +344,22 @@ def test_oauth2_authorization_code_and_api_key_authentication_can_be_combined(
         },
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, authorization_code_auth + api_key_auth)
-    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
+    auth = authorization_code_auth + api_key_auth
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA",
+                    "X-API-Key": "my_provided_api_key",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
@@ -256,8 +375,7 @@ def test_oauth2_authorization_code_and_multiple_authentication_can_be_combined(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -271,12 +389,23 @@ def test_oauth2_authorization_code_and_multiple_authentication_can_be_combined(
     api_key_auth2 = requests_auth.HeaderApiKey(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
-    header = get_header(
-        responses, authorization_code_auth + (api_key_auth + api_key_auth2)
+    auth = authorization_code_auth + (api_key_auth + api_key_auth2)
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA",
+                    "X-API-Key": "my_provided_api_key",
+                    "X-Api-Key2": "my_provided_api_key2",
+                }
+            )
+        ],
     )
-    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
@@ -295,8 +424,7 @@ def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -307,9 +435,22 @@ def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
         },
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, pkce_auth + api_key_auth)
-    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
+    auth = pkce_auth + api_key_auth
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA",
+                    "X-API-Key": "my_provided_api_key",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
@@ -328,8 +469,7 @@ def test_oauth2_pkce_and_multiple_authentication_can_be_combined(
         opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&code_challenge=5C_ph_KZ3DstYUc965SiqmKAA-ShvKF4Ut7daKd3fjc&code_challenge_method=S256",
         reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
     )
-    responses.add(
-        responses.POST,
+    responses.post(
         "http://provide_access_token",
         json={
             "access_token": "2YotnFZFEjr1zCsicMWpAA",
@@ -343,10 +483,23 @@ def test_oauth2_pkce_and_multiple_authentication_can_be_combined(
     api_key_auth2 = requests_auth.HeaderApiKey(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
-    header = get_header(responses, pkce_auth + (api_key_auth + api_key_auth2))
-    assert header.get("Authorization") == "Bearer 2YotnFZFEjr1zCsicMWpAA"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
+    auth = pkce_auth + (api_key_auth + api_key_auth2)
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA",
+                    "X-API-Key": "my_provided_api_key",
+                    "X-Api-Key2": "my_provided_api_key2",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
     )
@@ -366,9 +519,22 @@ def test_oauth2_implicit_and_api_key_authentication_can_be_combined(
         data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
     )
     api_key_auth = requests_auth.HeaderApiKey("my_provided_api_key")
-    header = get_header(responses, implicit_auth + api_key_auth)
-    assert header.get("Authorization") == f"Bearer {token}"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
+    auth = implicit_auth + api_key_auth
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": f"Bearer {token}",
+                    "X-API-Key": "my_provided_api_key",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
@@ -391,10 +557,23 @@ def test_oauth2_implicit_and_multiple_authentication_can_be_combined(
     api_key_auth2 = requests_auth.HeaderApiKey(
         "my_provided_api_key2", header_name="X-Api-Key2"
     )
-    header = get_header(responses, implicit_auth + (api_key_auth + api_key_auth2))
-    assert header.get("Authorization") == f"Bearer {token}"
-    assert header.get("X-Api-Key") == "my_provided_api_key"
-    assert header.get("X-Api-Key2") == "my_provided_api_key2"
+    auth = implicit_auth + (api_key_auth + api_key_auth2)
+
+    responses.get(
+        "http://authorized_only",
+        match=[
+            header_matcher(
+                {
+                    "Authorization": f"Bearer {token}",
+                    "X-API-Key": "my_provided_api_key",
+                    "X-Api-Key2": "my_provided_api_key2",
+                }
+            )
+        ],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
     tab.assert_success(
         "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
     )
