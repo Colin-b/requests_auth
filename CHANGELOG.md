@@ -15,7 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   If you were relying on some classes or functions that are now internal, feel free to open an issue.
 
 ### Fixed
-- Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/)
+- Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/).
+- Remove deprecation warnings due to usage of `utcnow` and `utcfromtimestamp`.
 
 ### Removed
 - Removing support for Python `3.7`.

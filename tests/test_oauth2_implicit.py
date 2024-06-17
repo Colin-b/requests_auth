@@ -34,7 +34,9 @@ def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing
         "http://provide_token?response_type=custom_token&fake_param=1",
         token_field_name="custom_token",
     )
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     first_token = create_token(expiry_in_1_hour)
     tab1 = browser_mock.add_response(
         opened_url="http://provide_token?response_type=custom_token&fake_param=1&state=5652a8138e3a99dab7b94532c73ed5b10f19405316035d1efdc8bf7e0713690485254c2eaff912040eac44031889ef0a5ed5730c8a111541120d64a898c31afe&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -45,9 +47,9 @@ def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing
     assert get_header(responses, auth1).get("Authorization") == f"Bearer {first_token}"
 
     # Ensure that the new token is different than previous one
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(
-        hours=1, seconds=1
-    )
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1, seconds=1)
 
     auth2 = requests_auth.OAuth2Implicit(
         "http://provide_token?response_type=custom_token&fake_param=2",
@@ -77,7 +79,9 @@ def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(
         "http://provide_token?response_type=custom_token&nonce=1",
         token_field_name="custom_token",
     )
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=custom_token&state=67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F&nonce=%5B%271%27%5D",
@@ -106,7 +110,9 @@ def test_oauth2_implicit_flow_token_can_be_requested_on_a_custom_server_port(
     auth = requests_auth.OAuth2Implicit(
         "http://provide_token", redirect_uri_port=available_port
     )
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5002%2F",
@@ -123,7 +129,9 @@ def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_defa
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2Implicit("http://provide_token")
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -141,14 +149,18 @@ def test_oauth2_implicit_flow_token_is_expired_after_30_seconds_by_default(
 ):
     auth = requests_auth.OAuth2Implicit("http://provide_token")
     # Add a token that expires in 29 seconds, so should be considered as expired when issuing the request
-    expiry_in_29_seconds = datetime.datetime.utcnow() + datetime.timedelta(seconds=29)
+    expiry_in_29_seconds = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(seconds=29)
     token_cache._add_token(
         key="42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
         token=create_token(expiry_in_29_seconds),
         expiry=requests_auth._oauth2.tokens._to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -166,7 +178,9 @@ def test_oauth2_implicit_flow_token_custom_expiry(
 ):
     auth = requests_auth.OAuth2Implicit("http://provide_token", early_expiry=28)
     # Add a token that expires in 29 seconds, so should be considered as not expired when issuing the request
-    expiry_in_29_seconds = datetime.datetime.utcnow() + datetime.timedelta(seconds=29)
+    expiry_in_29_seconds = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(seconds=29)
     token_cache._add_token(
         key="42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
         token=create_token(expiry_in_29_seconds),
@@ -234,7 +248,9 @@ def test_browser_error(token_cache, responses: RequestsMock, monkeypatch):
 
 def test_state_change(token_cache, responses: RequestsMock, browser_mock: BrowserMock):
     auth = requests_auth.OAuth2Implicit("http://provide_token")
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -283,7 +299,9 @@ def test_oauth2_implicit_flow_get_token_is_sent_in_authorization_header_by_defau
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2Implicit("http://provide_token")
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -301,7 +319,9 @@ def test_oauth2_implicit_flow_token_is_sent_in_requested_field(
     auth = requests_auth.OAuth2Implicit(
         "http://provide_token", header_name="Bearer", header_value="{token}"
     )
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -322,7 +342,9 @@ def test_oauth2_implicit_flow_can_send_a_custom_response_type_and_expects_token_
         response_type="custom_token",
         token_field_name="custom_token",
     )
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=custom_token&state=67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -341,7 +363,9 @@ def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_is_id_t
     auth = requests_auth.OAuth2Implicit(
         "http://provide_token", response_type="id_token"
     )
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=id_token&state=87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -358,7 +382,9 @@ def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_in_url_
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2Implicit("http://provide_token?response_type=id_token")
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=id_token&state=87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -375,7 +401,9 @@ def test_oauth2_implicit_flow_expects_token_to_be_stored_in_access_token_by_defa
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth = requests_auth.OAuth2Implicit("http://provide_token")
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -392,7 +420,9 @@ def test_oauth2_implicit_flow_token_is_reused_if_not_expired(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
     auth1 = requests_auth.OAuth2Implicit("http://provide_token")
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -450,7 +480,9 @@ def test_oauth2_implicit_flow_get_failure_if_token_is_not_provided(
 def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(
     token_cache, browser_mock: BrowserMock
 ):
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -474,7 +506,9 @@ def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(
 def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(
     token_cache, browser_mock: BrowserMock
 ):
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     token = create_token(expiry_in_1_hour)
     tab = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -725,9 +759,9 @@ def test_oauth2_implicit_flow_token_is_requested_again_if_expired(
 ):
     auth = requests_auth.OAuth2Implicit("http://provide_token")
     # This token will expires in 100 milliseconds
-    expiry_in_1_second = datetime.datetime.utcnow() + datetime.timedelta(
-        milliseconds=100
-    )
+    expiry_in_1_second = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(milliseconds=100)
     first_token = create_token(expiry_in_1_second)
     tab1 = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
@@ -740,7 +774,9 @@ def test_oauth2_implicit_flow_token_is_requested_again_if_expired(
     time.sleep(0.2)
 
     # Token should now be expired, a new one should be requested
-    expiry_in_1_hour = datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
     second_token = create_token(expiry_in_1_hour)
     tab2 = browser_mock.add_response(
         opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
