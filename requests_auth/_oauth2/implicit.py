@@ -109,11 +109,13 @@ class OAuth2Implicit(requests.auth.AuthBase, SupportMultiAuth, BrowserAuth):
         token = OAuth2.token_cache.get_token(
             key=self.state,
             early_expiry=self.early_expiry,
-            on_missing_token=authentication_responses_server.request_new_grant,
-            grant_details=self.grant_details,
+            on_missing_token=self.request_new_token,
         )
         r.headers[self.header_name] = self.header_value.format(token=token)
         return r
+
+    def request_new_token(self) -> tuple:
+        return authentication_responses_server.request_new_grant(self.grant_details)
 
 
 class AzureActiveDirectoryImplicit(OAuth2Implicit):
