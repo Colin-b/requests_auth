@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/).
 - Remove deprecation warnings due to usage of `utcnow` and `utcfromtimestamp`.
+- Tokens cache `DEBUG` logs will not display tokens anymore.
 
 ### Removed
 - Removing support for Python `3.7`.
