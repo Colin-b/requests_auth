@@ -360,9 +360,7 @@ def test_oauth2_authorization_code_and_api_key_authentication_can_be_combined(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_authorization_code_and_multiple_authentication_can_be_combined(
@@ -406,9 +404,7 @@ def test_oauth2_authorization_code_and_multiple_authentication_can_be_combined(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
@@ -451,9 +447,7 @@ def test_oauth2_pkce_and_api_key_authentication_can_be_combined(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_pkce_and_multiple_authentication_can_be_combined(
@@ -500,9 +494,7 @@ def test_oauth2_pkce_and_multiple_authentication_can_be_combined(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_and_api_key_authentication_can_be_combined(
@@ -535,9 +527,7 @@ def test_oauth2_implicit_and_api_key_authentication_can_be_combined(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_and_multiple_authentication_can_be_combined(
@@ -574,6 +564,4 @@ def test_oauth2_implicit_and_multiple_authentication_can_be_combined(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()

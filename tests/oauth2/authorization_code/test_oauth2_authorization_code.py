@@ -47,9 +47,7 @@ def test_oauth2_authorization_code_flow_uses_provided_session(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_authorization_code_flow_uses_redirect_uri_domain(
@@ -91,9 +89,7 @@ def test_oauth2_authorization_code_flow_uses_redirect_uri_domain(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header_by_default(
@@ -133,9 +129,7 @@ def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_authorization_code_flow_token_is_expired_after_30_seconds_by_default(
@@ -182,9 +176,7 @@ def test_oauth2_authorization_code_flow_token_is_expired_after_30_seconds_by_def
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_client_credentials_flow_token_custom_expiry(
@@ -244,9 +236,7 @@ def test_refresh_token(token_cache, responses: RequestsMock, browser_mock: Brows
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
     # response for refresh token grant
     responses.post(
@@ -313,9 +303,7 @@ def test_refresh_token_invalid(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
     # response for refresh token grant
     responses.post(
         "http://provide_access_token",
@@ -346,9 +334,7 @@ def test_refresh_token_invalid(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_refresh_token_access_token_not_expired(
@@ -388,9 +374,7 @@ def test_refresh_token_access_token_not_expired(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
     # expect Bearer token to remain the same
     responses.get(
@@ -427,9 +411,7 @@ def test_empty_token_is_invalid(
         str(exception_info.value)
         == "access_token not provided within {'access_token': '', 'token_type': 'example', 'expires_in': 3600, 'refresh_token': 'tGzv3JOkF0XG5Qx2TlKWIA', 'example_parameter': 'example_value'}."
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_no_json(
@@ -446,9 +428,7 @@ def test_with_invalid_grant_request_no_json(
     with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
         requests.get("http://authorized_only", auth=auth)
     assert str(exception_info.value) == "failure"
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_invalid_request_error(
@@ -475,9 +455,7 @@ def test_with_invalid_grant_request_invalid_request_error(
         "includes multiple credentials, utilizes more than one mechanism for "
         "authenticating the client, or is otherwise malformed."
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_invalid_request_error_and_error_description(
@@ -498,9 +476,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description(
     with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
         requests.get("http://authorized_only", auth=auth)
     assert str(exception_info.value) == "invalid_request: desc of the error"
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_invalid_request_error_and_error_description_and_uri(
@@ -528,9 +504,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
         str(exception_info.value)
         == f"invalid_request: desc of the error\nMore information can be found on http://test_url"
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_invalid_request_error_and_error_description_and_uri_and_other_fields(
@@ -559,9 +533,7 @@ def test_with_invalid_grant_request_invalid_request_error_and_error_description_
         str(exception_info.value)
         == "invalid_request: desc of the error\nMore information can be found on http://test_url\nAdditional information: {'other': 'other info'}"
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_without_error(
@@ -582,9 +554,7 @@ def test_with_invalid_grant_request_without_error(
     with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
         requests.get("http://authorized_only", auth=auth)
     assert str(exception_info.value) == "{'other': 'other info'}"
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_invalid_client_error(
@@ -615,9 +585,7 @@ def test_with_invalid_grant_request_invalid_client_error(
         'code and include the "WWW-Authenticate" response header field matching the '
         "authentication scheme used by the client."
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_invalid_grant_error(
@@ -644,9 +612,7 @@ def test_with_invalid_grant_request_invalid_grant_error(
         "does not match the redirection URI used in the authorization request, or was "
         "issued to another client."
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_unauthorized_client_error(
@@ -671,9 +637,7 @@ def test_with_invalid_grant_request_unauthorized_client_error(
         == "unauthorized_client: The authenticated client is not authorized to use this "
         "authorization grant type."
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_unsupported_grant_type_error(
@@ -698,9 +662,7 @@ def test_with_invalid_grant_request_unsupported_grant_type_error(
         == "unsupported_grant_type: The authorization grant type is not supported by the "
         "authorization server."
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_grant_request_invalid_scope_error(
@@ -725,9 +687,7 @@ def test_with_invalid_grant_request_invalid_scope_error(
         == "invalid_scope: The requested scope is invalid, unknown, malformed, or "
         "exceeds the scope granted by the resource owner."
     )
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_with_invalid_token_request_invalid_request_error(
@@ -747,7 +707,7 @@ def test_with_invalid_token_request_invalid_request_error(
         == "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
+        "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
     )
 
 
@@ -764,9 +724,7 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description(
     with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
         requests.get("http://authorized_only", auth=auth)
     assert str(exception_info.value) == "invalid_request: desc"
-    tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: desc"
-    )
+    tab.assert_failure("invalid_request: desc")
 
 
 def test_with_invalid_token_request_invalid_request_error_and_error_description_and_uri(
@@ -786,7 +744,7 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description_
         == "invalid_request: desc\nMore information can be found on http://test_url"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: desc\nMore information can be found on http://test_url"
+        "invalid_request: desc<br>More information can be found on http://test_url"
     )
 
 
@@ -807,7 +765,7 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description_
         == "invalid_request: desc\nMore information can be found on http://test_url\nAdditional information: {'other': ['test']}"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: desc\nMore information can be found on http://test_url\nAdditional information: {'other': ['test']}"
+        "invalid_request: desc<br>More information can be found on http://test_url<br>Additional information: {'other': ['test']}"
     )
 
 
@@ -828,7 +786,7 @@ def test_with_invalid_token_request_unauthorized_client_error(
         == "unauthorized_client: The client is not authorized to request an authorization code or an access token using this method."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: unauthorized_client: The client is not authorized to request an authorization code or an access token using this method."
+        "unauthorized_client: The client is not authorized to request an authorization code or an access token using this method."
     )
 
 
@@ -849,7 +807,7 @@ def test_with_invalid_token_request_access_denied_error(
         == "access_denied: The resource owner or authorization server denied the request."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: access_denied: The resource owner or authorization server denied the request."
+        "access_denied: The resource owner or authorization server denied the request."
     )
 
 
@@ -870,7 +828,7 @@ def test_with_invalid_token_request_unsupported_response_type_error(
         == "unsupported_response_type: The authorization server does not support obtaining an authorization code or an access token using this method."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: unsupported_response_type: The authorization server does not support obtaining an authorization code or an access token using this method."
+        "unsupported_response_type: The authorization server does not support obtaining an authorization code or an access token using this method."
     )
 
 
@@ -891,7 +849,7 @@ def test_with_invalid_token_request_invalid_scope_error(
         == "invalid_scope: The requested scope is invalid, unknown, or malformed."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_scope: The requested scope is invalid, unknown, or malformed."
+        "invalid_scope: The requested scope is invalid, unknown, or malformed."
     )
 
 
@@ -912,7 +870,7 @@ def test_with_invalid_token_request_server_error_error(
         == "server_error: The authorization server encountered an unexpected condition that prevented it from fulfilling the request. (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: server_error: The authorization server encountered an unexpected condition that prevented it from fulfilling the request. (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)"
+        "server_error: The authorization server encountered an unexpected condition that prevented it from fulfilling the request. (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)"
     )
 
 
@@ -933,7 +891,7 @@ def test_with_invalid_token_request_temporarily_unavailable_error(
         == "temporarily_unavailable: The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server.  (This error code is needed because a 503 Service Unavailable HTTP status code cannot be returned to the client via an HTTP redirect.)"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: temporarily_unavailable: The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server.  (This error code is needed because a 503 Service Unavailable HTTP status code cannot be returned to the client via an HTTP redirect.)"
+        "temporarily_unavailable: The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server.  (This error code is needed because a 503 Service Unavailable HTTP status code cannot be returned to the client via an HTTP redirect.)"
     )
 
 
@@ -974,9 +932,7 @@ def test_nonce_is_sent_if_provided_in_authorization_url(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_response_type_can_be_provided_in_url(
@@ -1017,9 +973,7 @@ def test_response_type_can_be_provided_in_url(
 
     requests.get("http://authorized_only", auth=auth)
 
-    tab.assert_success(
-        "You are now authenticated on 49b67a19e70f692c3fc09dd124e5782b41a86f4f4931e1cc938ccbb466eecf1b730edb9eb01e42005de77ce3dd5a016418f8e780f30c4477d71102fe03e39e62. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_authorization_url_is_mandatory():
