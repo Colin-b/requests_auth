@@ -131,6 +131,9 @@ def browser_mock(monkeypatch) -> BrowserMock:
         "get",
         lambda *args: mock,
     )
+    monkeypatch.setattr(
+        requests_auth.OAuth2, "display", requests_auth.DisplaySettings()
+    )
     yield mock
     mock.assert_checked()
 

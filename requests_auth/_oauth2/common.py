@@ -4,6 +4,7 @@ from typing import Optional
 import requests.auth
 
 from requests_auth._errors import InvalidGrantRequest, GrantNotProvided
+from requests_auth._oauth2.browser import DisplaySettings
 from requests_auth._oauth2.tokens import TokenMemoryCache
 
 
@@ -62,3 +63,4 @@ def request_new_grant_with_post(
 
 class OAuth2:
     token_cache = TokenMemoryCache()
+    display = DisplaySettings()

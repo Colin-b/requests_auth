@@ -18,11 +18,9 @@ keywords = [
     "authentication",
     "ntlm",
     "oauth2",
-    "azure-active-directory",
-    "azure-ad",
     "okta",
-    "apikey",
-    "multiple",
+    "aad",
+    "entra"
 ]
 classifiers=[
     "Development Status :: 5 - Production/Stable",

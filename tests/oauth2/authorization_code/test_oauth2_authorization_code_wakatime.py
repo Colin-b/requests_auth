@@ -5,6 +5,7 @@ import requests
 
 import requests_auth
 from requests_auth.testing import BrowserMock, browser_mock, token_cache  # noqa: F401
+from requests_auth._oauth2.tokens import _to_expiry
 
 
 def test_oauth2_authorization_code_flow_uses_provided_client(
@@ -240,7 +241,7 @@ def test_oauth2_authorization_code_flow_get_code_is_expired_after_30_seconds_by_
     token_cache._add_token(
         key="5d0adb208bdbecaf5cfb6de0bf4ba0aea52986f3fc5ea7bc30c4b2db449c17e5c9d15f9a3926476cdaf1c72e9f73c7cfdc624dde0187c38d8c6b04532770df2a",
         token="2YotnFZFEjr1zCsicMWpAA",
-        expiry=to_expiry(expires_in=29),
+        expiry=_to_expiry(expires_in=29),
     )
     # Meaning a new one will be requested
     tab = browser_mock.add_response(
@@ -290,7 +291,7 @@ def test_oauth2_authorization_code_flow_get_code_custom_expiry(
     token_cache._add_token(
         key="5d0adb208bdbecaf5cfb6de0bf4ba0aea52986f3fc5ea7bc30c4b2db449c17e5c9d15f9a3926476cdaf1c72e9f73c7cfdc624dde0187c38d8c6b04532770df2a",
         token="waka_tok_12345",
-        expiry=to_expiry(expires_in=29),
+        expiry=_to_expiry(expires_in=29),
     )
     responses.get(
         "https://authorized_only",
@@ -950,7 +951,7 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description_
         == "invalid_request: desc\nMore information can be found on https://test_url"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: desc<br>More information can be found on https://test_url"
+        "Unable to properly perform authentication: invalid_request: desc\nMore information can be found on https://test_url"
     )
 
 
@@ -975,7 +976,7 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description_
         == "invalid_request: desc\nMore information can be found on https://test_url\nAdditional information: {'other': ['test']}"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: desc<br>More information can be found on https://test_url<br>Additional information: {'other': ['test']}"
+        "Unable to properly perform authentication: invalid_request: desc\nMore information can be found on https://test_url\nAdditional information: {'other': ['test']}"
     )
 
 

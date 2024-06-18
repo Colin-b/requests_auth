@@ -18,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `requests_auth.JsonTokenFileCache` and `requests_auth.TokenMemoryCache` `get_token` method does not handle kwargs anymore, the `on_missing_token` callable does not expect any arguments anymore.
 - `requests_auth.JsonTokenFileCache` does not expose `tokens_path` or `last_save_time` attributes anymore and is also allowing `pathlib.Path` instances as cache location.
 - `requests_auth.TokenMemoryCache` does not expose `forbid_concurrent_cache_access` or `forbid_concurrent_missing_token_function_call` attributes anymore.
+- Browser display settings have been moved to a shared setting, see documentation for more information on `requests_auth.OAuth2.display`.
+  As a result the following classes no longer expose `success_display_time` and `failure_display_time` parameters.
+  - `requests_auth.OAuth2AuthorizationCode`.
+  - `requests_auth.OktaAuthorizationCode`.
+  - `requests_auth.WakaTimeAuthorizationCode`.
+  - `requests_auth.OAuth2AuthorizationCodePKCE`.
+  - `requests_auth.OktaAuthorizationCodePKCE`.
+  - `requests_auth.OAuth2Implicit`.
+  - `requests_auth.AzureActiveDirectoryImplicit`.
+  - `requests_auth.AzureActiveDirectoryImplicitIdToken`.
+  - `requests_auth.OktaImplicit`.
+  - `requests_auth.OktaImplicitIdToken`.
 
 ### Fixed
 - Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/).

@@ -5,6 +5,7 @@ from requests_auth._authentication import (
     NTLM,
     SupportMultiAuth,
 )
+from requests_auth._oauth2.browser import DisplaySettings
 from requests_auth._oauth2.common import OAuth2
 from requests_auth._oauth2.authorization_code import (
     OAuth2AuthorizationCode,
@@ -47,6 +48,7 @@ __all__ = [
     "HeaderApiKey",
     "QueryApiKey",
     "OAuth2",
+    "DisplaySettings",
     "OAuth2AuthorizationCodePKCE",
     "OktaAuthorizationCodePKCE",
     "OAuth2Implicit",

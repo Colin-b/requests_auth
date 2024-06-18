@@ -28,3 +28,25 @@ class BrowserAuth:
         self.failure_display_time = int(
             kwargs.pop("failure_display_time", None) or 5000
         )
+
+
+class DisplaySettings:
+    def __init__(
+        self,
+        *,
+        success_display_time: int = 1,
+        failure_display_time: int = 5_000,
+    ):
+        """
+        :param success_display_time: In case a code/token is successfully received,
+        this is the maximum amount of milliseconds the success page will be displayed in your browser.
+        Display the page for 1 millisecond by default.
+        :param failure_display_time: In case received code/token is not valid,
+        this is the maximum amount of milliseconds the failure page will be displayed in your browser.
+        Display the page for 5 seconds by default.
+        """
+        # Time is expressed in milliseconds
+        self.success_display_time = success_display_time
+
+        # Time is expressed in milliseconds
+        self.failure_display_time = failure_display_time
