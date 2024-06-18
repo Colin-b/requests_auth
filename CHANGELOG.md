@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [8.0.0] - 2024-06-18
 ### Added
 - Adding explicit support for Python `3.12`.
 - Publicly expose `requests_auth.SupportMultiAuth`, allowing multiple authentication support for every `requests` authentication class that exists.
@@ -222,7 +224,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v7.0.0...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v8.0.0...HEAD
+[8.0.0]: https://github.com/Colin-b/requests_auth/compare/v7.0.0...v8.0.0
 [7.0.0]: https://github.com/Colin-b/requests_auth/compare/v6.0.0...v7.0.0
 [6.0.0]: https://github.com/Colin-b/requests_auth/compare/v5.3.0...v6.0.0
 [5.3.0]: https://github.com/Colin-b/requests_auth/compare/v5.2.0...v5.3.0
