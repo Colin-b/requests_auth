@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adding explicit support for Python `3.12`.
 - Publicly expose `requests_auth.SupportMultiAuth`, allowing multiple authentication support for every `requests` authentication class that exists.
 - Publicly expose `requests_auth.TokenMemoryCache`, allowing to create custom Oauth2 token cache based on this default implementation.
+- You can now provide your own HTML success (`success_html`) and failure (`failure_html`) display via the new `OAuth2.display` shared setting. Refer to documentation for more details.
 - Thanks to the new `redirect_uri_domain` parameter on Authorization code (with and without PKCE) and Implicit flows, you can now provide the [FQDN](https://en.wikipedia.org/wiki/Fully_qualified_domain_name) to use in the `redirect_uri` when `localhost` (the default) is not allowed.
 - `requests_auth.WakaTimeAuthorizationCode` handling access to the [WakaTime API](https://wakatime.com/developers).
 
@@ -19,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `requests_auth.JsonTokenFileCache` does not expose `tokens_path` or `last_save_time` attributes anymore and is also allowing `pathlib.Path` instances as cache location.
 - `requests_auth.TokenMemoryCache` does not expose `forbid_concurrent_cache_access` or `forbid_concurrent_missing_token_function_call` attributes anymore.
 - Browser display settings have been moved to a shared setting, see documentation for more information on `requests_auth.OAuth2.display`.
+  The failure page will be displayed for 10 seconds by default instead of 5 seconds previously.
   As a result the following classes no longer expose `success_display_time` and `failure_display_time` parameters.
   - `requests_auth.OAuth2AuthorizationCode`.
   - `requests_auth.OktaAuthorizationCode`.
@@ -30,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `requests_auth.AzureActiveDirectoryImplicitIdToken`.
   - `requests_auth.OktaImplicit`.
   - `requests_auth.OktaImplicitIdToken`.
+- The authentication success and failure displayed in the browser were revamped to be more user-friendly. `requests_auth.testing` was modified to accommodate this change:
+  - `tab.assert_success` `expected_message` parameter was removed.
+  - `tab.assert_failure` `expected_message` parameter should not be prefixed with `Unable to properly perform authentication: ` anymore and `\n` in the message should be replaced with `<br>`.
 
 ### Fixed
 - Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/).

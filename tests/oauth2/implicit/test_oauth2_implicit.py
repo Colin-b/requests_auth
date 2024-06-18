@@ -72,12 +72,8 @@ def test_oauth2_implicit_flow_token_is_not_reused_if_a_url_parameter_is_changing
 
     requests.get("http://authorized_only", auth=auth2)
 
-    tab1.assert_success(
-        "You are now authenticated on 5652a8138e3a99dab7b94532c73ed5b10f19405316035d1efdc8bf7e0713690485254c2eaff912040eac44031889ef0a5ed5730c8a111541120d64a898c31afe. You may close this tab."
-    )
-    tab2.assert_success(
-        "You are now authenticated on 5c3940ccf78ac6e7d6d8d06782d9fd95a533aa5425b616eaa38dc3ec9508fbd55152c58a0d8dd8a087e76b77902559285819a41cb78ce8713e5a3b974bf07ce9. You may close this tab."
-    )
+    tab1.assert_success()
+    tab2.assert_success()
 
 
 def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(
@@ -113,9 +109,7 @@ def test_oauth2_implicit_flow_token_is_reused_if_only_nonce_differs(
     )
 
     requests.get("http://authorized_only", auth=auth2)
-    tab.assert_success(
-        "You are now authenticated on 67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_token_can_be_requested_on_a_custom_server_port(
@@ -141,9 +135,7 @@ def test_oauth2_implicit_flow_token_can_be_requested_on_a_custom_server_port(
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_uses_redirect_uri_domain(
@@ -167,8 +159,51 @@ def test_oauth2_implicit_flow_uses_redirect_uri_domain(
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
+    tab.assert_success()
+
+
+def test_oauth2_implicit_flow_uses_custom_success(
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
+):
+    auth = requests_auth.OAuth2Implicit("http://provide_token")
+    requests_auth.OAuth2.display.success_html = (
+        "<body><div>SUCCESS: {display_time}</div></body>"
+    )
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
+    token = create_token(expiry_in_1_hour)
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000",
+        displayed_html="<body><div>SUCCESS: {display_time}</div></body>",
+        data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
+    )
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+    tab.assert_success()
+
+
+def test_oauth2_implicit_flow_uses_custom_failure(
+    token_cache, browser_mock: BrowserMock
+):
+    auth = requests_auth.OAuth2Implicit("http://provide_token")
+    requests_auth.OAuth2.display.failure_html = "FAILURE: {display_time}\n{information}"
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_request",
+        displayed_html="FAILURE: {display_time}\n{information}",
+    )
+
+    with pytest.raises(requests_auth.InvalidGrantRequest):
+        requests.get("http://authorized_only", auth=auth)
+
+    tab.assert_failure(
+        "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
     )
 
 
@@ -191,9 +226,7 @@ def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_defa
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_token_is_expired_after_30_seconds_by_default(
@@ -225,9 +258,7 @@ def test_oauth2_implicit_flow_token_is_expired_after_30_seconds_by_default(
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_token_custom_expiry(
@@ -325,7 +356,7 @@ def test_state_change(token_cache, responses: RequestsMock, browser_mock: Browse
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success("You are now authenticated on 123456. You may close this tab.")
+    tab.assert_success()
 
 
 def test_empty_token_is_invalid(token_cache, browser_mock: BrowserMock):
@@ -340,9 +371,7 @@ def test_empty_token_is_invalid(token_cache, browser_mock: BrowserMock):
             auth=requests_auth.OAuth2Implicit("http://provide_token"),
         )
     assert str(exception_info.value) == " is invalid."
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_token_without_expiry_is_invalid(token_cache, browser_mock: BrowserMock):
@@ -357,9 +386,7 @@ def test_token_without_expiry_is_invalid(token_cache, browser_mock: BrowserMock)
             auth=requests_auth.OAuth2Implicit("http://provide_token"),
         )
     assert str(exception_info.value) == "Expiry (exp) is not provided in None."
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_get_token_is_sent_in_authorization_header_by_default(
@@ -380,9 +407,7 @@ def test_oauth2_implicit_flow_get_token_is_sent_in_authorization_header_by_defau
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_token_is_sent_in_requested_field(
@@ -406,9 +431,7 @@ def test_oauth2_implicit_flow_token_is_sent_in_requested_field(
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_can_send_a_custom_response_type_and_expects_token_to_be_received_with_this_name(
@@ -434,9 +457,7 @@ def test_oauth2_implicit_flow_can_send_a_custom_response_type_and_expects_token_
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 67b95d2c7555751d1d72c97c7cd9ad6630c8395e0eaa51ee86ac7e451211ded9cd98a7190848789fe93632d8960425710e93f1f5549c6c6bc328bf3865a85ff2. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_is_id_token(
@@ -460,9 +481,7 @@ def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_is_id_t
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_in_url_is_id_token(
@@ -484,9 +503,7 @@ def test_oauth2_implicit_flow_expects_token_in_id_token_if_response_type_in_url_
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 87c4108ec0eb03599335333a40434a36674269690b6957fef684bfb6c5a849ce660ef7031aa874c44d67cd3eada8febdfce41efb1ed3bc53a0a7e716cbba025a. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_expects_token_to_be_stored_in_access_token_by_default(
@@ -508,9 +525,7 @@ def test_oauth2_implicit_flow_expects_token_to_be_stored_in_access_token_by_defa
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_token_is_reused_if_not_expired(
@@ -540,9 +555,7 @@ def test_oauth2_implicit_flow_token_is_reused_if_not_expired(
     )
 
     requests.get("http://authorized_only", auth=oauth2)
-    tab.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab.assert_success()
 
 
 def test_oauth2_implicit_flow_post_failure_if_token_is_not_provided(
@@ -559,9 +572,7 @@ def test_oauth2_implicit_flow_post_failure_if_token_is_not_provided(
             auth=requests_auth.OAuth2Implicit("http://provide_token"),
         )
     assert str(exception_info.value) == "access_token not provided within {}."
-    tab.assert_failure(
-        "Unable to properly perform authentication: access_token not provided within {}."
-    )
+    tab.assert_failure("access_token not provided within {}.")
 
 
 def test_oauth2_implicit_flow_get_failure_if_token_is_not_provided(
@@ -577,9 +588,7 @@ def test_oauth2_implicit_flow_get_failure_if_token_is_not_provided(
             auth=requests_auth.OAuth2Implicit("http://provide_token"),
         )
     assert str(exception_info.value) == "access_token not provided within {}."
-    tab.assert_failure(
-        "Unable to properly perform authentication: access_token not provided within {}."
-    )
+    tab.assert_failure("access_token not provided within {}.")
 
 
 def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(
@@ -603,9 +612,7 @@ def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(
         str(exception_info.value)
         == f"state not provided within {{'access_token': ['{token}']}}."
     )
-    tab.assert_failure(
-        f"Unable to properly perform authentication: state not provided within {{'access_token': ['{token}']}}."
-    )
+    tab.assert_failure(f"state not provided within {{'access_token': ['{token}']}}.")
 
 
 def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(
@@ -629,7 +636,7 @@ def test_oauth2_implicit_flow_get_failure_if_state_is_not_provided(
         == f"state not provided within {{'access_token': ['{token}'], 'requests_auth_redirect': ['1']}}."
     )
     tab.assert_failure(
-        f"Unable to properly perform authentication: state not provided within {{'access_token': ['{token}'], 'requests_auth_redirect': ['1']}}."
+        f"state not provided within {{'access_token': ['{token}'], 'requests_auth_redirect': ['1']}}."
     )
 
 
@@ -650,7 +657,7 @@ def test_with_invalid_token_request_invalid_request_error(
         == "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
+        "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
     )
 
 
@@ -667,9 +674,7 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description(
             auth=requests_auth.OAuth2Implicit("http://provide_token"),
         )
     assert str(exception_info.value) == "invalid_request: desc"
-    tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: desc"
-    )
+    tab.assert_failure("invalid_request: desc")
 
 
 def test_with_invalid_token_request_invalid_request_error_and_error_description_and_uri(
@@ -689,7 +694,7 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description_
         == "invalid_request: desc\nMore information can be found on http://test_url"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: desc\nMore information can be found on http://test_url"
+        "invalid_request: desc<br>More information can be found on http://test_url"
     )
 
 
@@ -710,7 +715,7 @@ def test_with_invalid_token_request_invalid_request_error_and_error_description_
         == "invalid_request: desc\nMore information can be found on http://test_url\nAdditional information: {'other': ['test']}"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_request: desc\nMore information can be found on http://test_url\nAdditional information: {'other': ['test']}"
+        "invalid_request: desc<br>More information can be found on http://test_url<br>Additional information: {'other': ['test']}"
     )
 
 
@@ -731,7 +736,7 @@ def test_with_invalid_token_request_unauthorized_client_error(
         == "unauthorized_client: The client is not authorized to request an authorization code or an access token using this method."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: unauthorized_client: The client is not authorized to request an authorization code or an access token using this method."
+        "unauthorized_client: The client is not authorized to request an authorization code or an access token using this method."
     )
 
 
@@ -752,7 +757,7 @@ def test_with_invalid_token_request_access_denied_error(
         == "access_denied: The resource owner or authorization server denied the request."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: access_denied: The resource owner or authorization server denied the request."
+        "access_denied: The resource owner or authorization server denied the request."
     )
 
 
@@ -773,7 +778,7 @@ def test_with_invalid_token_request_unsupported_response_type_error(
         == "unsupported_response_type: The authorization server does not support obtaining an authorization code or an access token using this method."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: unsupported_response_type: The authorization server does not support obtaining an authorization code or an access token using this method."
+        "unsupported_response_type: The authorization server does not support obtaining an authorization code or an access token using this method."
     )
 
 
@@ -794,7 +799,7 @@ def test_with_invalid_token_request_invalid_scope_error(
         == "invalid_scope: The requested scope is invalid, unknown, or malformed."
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: invalid_scope: The requested scope is invalid, unknown, or malformed."
+        "invalid_scope: The requested scope is invalid, unknown, or malformed."
     )
 
 
@@ -815,7 +820,7 @@ def test_with_invalid_token_request_server_error_error(
         == "server_error: The authorization server encountered an unexpected condition that prevented it from fulfilling the request. (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: server_error: The authorization server encountered an unexpected condition that prevented it from fulfilling the request. (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)"
+        "server_error: The authorization server encountered an unexpected condition that prevented it from fulfilling the request. (This error code is needed because a 500 Internal Server Error HTTP status code cannot be returned to the client via an HTTP redirect.)"
     )
 
 
@@ -836,7 +841,7 @@ def test_with_invalid_token_request_temporarily_unavailable_error(
         == "temporarily_unavailable: The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server.  (This error code is needed because a 503 Service Unavailable HTTP status code cannot be returned to the client via an HTTP redirect.)"
     )
     tab.assert_failure(
-        "Unable to properly perform authentication: temporarily_unavailable: The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server.  (This error code is needed because a 503 Service Unavailable HTTP status code cannot be returned to the client via an HTTP redirect.)"
+        "temporarily_unavailable: The authorization server is currently unable to handle the request due to a temporary overloading or maintenance of the server.  (This error code is needed because a 503 Service Unavailable HTTP status code cannot be returned to the client via an HTTP redirect.)"
     )
 
 
@@ -899,9 +904,5 @@ def test_oauth2_implicit_flow_token_is_requested_again_if_expired(
     )
 
     requests.get("http://authorized_only", auth=auth)
-    tab1.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
-    tab2.assert_success(
-        "You are now authenticated on 42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521. You may close this tab."
-    )
+    tab1.assert_success()
+    tab2.assert_success()

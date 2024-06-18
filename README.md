@@ -5,7 +5,7 @@
 <a href="https://github.com/Colin-b/requests_auth/actions"><img alt="Build status" src="https://github.com/Colin-b/requests_auth/workflows/Release/badge.svg"></a>
 <a href="https://github.com/Colin-b/requests_auth/actions"><img alt="Coverage" src="https://img.shields.io/badge/coverage-100%25-brightgreen"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<a href="https://github.com/Colin-b/requests_auth/actions"><img alt="Number of tests" src="https://img.shields.io/badge/tests-311 passed-blue"></a>
+<a href="https://github.com/Colin-b/requests_auth/actions"><img alt="Number of tests" src="https://img.shields.io/badge/tests-363 passed-blue"></a>
 <a href="https://pypi.org/project/requests-auth/"><img alt="Number of downloads" src="https://img.shields.io/pypi/dm/requests_auth"></a>
 </p>
 
@@ -703,7 +703,9 @@ The following parameters can be provided to `DisplaySettings`:
 | Name                   | Description                                                                                                                                                                      | Default value |
 |:-----------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------|
 | `success_display_time` | In case a code or token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                 | 1             |
-| `failure_display_time` | In case received code or token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                      | 5_000         |
+| `success_html`         | In case a code or token is successfully received, this is the success page that will be displayed in your browser. `{display_time}` is expected in this content.                 |               |
+| `failure_display_time` | In case received code or token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                      | 10_000        |
+| `failure_html`         | In case received code or token is not valid, this is the failure page that will be displayed in your browser. `{information}` and `{display_time}` are expected in this content. |               |
 
 ## API key in header
 
@@ -911,9 +913,7 @@ def test_something(browser_mock: BrowserMock):
 
     # perform code using authentication
 
-    tab.assert_success(
-        "You are now authenticated on 1234 You may close this tab."
-    )
+    tab.assert_success()
 ```
 
 ## Endorsements

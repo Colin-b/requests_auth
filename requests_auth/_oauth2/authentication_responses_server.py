@@ -36,7 +36,10 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
             self.send_html(
-                self.error_page(f"Unable to properly perform authentication: {e}")
+                OAuth2.display.failure_html.format(
+                    display_time=OAuth2.display.failure_display_time,
+                    information=str(e).replace("\n", "<br>"),
+                )
             )
 
     def do_POST(self):
@@ -48,7 +51,10 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
             self.server.request_error = e
             logger.exception("Unable to properly perform authentication.")
             self.send_html(
-                self.error_page(f"Unable to properly perform authentication: {e}")
+                OAuth2.display.failure_html.format(
+                    display_time=OAuth2.display.failure_display_time,
+                    information=str(e).replace("\n", "<br>"),
+                )
             )
 
     def _parse_grant(self, arguments: dict):
@@ -67,15 +73,15 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         state = states[0]
         self.server.grant = state, grant
         self.send_html(
-            self.success_page(
-                f"You are now authenticated on {state}. You may close this tab."
+            OAuth2.display.success_html.format(
+                display_time=OAuth2.display.success_display_time
             )
         )
 
     def _get_form(self):
         content_length = int(self.headers.get("Content-Length", 0))
         body_str = self.rfile.read(content_length).decode("utf-8")
-        return parse_qs(body_str, keep_blank_values=1)
+        return parse_qs(body_str, keep_blank_values=True)
 
     def _get_params(self):
         return parse_qs(urlparse(self.path).query)
@@ -86,28 +92,6 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(str.encode(html_content))
         logger.debug("HTML content sent to client.")
-
-    def success_page(self, text: str):
-        return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {OAuth2.display.success_display_time})" style="
-        color: #4F8A10;
-        background-color: #DFF2BF;
-        font-size: xx-large;
-        display: flex;
-        align-items: center;
-        justify-content: center;">
-            <div style="border: 1px solid;">{text}</div>
-        </body>"""
-
-    def error_page(self, text: str):
-        return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {OAuth2.display.failure_display_time})" style="
-        color: #D8000C;
-        background-color: #FFBABA;
-        font-size: xx-large;
-        display: flex;
-        align-items: center;
-        justify-content: center;">
-            <div style="border: 1px solid;">{text}</div>
-        </body>"""
 
     def fragment_redirect_page(self):
         """Return a page with JS that calls back the server on the url
@@ -180,7 +164,7 @@ def request_new_grant(grant_details: GrantDetails) -> (str, str):
     :raises InvalidGrantRequest: If the request was invalid.
     :raises TimeoutOccurred: If not retrieved within timeout.
     :raises GrantNotProvided: If grant is not provided in response (but no error occurred).
-    :raises StateNotProvided: If state if not provided in addition to the grant.
+    :raises StateNotProvided: If state is not provided in addition to the grant.
     """
     logger.debug(f"Requesting new {grant_details.name}...")
 
