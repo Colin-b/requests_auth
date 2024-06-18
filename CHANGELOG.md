@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Publicly expose `requests_auth.SupportMultiAuth`, allowing multiple authentication support for every `requests` authentication class that exists.
 - Publicly expose `requests_auth.TokenMemoryCache`, allowing to create custom Oauth2 token cache based on this default implementation.
 - Thanks to the new `redirect_uri_domain` parameter on Authorization code (with and without PKCE) and Implicit flows, you can now provide the [FQDN](https://en.wikipedia.org/wiki/Fully_qualified_domain_name) to use in the `redirect_uri` when `localhost` (the default) is not allowed.
+- `requests_auth.WakaTimeAuthorizationCode` handling access to the [WakaTime API](https://wakatime.com/developers).
 
 ### Changed
 - Except for `requests_auth.testing`, only direct access via `requests_auth.` was considered publicly exposed. This is now explicit, as inner packages are now using private prefix (`_`).
@@ -17,6 +18,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `requests_auth.JsonTokenFileCache` and `requests_auth.TokenMemoryCache` `get_token` method does not handle kwargs anymore, the `on_missing_token` callable does not expect any arguments anymore.
 - `requests_auth.JsonTokenFileCache` does not expose `tokens_path` or `last_save_time` attributes anymore and is also allowing `pathlib.Path` instances as cache location.
 - `requests_auth.TokenMemoryCache` does not expose `forbid_concurrent_cache_access` or `forbid_concurrent_missing_token_function_call` attributes anymore.
+- Browser display settings have been moved to a shared setting, see documentation for more information on `requests_auth.OAuth2.display`.
+  As a result the following classes no longer expose `success_display_time` and `failure_display_time` parameters.
+  - `requests_auth.OAuth2AuthorizationCode`.
+  - `requests_auth.OktaAuthorizationCode`.
+  - `requests_auth.WakaTimeAuthorizationCode`.
+  - `requests_auth.OAuth2AuthorizationCodePKCE`.
+  - `requests_auth.OktaAuthorizationCodePKCE`.
+  - `requests_auth.OAuth2Implicit`.
+  - `requests_auth.AzureActiveDirectoryImplicit`.
+  - `requests_auth.AzureActiveDirectoryImplicitIdToken`.
+  - `requests_auth.OktaImplicit`.
+  - `requests_auth.OktaImplicitIdToken`.
 
 ### Fixed
 - Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/).
@@ -24,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `requests_auth.OktaClientCredentials` `scope` parameter is now mandatory and does not default to `openid` anymore.
 - `requests_auth.OktaClientCredentials` will now display a more user-friendly error message in case Okta instance is not provided.
 - Tokens cache `DEBUG` logs will not display tokens anymore.
+- Handle `text/html; charset=utf-8` content-type in token responses.
 
 ### Removed
 - Removing support for Python `3.7`.

@@ -14,7 +14,7 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
 <p align="center">
     <a href="https://oauth.net/2/"><img alt="OAuth2" src="https://oauth.net/images/oauth-2-sm.png"></a>
     <a href="https://www.okta.com"><img alt="Okta" src="https://www.okta.com/sites/all/themes/Okta/images/logos/developer/Dev_Logo-03_Large.png" height="120"></a>
-    <a href="https://azure.microsoft.com/en-us/services/active-directory/"><img alt="Azure Active Directory (AD)" src="https://azurecomcdn.azureedge.net/cvt-cda59ccd0aa5ced6ff5a2052417cf596b92980921e88e667127eaca2232a31ab/images/shared/services/pricing-glyph-lock.svg" height="120"></a>
+    <a href="https://www.microsoft.com/en-us/security/business/identity-access/microsoft-entra-id"><img alt="Microsoft Entra ID, formerly Azure Active Directory (AD)" src="https://svgshare.com/i/12u_.svg" height="120"></a>
 </p>
 <p align="center">Some of the supported authentication</p>
 
@@ -29,11 +29,12 @@ Provides authentication classes to be used with [`requests`][1] [authentication 
   - [Client Credentials Flow](#client-credentials-flow)
     - [Okta](#okta-oauth2-client-credentials)
   - [Implicit Flow](#implicit-flow)
-    - [Azure AD (Access Token)](#microsoft---azure-active-directory-oauth2-access-token)
-    - [Azure AD (ID token)](#microsoft---azure-active-directory-openid-connect-id-token)
+    - [Microsoft Entra (Access Token)](#microsoft---azure-active-directory-oauth2-access-token)
+    - [Microsoft Entra (ID token)](#microsoft---azure-active-directory-openid-connect-id-token)
     - [Okta (Access Token)](#okta-oauth2-implicit-access-token)
     - [Okta (ID token)](#okta-openid-connect-implicit-id-token)
   - [Managing token cache](#managing-token-cache)
+  - [Managing browser](#managing-the-web-browser)
 - API key
   - [In header](#api-key-in-header)
   - [In query](#api-key-in-query)
@@ -61,6 +62,10 @@ from requests_auth import OAuth2AuthorizationCode
 requests.get('https://www.example.com', auth=OAuth2AuthorizationCode('https://www.authorization.url', 'https://www.token.url'))
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 #### Parameters
 
 | Name                    | Description                                                                                                                                                                                                                                                                                       | Mandatory  | Default value  |
@@ -71,8 +76,6 @@ requests.get('https://www.example.com', auth=OAuth2AuthorizationCode('https://ww
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional   | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 code will be started.                                                                                                                                                                                                                      | Optional   | 5000           |
 | `timeout`               | Maximum amount of seconds to wait for a code or a token to be received once requested.                                                                                                                                                                                                            | Optional   | 60             |
-| `success_display_time`  | In case a code is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                           | Optional   | 1              |
-| `failure_display_time`  | In case received code is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                                | Optional   | 5000           |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional   | Authorization  |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional   | Bearer {token} |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL.                                                                                                                                                                                                          | Optional   | code           |
@@ -114,6 +117,10 @@ okta = OktaAuthorizationCode(instance='testserver.okta-emea.com', client_id='542
 requests.get('https://www.example.com', auth=okta)
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 ###### Parameters
 
 | Name                    | Description                                                                                                                                                                                                                                                                                       | Mandatory  | Default value                                |
@@ -130,8 +137,6 @@ requests.get('https://www.example.com', auth=okta)
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional   | ''                                           |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started.                                                                                                                                                                                                                     | Optional   | 5000                                         |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested.                                                                                                                                                                                                                      | Optional   | 60                                           |
-| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                          | Optional   | 1                                            |
-| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                               | Optional   | 5000                                         |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional   | Authorization                                |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional   | Bearer {token}                               |
 | `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance.                                                                                                                                                                        | Optional   |                                              |
@@ -143,6 +148,46 @@ Usual extra parameters are:
 | Name            | Description                                                          |
 |:----------------|:---------------------------------------------------------------------|
 | `prompt`        | none to avoid prompting the user if a session is already opened.     |
+
+##### WakaTime (OAuth2 Authorization Code)
+
+[WakaTime Authorization Code Grant](https://wakatime.com/developers#authentication) providing access tokens is supported.
+
+Use `requests_auth.WakaTimeAuthorizationCode` to configure this kind of authentication.
+
+```python
+import requests
+from requests_auth import WakaTimeAuthorizationCode
+
+
+waka_time = WakaTimeAuthorizationCode(client_id="aPJQV0op6Pu3b66MWDi9b1wB", client_secret="waka_sec_0c5MB", scope="email")
+requests.get('https://wakatime.com/api/v1/users/current', auth=waka_time)
+```
+
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
+###### Parameters
+
+| Name                    | Description                | Mandatory | Default value                                |
+|:------------------------|:---------------------------|:----------|:---------------------------------------------|
+| `client_id`             | WakaTime Application Identifier (formatted as an Universal Unique Identifier). | Mandatory |                                              |
+| `client_secret`         | WakaTime Application Secret (formatted as waka_sec_ followed by an Universal Unique Identifier). | Mandatory |                                              |
+| `scope`                 | Scope parameter sent in query. Can also be a list of scopes. | Mandatory |                                              |
+| `response_type`         | Value of the response_type query parameter if not already provided in authorization URL. | Optional  | token                                        |
+| `token_field_name`      | Field name containing the token. | Optional  | access_token                                 |
+| `early_expiry`          | Number of seconds before actual token expiry where token will be considered as expired. Used to ensure token will not expire between the time of retrieval and the time the request reaches the actual server. Set it to 0 to deactivate this feature and use the same token until actual expiry. | Optional  | 30.0                                         |
+| `nonce`                 | Refer to [OpenID ID Token specifications][3] for more details. | Optional  | Newly generated Universal Unique Identifier. |
+| `redirect_uri_domain`   | [FQDN](https://en.wikipedia.org/wiki/Fully_qualified_domain_name) to use in the redirect_uri when localhost is not allowed.                                                                                                                                                                       | Optional   | localhost      |
+| `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional   | ''             |
+| `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started. | Optional  | 5000                                         |
+| `timeout`               | Maximum amount of seconds to wait for a token to be received once requested. | Optional  | 60                                           |
+| `header_name`           | Name of the header field used to send token. | Optional  | Authorization                                |
+| `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token. | Optional  | Bearer {token}                               |
+| `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance.                                                                                                                                                                        | Optional   |                                              |
+
+Any other parameter will be put as query parameter in the authorization URL.
 
 ### Authorization Code Flow with Proof Key for Code Exchange
 
@@ -157,6 +202,10 @@ from requests_auth import OAuth2AuthorizationCodePKCE
 requests.get('https://www.example.com', auth=OAuth2AuthorizationCodePKCE('https://www.authorization.url', 'https://www.token.url'))
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 #### Parameters 
 
 | Name                    | Description                                                                                                                                                                                                                                                                                       | Mandatory  | Default value  |
@@ -167,8 +216,6 @@ requests.get('https://www.example.com', auth=OAuth2AuthorizationCodePKCE('https:
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional   | ''             |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 code will be started.                                                                                                                                                                                                                      | Optional   | 5000           |
 | `timeout`               | Maximum amount of seconds to wait for a code or a token to be received once requested.                                                                                                                                                                                                            | Optional   | 60             |
-| `success_display_time`  | In case a code is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                           | Optional   | 1              |
-| `failure_display_time`  | In case received code is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                                | Optional   | 5000           |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional   | Authorization  |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional   | Bearer {token} |
 | `response_type`         | Value of the response_type query parameter if not already provided in authorization URL.                                                                                                                                                                                                          | Optional   | code           |
@@ -208,6 +255,10 @@ okta = OktaAuthorizationCodePKCE(instance='testserver.okta-emea.com', client_id=
 requests.get('https://www.example.com', auth=okta)
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 ###### Parameters
 
 | Name                    | Description                                                                                                                                                                                                                                                                                       | Mandatory  | Default value                                |
@@ -225,8 +276,6 @@ requests.get('https://www.example.com', auth=okta)
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional   | ''                                           |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started.                                                                                                                                                                                                                     | Optional   | 5000                                         |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested.                                                                                                                                                                                                                      | Optional   | 60                                           |
-| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                          | Optional   | 1                                            |
-| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                               | Optional   | 5000                                         |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional   | Authorization                                |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional   | Bearer {token}                               |
 | `session`               | `requests.Session` instance that will be used to request the token. Use it to provide a custom proxying rule for instance.                                                                                                                                                                        | Optional   |                                              |
@@ -252,6 +301,9 @@ from requests_auth import OAuth2ResourceOwnerPasswordCredentials
 
 requests.get('https://www.example.com', auth=OAuth2ResourceOwnerPasswordCredentials('https://www.token.url', 'user name', 'user password'))
 ```
+
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
 
 #### Parameters
 
@@ -292,6 +344,9 @@ okta = OktaResourceOwnerPasswordCredentials(instance='testserver.okta-emea.com',
 requests.get('https://www.example.com', auth=okta)
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+
 ###### Parameters
 
 | Name                   | Description                                                                                                                                                                                                                                                                                       | Mandatory  | Default value  |
@@ -323,6 +378,9 @@ from requests_auth import OAuth2ClientCredentials
 
 requests.get('https://www.example.com', auth=OAuth2ClientCredentials('https://www.token.url', client_id='id', client_secret='secret'))
 ```
+
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
 
 #### Parameters
 
@@ -362,6 +420,9 @@ okta = OktaClientCredentials(instance='testserver.okta-emea.com', client_id='542
 requests.get('https://www.example.com', auth=okta)
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+
 ###### Parameters
 
 | Name                   | Description                                                                                                                                                                                                                                                                                       | Mandatory  | Default value  |
@@ -393,6 +454,10 @@ from requests_auth import OAuth2Implicit
 requests.get('https://www.example.com', auth=OAuth2Implicit('https://www.authorization.url'))
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 #### Parameters
 
 | Name                    | Description                                                                                                                                                                                                                                                                                       | Mandatory | Default value                                                 |
@@ -405,8 +470,6 @@ requests.get('https://www.example.com', auth=OAuth2Implicit('https://www.authori
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional  | ''                                                            |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started.                                                                                                                                                                                                                     | Optional  | 5000                                                          |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested.                                                                                                                                                                                                                      | Optional  | 60                                                            |
-| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                          | Optional  | 1                                                             |
-| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                               | Optional  | 5000                                                          |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional  | Authorization                                                 |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional  | Bearer {token}                                                |
 
@@ -441,6 +504,10 @@ aad = AzureActiveDirectoryImplicit(tenant_id='45239d18-c68c-4c47-8bdd-ce71ea1d50
 requests.get('https://www.example.com', auth=aad)
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 You can retrieve Microsoft Azure Active Directory application information thanks to the [application list on Azure portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/AllApps/menuId/).
 
 ###### Parameters
@@ -457,8 +524,6 @@ You can retrieve Microsoft Azure Active Directory application information thanks
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional   | ''                                           |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started.                                                                                                                                                                                                                     | Optional   | 5000                                         |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested.                                                                                                                                                                                                                      | Optional   | 60                                           |
-| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                          | Optional   | 1                                            |
-| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                               | Optional   | 5000                                         |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional   | Authorization                                |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional   | Bearer {token}                               |
 
@@ -485,6 +550,10 @@ aad = AzureActiveDirectoryImplicitIdToken(tenant_id='45239d18-c68c-4c47-8bdd-ce7
 requests.get('https://www.example.com', auth=aad)
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 You can retrieve Microsoft Azure Active Directory application information thanks to the [application list on Azure portal](https://portal.azure.com/#blade/Microsoft_AAD_IAM/StartboardApplicationsMenuBlade/AllApps/menuId/).
 
 ###### Parameters
@@ -501,8 +570,6 @@ You can retrieve Microsoft Azure Active Directory application information thanks
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional  | ''                                           |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started.                                                                                                                                                                                                                     | Optional  | 5000                                         |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested.                                                                                                                                                                                                                      | Optional  | 60                                           |
-| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                          | Optional  | 1                                            |
-| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                               | Optional  | 5000                                         |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional  | Authorization                                |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional  | Bearer {token}                               |
 
@@ -529,6 +596,10 @@ okta = OktaImplicit(instance='testserver.okta-emea.com', client_id='54239d18-c68
 requests.get('https://www.example.com', auth=okta)
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 ###### Parameters
 
 | Name                    | Description                                                                                                                                                                                                                                                                                       | Mandatory  | Default value                                |
@@ -545,8 +616,6 @@ requests.get('https://www.example.com', auth=okta)
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional   | ''                                           |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started.                                                                                                                                                                                                                     | Optional   | 5000                                         |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested.                                                                                                                                                                                                                      | Optional   | 60                                           |
-| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                          | Optional   | 1                                            |
-| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                               | Optional   | 5000                                         |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional   | Authorization                                |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional   | Bearer {token}                               |
 
@@ -573,6 +642,10 @@ okta = OktaImplicitIdToken(instance='testserver.okta-emea.com', client_id='54239
 requests.get('https://www.example.com', auth=okta)
 ```
 
+Note:
+* You can persist tokens thanks to [the token cache](#managing-token-cache).
+* You can tweak web browser interaction thanks to [the display settings](#managing-the-web-browser).
+
 ###### Parameters
 
 | Name                    | Description                                                                                                                                                                                                                                                                                       | Mandatory  | Default value                                |
@@ -589,8 +662,6 @@ requests.get('https://www.example.com', auth=okta)
 | `redirect_uri_endpoint` | Custom endpoint that will be used as redirect_uri the following way: http://<redirect_uri_domain>:<redirect_uri_port>/<redirect_uri_endpoint>.                                                                                                                                                    | Optional   | ''                                           |
 | `redirect_uri_port`     | The port on which the server listening for the OAuth 2 token will be started.                                                                                                                                                                                                                     | Optional   | 5000                                         |
 | `timeout`               | Maximum amount of seconds to wait for a token to be received once requested.                                                                                                                                                                                                                      | Optional   | 60                                           |
-| `success_display_time`  | In case a token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                                                                                                                                          | Optional   | 1                                            |
-| `failure_display_time`  | In case received token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                                                                                                                                               | Optional   | 5000                                         |
 | `header_name`           | Name of the header field used to send token.                                                                                                                                                                                                                                                      | Optional   | Authorization                                |
 | `header_value`          | Format used to send the token value. "{token}" must be present as it will be replaced by the actual token.                                                                                                                                                                                        | Optional   | Bearer {token}                               |
 
@@ -606,17 +677,33 @@ Usual extra parameters are:
 
 To avoid asking for a new token every new request, a token cache is used.
 
-Default cache is in memory but it is also possible to use a physical cache.
+Default cache is in memory, but it is also possible to use a physical cache.
 
-You need to provide the location of your token cache file. It can be a full or relative path.
+You need to provide the location of your token cache file. It can be a full or relative path (`str` or `pathlib.Path).
 
-If the file already exists it will be used, if the file do not exists it will be created.
+If the file already exists it will be used, if the file do not exist it will be created.
 
 ```python
 from requests_auth import OAuth2, JsonTokenFileCache
 
 OAuth2.token_cache = JsonTokenFileCache('path/to/my_token_cache.json')
 ```
+
+### Managing the web browser
+
+You can configure the browser display settings thanks to `requests_auth.OAuth2.display` as in the following:
+```python
+from requests_auth import OAuth2, DisplaySettings
+
+OAuth2.display = DisplaySettings()
+```
+
+The following parameters can be provided to `DisplaySettings`:
+
+| Name                   | Description                                                                                                                                                                      | Default value |
+|:-----------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------|
+| `success_display_time` | In case a code or token is successfully received, this is the maximum amount of milliseconds the success page will be displayed in your browser.                                 | 1             |
+| `failure_display_time` | In case received code or token is not valid, this is the maximum amount of milliseconds the failure page will be displayed in your browser.                                      | 5_000         |
 
 ## API key in header
 

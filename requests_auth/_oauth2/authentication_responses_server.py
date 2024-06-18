@@ -5,6 +5,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 from socket import socket
 
+from requests_auth._oauth2.common import OAuth2
+
 from requests_auth._errors import *
 
 logger = logging.getLogger(__name__)
@@ -86,7 +88,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         logger.debug("HTML content sent to client.")
 
     def success_page(self, text: str):
-        return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {self.server.grant_details.reception_success_display_time})" style="
+        return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {OAuth2.display.success_display_time})" style="
         color: #4F8A10;
         background-color: #DFF2BF;
         font-size: xx-large;
@@ -97,7 +99,7 @@ class OAuth2ResponseHandler(BaseHTTPRequestHandler):
         </body>"""
 
     def error_page(self, text: str):
-        return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {self.server.grant_details.reception_failure_display_time})" style="
+        return f"""<body onload="window.open('', '_self', ''); window.setTimeout(close, {OAuth2.display.failure_display_time})" style="
         color: #D8000C;
         background-color: #FFBABA;
         font-size: xx-large;
@@ -137,15 +139,11 @@ class GrantDetails:
         url: str,
         name: str,
         reception_timeout: float,
-        reception_success_display_time: int,
-        reception_failure_display_time: int,
         redirect_uri_port: int,
     ):
         self.url = url
         self.name = name
         self.reception_timeout = reception_timeout
-        self.reception_success_display_time = reception_success_display_time
-        self.reception_failure_display_time = reception_failure_display_time
         self.redirect_uri_port = redirect_uri_port
 
 
