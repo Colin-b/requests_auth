@@ -40,6 +40,7 @@ from requests_auth._errors import (
     InvalidToken,
     TokenExpiryNotProvided,
     InvalidGrantRequest,
+    RequestsAuthException,
 )
 from requests_auth.version import __version__
 
@@ -67,6 +68,7 @@ __all__ = [
     "SupportMultiAuth",
     "JsonTokenFileCache",
     "TokenMemoryCache",
+    "RequestsAuthException",
     "GrantNotProvided",
     "TimeoutOccurred",
     "AuthenticationFailed",

@@ -308,6 +308,8 @@ def test_browser_opening_failure(token_cache, responses: RequestsMock, monkeypat
         str(exception_info.value)
         == "User authentication was not received within 0.1 seconds."
     )
+    assert isinstance(exception_info.value, requests_auth.RequestsAuthException)
+    assert isinstance(exception_info.value, requests.RequestException)
 
 
 def test_browser_error(token_cache, responses: RequestsMock, monkeypatch):
@@ -371,6 +373,8 @@ def test_empty_token_is_invalid(token_cache, browser_mock: BrowserMock):
             auth=requests_auth.OAuth2Implicit("http://provide_token"),
         )
     assert str(exception_info.value) == " is invalid."
+    assert isinstance(exception_info.value, requests_auth.RequestsAuthException)
+    assert isinstance(exception_info.value, requests.RequestException)
     tab.assert_success()
 
 
@@ -386,6 +390,8 @@ def test_token_without_expiry_is_invalid(token_cache, browser_mock: BrowserMock)
             auth=requests_auth.OAuth2Implicit("http://provide_token"),
         )
     assert str(exception_info.value) == "Expiry (exp) is not provided in None."
+    assert isinstance(exception_info.value, requests_auth.RequestsAuthException)
+    assert isinstance(exception_info.value, requests.RequestException)
     tab.assert_success()
 
 
@@ -612,6 +618,8 @@ def test_oauth2_implicit_flow_post_failure_if_state_is_not_provided(
         str(exception_info.value)
         == f"state not provided within {{'access_token': ['{token}']}}."
     )
+    assert isinstance(exception_info.value, requests_auth.RequestsAuthException)
+    assert isinstance(exception_info.value, requests.RequestException)
     tab.assert_failure(f"state not provided within {{'access_token': ['{token}']}}.")
 
 

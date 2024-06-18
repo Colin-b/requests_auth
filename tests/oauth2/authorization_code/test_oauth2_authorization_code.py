@@ -151,8 +151,11 @@ def test_oauth2_authorization_code_flow_uses_custom_failure(
         displayed_html="FAILURE: {display_time}\n{information}",
     )
 
-    with pytest.raises(requests_auth.InvalidGrantRequest):
+    with pytest.raises(requests_auth.InvalidGrantRequest) as exception_info:
         requests.get("http://authorized_only", auth=auth)
+
+    assert isinstance(exception_info.value, requests_auth.RequestsAuthException)
+    assert isinstance(exception_info.value, requests.RequestException)
 
     tab.assert_failure(
         "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
@@ -478,6 +481,8 @@ def test_empty_token_is_invalid(
         str(exception_info.value)
         == "access_token not provided within {'access_token': '', 'token_type': 'example', 'expires_in': 3600, 'refresh_token': 'tGzv3JOkF0XG5Qx2TlKWIA', 'example_parameter': 'example_value'}."
     )
+    assert isinstance(exception_info.value, requests_auth.RequestsAuthException)
+    assert isinstance(exception_info.value, requests.RequestException)
     tab.assert_success()
 
 
