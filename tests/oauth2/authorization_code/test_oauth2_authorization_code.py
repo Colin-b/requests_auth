@@ -92,6 +92,73 @@ def test_oauth2_authorization_code_flow_uses_redirect_uri_domain(
     tab.assert_success()
 
 
+def test_oauth2_authorization_code_flow_uses_custom_success(
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
+):
+    auth = requests_auth.OAuth2AuthorizationCode(
+        "http://provide_code",
+        "http://provide_access_token",
+    )
+    requests_auth.OAuth2.display.success_html = (
+        "<body><div>SUCCESS: {display_time}</div></body>"
+    )
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de",
+        displayed_html="<body><div>SUCCESS: {display_time}</div></body>",
+    )
+    responses.post(
+        "http://provide_access_token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
+    )
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
+    tab.assert_success()
+
+
+def test_oauth2_authorization_code_flow_uses_custom_failure(
+    token_cache, browser_mock: BrowserMock
+):
+    auth = requests_auth.OAuth2AuthorizationCode(
+        "http://provide_code",
+        "http://provide_access_token",
+    )
+    requests_auth.OAuth2.display.failure_html = "FAILURE: {display_time}\n{information}"
+    tab = browser_mock.add_response(
+        opened_url="http://provide_code?response_type=code&state=163f0455b3e9cad3ca04254e5a0169553100d3aa0756c7964d897da316a695ffed5b4f46ef305094fd0a88cfe4b55ff257652015e4aa8f87b97513dba440f8de&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_request",
+        displayed_html="FAILURE: {display_time}\n{information}",
+    )
+
+    with pytest.raises(requests_auth.InvalidGrantRequest):
+        requests.get("http://authorized_only", auth=auth)
+
+    tab.assert_failure(
+        "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
+    )
+
+
 def test_oauth2_authorization_code_flow_get_code_is_sent_in_authorization_header_by_default(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):

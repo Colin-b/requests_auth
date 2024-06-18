@@ -162,6 +162,51 @@ def test_oauth2_implicit_flow_uses_redirect_uri_domain(
     tab.assert_success()
 
 
+def test_oauth2_implicit_flow_uses_custom_success(
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
+):
+    auth = requests_auth.OAuth2Implicit("http://provide_token")
+    requests_auth.OAuth2.display.success_html = (
+        "<body><div>SUCCESS: {display_time}</div></body>"
+    )
+    expiry_in_1_hour = datetime.datetime.now(
+        datetime.timezone.utc
+    ) + datetime.timedelta(hours=1)
+    token = create_token(expiry_in_1_hour)
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000",
+        displayed_html="<body><div>SUCCESS: {display_time}</div></body>",
+        data=f"access_token={token}&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521",
+    )
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": f"Bearer {token}"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+    tab.assert_success()
+
+
+def test_oauth2_implicit_flow_uses_custom_failure(
+    token_cache, browser_mock: BrowserMock
+):
+    auth = requests_auth.OAuth2Implicit("http://provide_token")
+    requests_auth.OAuth2.display.failure_html = "FAILURE: {display_time}\n{information}"
+    tab = browser_mock.add_response(
+        opened_url="http://provide_token?response_type=token&state=42a85b271b7a652ca3cc4c398cfd3f01b9ad36bf9c945ba823b023e8f8b95c4638576a0e3dcc96838b838bec33ec6c0ee2609d62ed82480b3b8114ca494c0521&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_request",
+        displayed_html="FAILURE: {display_time}\n{information}",
+    )
+
+    with pytest.raises(requests_auth.InvalidGrantRequest):
+        requests.get("http://authorized_only", auth=auth)
+
+    tab.assert_failure(
+        "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
+    )
+
+
 def test_oauth2_implicit_flow_post_token_is_sent_in_authorization_header_by_default(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):

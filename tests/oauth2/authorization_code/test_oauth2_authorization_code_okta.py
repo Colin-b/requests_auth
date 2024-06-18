@@ -98,6 +98,75 @@ def test_oauth2_authorization_code_flow_uses_redirect_uri_domain(
     tab.assert_success()
 
 
+def test_oauth2_authorization_code_flow_uses_custom_success(
+    token_cache, responses: RequestsMock, browser_mock: BrowserMock
+):
+    auth = requests_auth.OktaAuthorizationCode(
+        "testserver.okta-emea.com",
+        "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+    )
+    requests_auth.OAuth2.display.success_html = (
+        "<body><div>SUCCESS: {display_time}</div></body>"
+    )
+    tab = browser_mock.add_response(
+        opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#code=SplxlOBeZQQYbYS6WxSbIA&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b",
+        displayed_html="<body><div>SUCCESS: {display_time}</div></body>",
+    )
+    responses.post(
+        "https://testserver.okta-emea.com/oauth2/default/v1/token",
+        json={
+            "access_token": "2YotnFZFEjr1zCsicMWpAA",
+            "token_type": "example",
+            "expires_in": 3600,
+            "refresh_token": "tGzv3JOkF0XG5Qx2TlKWIA",
+            "example_parameter": "example_value",
+        },
+        match=[
+            urlencoded_params_matcher(
+                {
+                    "grant_type": "authorization_code",
+                    "redirect_uri": "http://localhost:5000/",
+                    "client_id": "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+                    "scope": "openid",
+                    "response_type": "code",
+                    "code": "SplxlOBeZQQYbYS6WxSbIA",
+                }
+            ),
+        ],
+    )
+    responses.get(
+        "http://authorized_only",
+        match=[header_matcher({"Authorization": "Bearer 2YotnFZFEjr1zCsicMWpAA"})],
+    )
+
+    requests.get("http://authorized_only", auth=auth)
+
+    tab.assert_success()
+
+
+def test_oauth2_authorization_code_flow_uses_custom_failure(
+    token_cache, browser_mock: BrowserMock
+):
+    auth = requests_auth.OktaAuthorizationCode(
+        "testserver.okta-emea.com",
+        "54239d18-c68c-4c47-8bdd-ce71ea1d50cd",
+    )
+    requests_auth.OAuth2.display.failure_html = "FAILURE: {display_time}\n{information}"
+    tab = browser_mock.add_response(
+        opened_url="https://testserver.okta-emea.com/oauth2/default/v1/authorize?client_id=54239d18-c68c-4c47-8bdd-ce71ea1d50cd&scope=openid&response_type=code&state=5264d11c8b268ccf911ce564ca42fd75cea68c4a3c1ec3ac1ab20243891ab7cd5250ad4c2d002017c6e8ac2ba34954293baa5e0e4fd00bb9ffd4a39c45f1960b&redirect_uri=http%3A%2F%2Flocalhost%3A5000%2F",
+        reply_url="http://localhost:5000#error=invalid_request",
+        displayed_html="FAILURE: {display_time}\n{information}",
+    )
+
+    with pytest.raises(requests_auth.InvalidGrantRequest):
+        requests.get("http://authorized_only", auth=auth)
+
+    tab.assert_failure(
+        "invalid_request: The request is missing a required parameter, includes an invalid parameter value, includes a parameter more than once, or is otherwise malformed."
+    )
+
+
 def test_okta_authorization_code_flow_get_code_is_sent_in_authorization_header_by_default(
     token_cache, responses: RequestsMock, browser_mock: BrowserMock
 ):
