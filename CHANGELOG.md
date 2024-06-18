@@ -6,6 +6,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.0] - 2024-06-18
+### Added
+- Adding explicit support for Python `3.12`.
+- Publicly expose `requests_auth.SupportMultiAuth`, allowing multiple authentication support for every `requests` authentication class that exists.
+- Publicly expose `requests_auth.TokenMemoryCache`, allowing to create custom Oauth2 token cache based on this default implementation.
+- You can now provide your own HTML success (`success_html`) and failure (`failure_html`) display via the new `OAuth2.display` shared setting. Refer to documentation for more details.
+- Thanks to the new `redirect_uri_domain` parameter on Authorization code (with and without PKCE) and Implicit flows, you can now provide the [FQDN](https://en.wikipedia.org/wiki/Fully_qualified_domain_name) to use in the `redirect_uri` when `localhost` (the default) is not allowed.
+- `requests_auth.WakaTimeAuthorizationCode` handling access to the [WakaTime API](https://wakatime.com/developers).
+
+### Changed
+- Except for `requests_auth.testing`, only direct access via `requests_auth.` was considered publicly exposed. This is now explicit, as inner packages are now using private prefix (`_`).
+  If you were relying on some classes or functions that are now internal, feel free to open an issue.
+- `requests_auth.JsonTokenFileCache` and `requests_auth.TokenMemoryCache` `get_token` method does not handle kwargs anymore, the `on_missing_token` callable does not expect any arguments anymore.
+- `requests_auth.JsonTokenFileCache` does not expose `tokens_path` or `last_save_time` attributes anymore and is also allowing `pathlib.Path` instances as cache location.
+- `requests_auth.TokenMemoryCache` does not expose `forbid_concurrent_cache_access` or `forbid_concurrent_missing_token_function_call` attributes anymore.
+- Browser display settings have been moved to a shared setting, see documentation for more information on `requests_auth.OAuth2.display`.
+  The failure page will be displayed for 10 seconds by default instead of 5 seconds previously.
+  As a result the following classes no longer expose `success_display_time` and `failure_display_time` parameters.
+  - `requests_auth.OAuth2AuthorizationCode`.
+  - `requests_auth.OktaAuthorizationCode`.
+  - `requests_auth.WakaTimeAuthorizationCode`.
+  - `requests_auth.OAuth2AuthorizationCodePKCE`.
+  - `requests_auth.OktaAuthorizationCodePKCE`.
+  - `requests_auth.OAuth2Implicit`.
+  - `requests_auth.AzureActiveDirectoryImplicit`.
+  - `requests_auth.AzureActiveDirectoryImplicitIdToken`.
+  - `requests_auth.OktaImplicit`.
+  - `requests_auth.OktaImplicitIdToken`.
+- The authentication success and failure displayed in the browser were revamped to be more user-friendly. `requests_auth.testing` was modified to accommodate this change:
+  - `tab.assert_success` `expected_message` parameter was removed.
+  - `tab.assert_failure` `expected_message` parameter should not be prefixed with `Unable to properly perform authentication: ` anymore and `\n` in the message should be replaced with `<br>`.
+- Exceptions issued by `requests_auth` are now inheriting from `requests_auth.RequestsAuthException`, itself inheriting from `requests.RequestException`, instead of `Exception`.
+
+### Fixed
+- Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/).
+- Remove deprecation warnings due to usage of `utcnow` and `utcfromtimestamp`.
+- `requests_auth.OktaClientCredentials` `scope` parameter is now mandatory and does not default to `openid` anymore.
+- `requests_auth.OktaClientCredentials` will now display a more user-friendly error message in case Okta instance is not provided.
+- Tokens cache `DEBUG` logs will not display tokens anymore.
+- Handle `text/html; charset=utf-8` content-type in token responses.
+
+### Removed
+- Removing support for Python `3.7`.
+- Deprecated `requests_auth.Auths` class has been removed.
+
 ## [7.0.0] - 2023-04-27
 ### Changed
 - `requests_auth.OAuth2ResourceOwnerPasswordCredentials` does not send basic authentication by default.
@@ -13,10 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `session_auth` as a parameter of `requests_auth.OAuth2ResourceOwnerPasswordCredentials`. Allowing to provide any kind of optional authentication.
 - `requests_auth.OktaResourceOwnerPasswordCredentials` providing Okta resource owner password credentials flow easy setup.
-- Explicit support for Python 3.11
+- Explicit support for Python `3.11`.
 
 ### Removed
-- Explicit support for Python 3.6
+- Explicit support for Python `3.6`.
 
 ## [6.0.0] - 2022-01-11
 ### Changed
@@ -58,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.2.0] - 2020-10-14
 ### Added
 - Allow to provide a `requests.Session` instance for `*AuthorizationCode` flows (even `PKCE`), `*ClientCredentials` and `*ResourceOwnerPasswordCredentials` flows.
-- Explicit support for Python 3.9
+- Explicit support for Python `3.9`.
 
 ### Changed
 - Code now follow `black==20.8b1` formatting instead of the git master version.
@@ -179,7 +224,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Public release
 
-[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v7.0.0...HEAD
+[Unreleased]: https://github.com/Colin-b/requests_auth/compare/v8.0.0...HEAD
+[8.0.0]: https://github.com/Colin-b/requests_auth/compare/v7.0.0...v8.0.0
 [7.0.0]: https://github.com/Colin-b/requests_auth/compare/v6.0.0...v7.0.0
 [6.0.0]: https://github.com/Colin-b/requests_auth/compare/v5.3.0...v6.0.0
 [5.3.0]: https://github.com/Colin-b/requests_auth/compare/v5.2.0...v5.3.0

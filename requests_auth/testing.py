@@ -7,6 +7,7 @@ import datetime
 import pytest
 
 import requests_auth
+import requests_auth._oauth2.authentication_responses_server
 
 
 def create_token(expiry: Optional[datetime.datetime]) -> str:
@@ -19,7 +20,7 @@ def create_token(expiry: Optional[datetime.datetime]) -> str:
 
 
 @pytest.fixture
-def token_cache():
+def token_cache() -> requests_auth.TokenMemoryCache:
     yield requests_auth.OAuth2.token_cache
     requests_auth.OAuth2.token_cache.clear()
 
@@ -33,10 +34,177 @@ class Tab(threading.Thread):
       * assert the content sent to the browser
     """
 
-    def __init__(self, reply_url: str, data: str):
+    def __init__(
+        self,
+        reply_url: str,
+        data: str,
+        displayed_html: Optional[str] = None,
+    ):
         self.reply_url = reply_url
         self.data = data.encode() if data is not None else None
         self.checked = False
+        self.success_html = (
+            displayed_html
+            or """<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Authentication success</title>
+        <style>
+body {{
+    border: none;
+    box-sizing: border-box;
+    display: block;
+    font-family: "Segoe UI";
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 50px 0 76px 0;
+    text-align: center;
+}}
+
+.content {{
+    padding: 30px 0 50px 0;
+}}
+
+h1 {{
+    color: #32cd32;
+    font-size: 2.4rem;
+    margin: 1.7rem auto .5rem auto;
+}}
+
+p {{
+    color: #2f374f;
+    font-size: 1.2rem;
+    margin: .75rem 0 0 0;
+}}
+
+.btn {{
+    display: inline-block;
+    color: #32cd32 !important;
+    text-decoration: none;
+    background-color: #f0fff0;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 400;
+    margin: 50px 0 0 0;
+}}
+
+.btn:hover {{
+    color: #f0fff0 !important;
+    background-color: #32cd32;
+}}
+
+@keyframes zoomText {{
+  from {{
+    opacity: 0;
+    transform: scale3d(0.9, 0.9, 0.9);
+  }}
+  50% {{
+    opacity: 1;
+  }}
+}}
+
+.content h1 {{
+    animation-duration: .6s;
+    animation-fill-mode: both;
+    animation-name: zoomText;
+    animation-delay: .2s;
+}}
+        </style>
+    </head>
+    <body onload="window.open('', '_self', ''); window.setTimeout(close, {display_time})">
+        <div class="content">
+            <h1>Authentication success</h1>
+            <p>You can close this tab</p>
+        </div>
+        <div class="more">
+            <a href="https://colin-b.github.io/requests_auth/" class="btn" target="_blank" rel="noreferrer noopener" role="button">Documentation</a>
+            <a href="https://github.com/Colin-b/requests_auth/blob/develop/CHANGELOG.md" class="btn" target="_blank" rel="noreferrer noopener" role="button">Latest changes</a>
+        </div>
+    </body>
+</html>"""
+        )
+        self.failure_html = (
+            displayed_html
+            or """<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Authentication failed</title>
+        <style>
+body {{
+    border: none;
+    box-sizing: border-box;
+    display: block;
+    font-family: "Segoe UI";
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 50px 0 76px 0;
+    text-align: center;
+}}
+
+.content {{
+    padding: 30px 0 50px 0;
+}}
+
+h1 {{
+    color: #dc143c;
+    font-size: 2.4rem;
+    margin: 1.7rem auto .5rem auto;
+}}
+
+p {{
+    color: #2f374f;
+    font-size: 1.2rem;
+    margin: .75rem 0 0 0;
+}}
+
+.btn {{
+    display: inline-block;
+    color: #dc143c !important;
+    text-decoration: none;
+    background-color: #fffafa;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 400;
+    margin: 50px 0 0 0;
+}}
+
+.btn:hover {{
+    color: #fffafa !important;
+    background-color: #dc143c;
+}}
+
+@keyframes zoomText {{
+  from {{
+    opacity: 0;
+    transform: scale3d(0.9, 0.9, 0.9);
+  }}
+  50% {{
+    opacity: 1;
+  }}
+}}
+
+.content h1 {{
+    animation-duration: .6s;
+    animation-fill-mode: both;
+    animation-name: zoomText;
+    animation-delay: .2s;
+}}
+        </style>
+    </head>
+    <body onload="window.open('', '_self', ''); window.setTimeout(close, {display_time})">
+        <div class="content">
+            <h1>Authentication failed</h1>
+            <p>{information}</p>
+        </div>
+        <div class="more">
+            <a href="https://colin-b.github.io/requests_auth/" class="btn" target="_blank" rel="noreferrer noopener" role="button">Documentation</a>
+            <a href="https://github.com/Colin-b/requests_auth/blob/develop/CHANGELOG.md" class="btn" target="_blank" rel="noreferrer noopener" role="button">Latest changes</a>
+        </div>
+    </body>
+</html>"""
+        )
         super().__init__()
 
     def run(self) -> None:
@@ -49,7 +217,7 @@ class Tab(threading.Thread):
         # Simulate a browser tab token redirect to the reply URL
         self.content = self._simulate_redirect().decode()
 
-    def _request_favicon(self):
+    def _request_favicon(self) -> None:
         scheme, netloc, *_ = urlsplit(self.reply_url)
         favicon_response = urllib.request.urlopen(f"{scheme}://{netloc}/favicon.ico")
         assert favicon_response.read() == b"Favicon is not provided."
@@ -75,19 +243,15 @@ class Tab(threading.Thread):
         )
         return urllib.request.urlopen(reply_url, data=self.data).read()
 
-    def assert_success(self, expected_message: str, timeout: int = 1):
+    def assert_success(self, timeout: int = 1) -> None:
         self.join()
-        assert (
-            self.content
-            == f"<body onload=\"window.open('', '_self', ''); window.setTimeout(close, {timeout})\" style=\"\n        color: #4F8A10;\n        background-color: #DFF2BF;\n        font-size: xx-large;\n        display: flex;\n        align-items: center;\n        justify-content: center;\">\n            <div style=\"border: 1px solid;\">{expected_message}</div>\n        </body>"
-        )
+        assert self.content == self.success_html.format(display_time=timeout)
         self.checked = True
 
-    def assert_failure(self, expected_message: str, timeout: int = 5000):
+    def assert_failure(self, expected_message: str, timeout: int = 10_000) -> None:
         self.join()
-        assert (
-            self.content
-            == f"<body onload=\"window.open('', '_self', ''); window.setTimeout(close, {timeout})\" style=\"\n        color: #D8000C;\n        background-color: #FFBABA;\n        font-size: xx-large;\n        display: flex;\n        align-items: center;\n        justify-content: center;\">\n            <div style=\"border: 1px solid;\">{expected_message}</div>\n        </body>"
+        assert self.content == self.failure_html.format(
+            display_time=timeout, information=expected_message
         )
         self.checked = True
 
@@ -96,7 +260,7 @@ class BrowserMock:
     def __init__(self):
         self.tabs: Dict[str, Tab] = {}
 
-    def open(self, url: str, new: int):
+    def open(self, url: str, new: int) -> bool:
         assert new == 1
         assert url in self.tabs, f"Browser call on {url} was not mocked."
         # Simulate a browser by sending the response in another thread
@@ -104,18 +268,23 @@ class BrowserMock:
         return True
 
     def add_response(
-        self, opened_url: str, reply_url: Optional[str], data: str = None
+        self,
+        opened_url: str,
+        reply_url: Optional[str],
+        data: Optional[str] = None,
+        displayed_html: Optional[str] = None,
     ) -> Tab:
         """
         :param opened_url: URL opened by requests_auth
         :param reply_url: The URL to send a response to, None to simulate the fact that there is no redirect.
         :param data: Body of the POST response to be sent. None to send a GET request.
+        :param displayed_html: Expected success/failure page.
         """
-        tab = Tab(reply_url, data)
+        tab = Tab(reply_url, data, displayed_html)
         self.tabs[opened_url] = tab
         return tab
 
-    def assert_checked(self):
+    def assert_checked(self) -> None:
         for url, tab in self.tabs.items():
             tab.join()
             assert tab.checked, f"Response received on {url} was not checked properly."
@@ -124,12 +293,14 @@ class BrowserMock:
 @pytest.fixture
 def browser_mock(monkeypatch) -> BrowserMock:
     mock = BrowserMock()
-    import requests_auth.oauth2_authentication_responses_server
 
     monkeypatch.setattr(
-        requests_auth.oauth2_authentication_responses_server.webbrowser,
+        requests_auth._oauth2.authentication_responses_server.webbrowser,
         "get",
         lambda *args: mock,
+    )
+    monkeypatch.setattr(
+        requests_auth.OAuth2, "display", requests_auth.DisplaySettings()
     )
     yield mock
     mock.assert_checked()
