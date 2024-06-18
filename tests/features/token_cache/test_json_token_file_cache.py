@@ -4,6 +4,7 @@ import pathlib
 
 import pytest
 import jwt
+import requests
 
 import requests_auth
 import requests_auth._oauth2.tokens
@@ -78,6 +79,8 @@ def test_save_bearer_token_exception_handling(
     with pytest.raises(requests_auth.AuthenticationFailed) as exception_info:
         same_cache.get_token("key1")
     assert str(exception_info.value) == "User was not authenticated."
+    assert isinstance(exception_info.value, requests_auth.RequestsAuthException)
+    assert isinstance(exception_info.value, requests.RequestException)
 
     assert caplog.messages == [
         "Cannot save tokens.",

@@ -1,42 +1,45 @@
 from json import JSONDecodeError
 from typing import Union
 
-from requests import Response
+from requests import Response, RequestException
 
 
-class AuthenticationFailed(Exception):
+class RequestsAuthException(RequestException): ...
+
+
+class AuthenticationFailed(RequestsAuthException):
     """User was not authenticated."""
 
     def __init__(self):
-        Exception.__init__(self, "User was not authenticated.")
+        RequestsAuthException.__init__(self, "User was not authenticated.")
 
 
-class TimeoutOccurred(Exception):
+class TimeoutOccurred(RequestsAuthException):
     """No response within timeout interval."""
 
     def __init__(self, timeout: float):
-        Exception.__init__(
+        RequestsAuthException.__init__(
             self, f"User authentication was not received within {timeout} seconds."
         )
 
 
-class InvalidToken(Exception):
+class InvalidToken(RequestsAuthException):
     """Token is invalid."""
 
     def __init__(self, token_name: str):
-        Exception.__init__(self, f"{token_name} is invalid.")
+        RequestsAuthException.__init__(self, f"{token_name} is invalid.")
 
 
-class GrantNotProvided(Exception):
+class GrantNotProvided(RequestsAuthException):
     """Grant was not provided."""
 
     def __init__(self, grant_name: str, dictionary_without_grant: dict):
-        Exception.__init__(
+        RequestsAuthException.__init__(
             self, f"{grant_name} not provided within {dictionary_without_grant}."
         )
 
 
-class InvalidGrantRequest(Exception):
+class InvalidGrantRequest(RequestsAuthException):
     """
     If the request failed client authentication or is invalid, the authorization server returns an error response as described in https://tools.ietf.org/html/rfc6749#section-5.2
     """
@@ -64,7 +67,7 @@ class InvalidGrantRequest(Exception):
     }
 
     def __init__(self, response: Union[Response, dict]):
-        Exception.__init__(self, InvalidGrantRequest.to_message(response))
+        RequestsAuthException.__init__(self, InvalidGrantRequest.to_message(response))
 
     @staticmethod
     def to_message(response: Union[Response, dict]) -> str:
@@ -114,17 +117,19 @@ class InvalidGrantRequest(Exception):
         return message
 
 
-class StateNotProvided(Exception):
+class StateNotProvided(RequestsAuthException):
     """State was not provided."""
 
     def __init__(self, dictionary_without_state: dict):
-        Exception.__init__(
+        RequestsAuthException.__init__(
             self, f"state not provided within {dictionary_without_state}."
         )
 
 
-class TokenExpiryNotProvided(Exception):
+class TokenExpiryNotProvided(RequestsAuthException):
     """Token expiry was not provided."""
 
     def __init__(self, token_body: dict):
-        Exception.__init__(self, f"Expiry (exp) is not provided in {token_body}.")
+        RequestsAuthException.__init__(
+            self, f"Expiry (exp) is not provided in {token_body}."
+        )

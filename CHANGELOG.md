@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The authentication success and failure displayed in the browser were revamped to be more user-friendly. `requests_auth.testing` was modified to accommodate this change:
   - `tab.assert_success` `expected_message` parameter was removed.
   - `tab.assert_failure` `expected_message` parameter should not be prefixed with `Unable to properly perform authentication: ` anymore and `\n` in the message should be replaced with `<br>`.
+- Exceptions issued by `requests_auth` are now inheriting from `requests_auth.RequestsAuthException`, itself inheriting from `requests.RequestException`, instead of `Exception`.
 
 ### Fixed
 - Type information is now provided following [PEP 561](https://www.python.org/dev/peps/pep-0561/).
